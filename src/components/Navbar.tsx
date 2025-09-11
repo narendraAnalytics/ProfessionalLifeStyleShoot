@@ -4,10 +4,12 @@ import { useState, useEffect } from 'react'
 import { Menu, X } from 'lucide-react'
 import { Button } from './ui/button'
 import { SignedIn, SignedOut, SignInButton, UserButton } from '@clerk/nextjs'
+import { useRouter } from 'next/navigation'
 
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const router = useRouter()
 
   useEffect(() => {
     const handleScroll = () => {
@@ -99,7 +101,10 @@ export default function Navbar() {
               </SignInButton>
             </SignedOut>
             <SignedIn>
-              <Button className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-6 py-2 rounded-full font-medium transition-all duration-300 shadow-lg hover:shadow-purple-500/25 hover:shadow-2xl hover:scale-110 relative overflow-hidden cursor-pointer group">
+              <Button 
+                onClick={() => router.push('/dashboard')}
+                className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-6 py-2 rounded-full font-medium transition-all duration-300 shadow-lg hover:shadow-purple-500/25 hover:shadow-2xl hover:scale-110 relative overflow-hidden cursor-pointer group"
+              >
                 <span className="relative z-10">Start Your Shoot</span>
                 <div className="absolute inset-0 bg-gradient-to-r from-pink-600 to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full blur opacity-30 group-hover:opacity-70 transition-opacity duration-300 -z-10" />
@@ -142,7 +147,13 @@ export default function Navbar() {
                   </SignInButton>
                 </SignedOut>
                 <SignedIn>
-                  <Button className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white py-2 rounded-full font-medium transition-all duration-300">
+                  <Button 
+                    onClick={() => {
+                      router.push('/dashboard')
+                      setIsMobileMenuOpen(false)
+                    }}
+                    className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white py-2 rounded-full font-medium transition-all duration-300"
+                  >
                     Start Your Shoot
                   </Button>
                   <div className="flex justify-center pt-2">
