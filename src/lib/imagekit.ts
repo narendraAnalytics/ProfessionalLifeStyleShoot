@@ -31,6 +31,7 @@ export class ImageKitService {
       folder?: string;
       tags?: string[];
       useUniqueFileName?: boolean;
+      aspectRatio?: string;
     }
   ): Promise<{ url: string; fileId: string; thumbnailUrl: string }> {
     try {
@@ -40,6 +41,12 @@ export class ImageKitService {
         ? `${timestamp}_${sanitizedFileName}` 
         : sanitizedFileName;
 
+      // Build transformation string with aspect ratio
+      let transformationString = 'w-800,h-800,c-at_max,q-90'; // Base optimization
+      if (options?.aspectRatio) {
+        transformationString = `ar-${options.aspectRatio},w-800,c-maintain_ar,q-90`; // Apply aspect ratio first
+      }
+
       const response = await this.imagekit.upload({
         file: buffer,
         fileName: finalFileName,
@@ -47,7 +54,7 @@ export class ImageKitService {
         tags: options?.tags || ['ai-generated', 'professional'],
         useUniqueFileName: false, // We handle this ourselves above
         transformation: {
-          pre: 'w-800,h-800,c-at_max,q-90', // Optimize uploaded images
+          pre: transformationString,
         }
       });
 
@@ -138,23 +145,26 @@ export class ImageKitService {
   }
 
   // Generate responsive image URLs for different screen sizes
-  getResponsiveUrls(url: string): {
+  getResponsiveUrls(url: string, aspectRatio?: string): {
     small: string;
     medium: string;
     large: string;
     original: string;
   } {
+    // Use maintain_ar crop mode to preserve aspect ratio
+    const cropMode = aspectRatio ? 'maintain_ar' : 'at_max';
+    
     return {
       small: this.getOptimizedUrl(url, [
-        { width: 400, height: 400, crop: 'at_max' },
+        { width: 400, crop: cropMode },
         { quality: 80, format: 'webp' }
       ]),
       medium: this.getOptimizedUrl(url, [
-        { width: 800, height: 800, crop: 'at_max' },
+        { width: 800, crop: cropMode },
         { quality: 85, format: 'webp' }
       ]),
       large: this.getOptimizedUrl(url, [
-        { width: 1200, height: 1200, crop: 'at_max' },
+        { width: 1200, crop: cropMode },
         { quality: 90, format: 'webp' }
       ]),
       original: this.getOptimizedUrl(url, [

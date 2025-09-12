@@ -36,20 +36,60 @@ interface AIPhotoshootGeneratorProps {
   onImageGenerated?: (image: GeneratedImage) => void
 }
 
+interface AspectRatio {
+  label: string
+  value: string
+  ratio: string
+  description: string
+  icon: string
+}
+
 export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshootGeneratorProps) {
   // Single chat state
   const [currentPrompt, setCurrentPrompt] = useState('')
   const [enhancedPrompt, setEnhancedPrompt] = useState('')
   const [originalPrompt, setOriginalPrompt] = useState('')
   const [generatedImage, setGeneratedImage] = useState<GeneratedImage | null>(null)
+  const [selectedAspectRatio, setSelectedAspectRatio] = useState<AspectRatio>({
+    label: '1:1',
+    value: '1-1',
+    ratio: '1:1',
+    description: 'Square',
+    icon: '⬜'
+  })
   
   // UI state
   const [isEnhancing, setIsEnhancing] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
   const [progress, setProgress] = useState(0)
   const [error, setError] = useState<string | null>(null)
-  const [step, setStep] = useState<'input' | 'enhanced' | 'generated'>('input')
+  const [step, setStep] = useState<'input' | 'enhanced' | 'size-selection' | 'generated'>('input')
   const { user } = useUser()
+
+  // Aspect ratio options
+  const aspectRatios: AspectRatio[] = [
+    {
+      label: '1:1',
+      value: '1-1',
+      ratio: '1:1',
+      description: 'Square',
+      icon: '⬜'
+    },
+    {
+      label: '16:9',
+      value: '16-9',
+      ratio: '16:9',
+      description: 'Landscape',
+      icon: '▭'
+    },
+    {
+      label: '9:16',
+      value: '9-16',
+      ratio: '9:16',
+      description: 'Portrait',
+      icon: '▯'
+    }
+  ]
 
   const handleEnhancePrompt = async () => {
     if (!currentPrompt.trim()) {
@@ -81,7 +121,7 @@ export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshoot
 
       setOriginalPrompt(data.originalPrompt)
       setEnhancedPrompt(data.enhancedPrompt)
-      setStep('enhanced')
+      setStep('size-selection')
       setProgress(100)
       
       toast.success('Prompt enhanced successfully!')
@@ -119,7 +159,8 @@ export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshoot
           prompt: originalPrompt || currentPrompt.trim(),
           style: 'professional',
           skipEnhancement: true, // We already enhanced if we have enhancedPrompt
-          enhancedPrompt: finalPrompt
+          enhancedPrompt: finalPrompt,
+          aspectRatio: selectedAspectRatio.value
         }),
       })
 
@@ -178,6 +219,14 @@ export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshoot
     setGeneratedImage(null)
     setStep('input')
     setError(null)
+    // Reset to default aspect ratio
+    setSelectedAspectRatio({
+      label: '1:1',
+      value: '1-1',
+      ratio: '1:1',
+      description: 'Square',
+      icon: '⬜'
+    })
   }
 
   const quickIdeas = [
@@ -282,7 +331,77 @@ export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshoot
             </div>
           )}
 
-          {/* Step 2: Enhanced Prompt */}
+          {/* Step 2: Size Selection */}
+          {step === 'size-selection' && (
+            <div className="space-y-4">
+              <div className="text-center">
+                <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <ImageIcon className="w-6 h-6 text-white" />
+                </div>
+                <h3 className="text-xl font-semibold text-gray-800 mb-2">Step 2: Choose Image Size</h3>
+                <p className="text-gray-600">Select your preferred aspect ratio for the generated image</p>
+              </div>
+
+              {/* Enhanced Prompt Display */}
+              <div className="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-xl p-4 mb-6">
+                <div className="space-y-3">
+                  <div>
+                    <span className="font-medium text-gray-700 text-sm">Your Enhanced Prompt:</span>
+                    <div className="mt-1 p-3 bg-emerald-50 rounded-lg text-emerald-800 font-medium text-sm">
+                      "{enhancedPrompt}"
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Aspect Ratio Selection */}
+              <div className="space-y-4">
+                <h4 className="font-medium text-gray-700 text-center">Choose Aspect Ratio:</h4>
+                <div className="grid grid-cols-3 gap-4">
+                  {aspectRatios.map((ratio) => (
+                    <button
+                      key={ratio.value}
+                      onClick={() => setSelectedAspectRatio(ratio)}
+                      className={`p-4 rounded-xl border-2 transition-all duration-200 flex flex-col items-center gap-2 ${
+                        selectedAspectRatio.value === ratio.value
+                          ? 'border-purple-500 bg-purple-50 text-purple-700'
+                          : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                      }`}
+                    >
+                      <div className="text-2xl">{ratio.icon}</div>
+                      <div className="font-medium">{ratio.label}</div>
+                      <div className="text-sm text-gray-500">{ratio.description}</div>
+                      <div className="text-xs text-gray-400">{ratio.ratio}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <Button
+                  onClick={handleStartOver}
+                  variant="outline"
+                  className="border-gray-200 text-gray-600 hover:bg-gray-50"
+                >
+                  Start Over
+                </Button>
+                <Button
+                  onClick={() => handleGenerateImage(enhancedPrompt)}
+                  disabled={isGenerating}
+                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white flex-1"
+                >
+                  {isGenerating ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <Send className="w-4 h-4 mr-2" />
+                  )}
+                  Generate {selectedAspectRatio.description} Image ({selectedAspectRatio.label})
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Step 3: Enhanced Prompt (Legacy - keeping for direct generation) */}
           {step === 'enhanced' && (
             <div className="space-y-4">
               <div className="text-center">
@@ -334,15 +453,15 @@ export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshoot
             </div>
           )}
 
-          {/* Step 3: Generated Image */}
+          {/* Step 4: Generated Image */}
           {step === 'generated' && generatedImage && (
             <div className="space-y-4">
               <div className="text-center">
-                <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-3">
+                <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full flex items-center justify-center mx-auto mb-3">
                   <ImageIcon className="w-6 h-6 text-white" />
                 </div>
-                <h3 className="text-xl font-semibold text-gray-800 mb-2">Your Image is Ready!</h3>
-                <p className="text-gray-600">Generated using AI image model</p>
+                <h3 className="text-xl font-semibold text-gray-800 mb-2">Your {selectedAspectRatio.description} Image is Ready!</h3>
+                <p className="text-gray-600">Generated in {selectedAspectRatio.label} aspect ratio</p>
               </div>
 
               <div className="bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
@@ -361,6 +480,11 @@ export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshoot
                 </div>
                 <div className="p-4">
                   <div className="text-sm text-gray-600 mb-3">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
+                        {selectedAspectRatio.label} {selectedAspectRatio.description}
+                      </span>
+                    </div>
                     <span className="font-medium">Generated from:</span> "{generatedImage.originalPrompt}"
                     {generatedImage.enhancedPrompt && (
                       <div className="mt-1">

@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { prompt, enhancedPrompt, style, skipEnhancement } = await req.json();
+    const { prompt, enhancedPrompt, style, skipEnhancement, aspectRatio } = await req.json();
 
     if (!prompt || typeof prompt !== 'string' || prompt.trim().length === 0) {
       return NextResponse.json({ error: 'Valid prompt is required' }, { status: 400 });
@@ -50,14 +50,15 @@ export async function POST(req: NextRequest) {
       console.log('🎨 Starting image generation with final prompt:', finalPrompt);
       const imageBuffer = await geminiService.generateImage(finalPrompt);
 
-      // Upload to ImageKit
+      // Upload to ImageKit with aspect ratio transformation
       const uploadResult = await imageKitService.uploadImage(
         imageBuffer,
         'ai-generated.png',
         userId,
         {
           folder: `/photoshoots/${userId}`,
-          tags: ['ai-generated', 'professional', style || 'general'],
+          tags: ['ai-generated', 'professional', style || 'general', aspectRatio ? `ar-${aspectRatio}` : '1-1'],
+          aspectRatio: aspectRatio || '1-1'  // Pass aspect ratio to service
         }
       );
 
@@ -78,8 +79,8 @@ export async function POST(req: NextRequest) {
 
       // Credits system disabled for now
 
-      // Generate responsive URLs
-      const responsiveUrls = imageKitService.getResponsiveUrls(uploadResult.url);
+      // Generate responsive URLs with aspect ratio
+      const responsiveUrls = imageKitService.getResponsiveUrls(uploadResult.url, aspectRatio);
 
       console.log('📊 Image URLs generated:', {
         originalUrl: uploadResult.url,
