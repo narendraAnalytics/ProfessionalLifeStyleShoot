@@ -16,39 +16,52 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Valid prompt is required' }, { status: 400 });
     }
 
-    // Check user credits (optional - implement based on your business logic)
+    // Check user credits
     const user = await prisma.user.findUnique({
       where: { clerkId: userId },
-      select: { creditsRemaining: true }
+      select: { id: true, creditsRemaining: true }
     });
 
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    if (user.creditsRemaining <= 0) {
-      return NextResponse.json({ error: 'No credits remaining' }, { status: 403 });
+    const creditsNeeded = 1; // Enhancement only costs 1 credit
+    if (user.creditsRemaining < creditsNeeded) {
+      return NextResponse.json({ 
+        error: `Insufficient credits. Need ${creditsNeeded}, have ${user.creditsRemaining}` 
+      }, { status: 403 });
     }
 
-    // Enhance the prompt using Gemini Live API
+    // Initialize Gemini service
     const geminiService = new GeminiService();
-    const enhancedPrompt = await geminiService.enhancePrompt(prompt.trim());
 
-    // Update user credits
-    await prisma.user.update({
-      where: { clerkId: userId },
-      data: {
-        creditsRemaining: { decrement: 1 },
-        creditsUsed: { increment: 1 },
-      },
-    });
+    try {
+      // Enhance prompt using gemini-2.5-flash-live-preview
+      console.log('✨ Enhancing prompt only:', prompt);
+      const enhancedPrompt = await geminiService.enhancePrompt(prompt.trim());
+
+      // Update user credits (deduct 1 credit for enhancement)
+      await prisma.user.update({
+        where: { clerkId: userId },
+        data: {
+          creditsRemaining: { decrement: creditsNeeded },
+          creditsUsed: { increment: creditsNeeded },
+        },
+      });
+
+      console.log('✅ Prompt enhancement completed successfully');
+    } finally {
+      // Ensure cleanup even if an error occurs
+      geminiService.cleanup();
+    }
 
     return NextResponse.json({
       success: true,
       originalPrompt: prompt,
       enhancedPrompt,
-      creditsUsed: 1,
-      remainingCredits: user.creditsRemaining - 1,
+      creditsUsed: creditsNeeded,
+      remainingCredits: user.creditsRemaining - creditsNeeded,
     });
 
   } catch (error) {

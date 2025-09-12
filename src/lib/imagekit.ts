@@ -115,8 +115,24 @@ export class ImageKitService {
       },
     ];
 
+    // Extract the path from the full ImageKit URL
+    // URL format: https://ik.imagekit.io/your_endpoint/path/to/file.ext
+    const urlEndpoint = process.env.IMAGEKIT_URL_ENDPOINT || '';
+    let imagePath = url;
+    
+    // If it's a full ImageKit URL, extract just the path part
+    if (url.includes(urlEndpoint)) {
+      imagePath = url.replace(urlEndpoint, '').replace(/^\/+/, '/');
+    }
+    
+    console.log('🔗 Generating optimized URL:', {
+      originalUrl: url,
+      extractedPath: imagePath,
+      transformations: transformations || defaultTransformations
+    });
+
     return this.imagekit.url({
-      path: url,
+      path: imagePath,
       transformation: transformations || defaultTransformations,
     });
   }

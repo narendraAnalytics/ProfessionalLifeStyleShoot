@@ -27,7 +27,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    const creditsNeeded = skipEnhancement ? 2 : 3; // Different costs for enhanced vs basic
+    // Smart credit calculation: if prompt is already enhanced, only charge for generation
+    const creditsNeeded = skipEnhancement ? 2 : (enhancedPrompt ? 2 : 3); // 2 for basic/pre-enhanced, 3 for enhance+generate
     if (user.creditsRemaining < creditsNeeded) {
       return NextResponse.json({ 
         error: `Insufficient credits. Need ${creditsNeeded}, have ${user.creditsRemaining}` 
@@ -42,13 +43,19 @@ export async function POST(req: NextRequest) {
     try {
       // Enhance prompt if not already enhanced or if skipEnhancement is false
       if (!skipEnhancement && !enhancedPrompt) {
+        console.log('🔄 Enhancing prompt first...');
         actualEnhancedPrompt = await geminiService.enhancePrompt(finalPrompt);
         finalPrompt = actualEnhancedPrompt;
+        console.log('✨ Using enhanced prompt for image generation:', finalPrompt);
       } else if (enhancedPrompt) {
         finalPrompt = enhancedPrompt;
+        console.log('✅ Using pre-enhanced prompt:', finalPrompt);
+      } else {
+        console.log('⚠️ Using original prompt (skip enhancement):', finalPrompt);
       }
 
       // Generate image using the final prompt
+      console.log('🎨 Starting image generation with final prompt:', finalPrompt);
       const imageBuffer = await geminiService.generateImage(finalPrompt);
 
       // Upload to ImageKit
@@ -89,6 +96,12 @@ export async function POST(req: NextRequest) {
 
       // Generate responsive URLs
       const responsiveUrls = imageKitService.getResponsiveUrls(uploadResult.url);
+
+      console.log('📊 Image URLs generated:', {
+        originalUrl: uploadResult.url,
+        thumbnailUrl: uploadResult.thumbnailUrl,
+        responsiveUrls
+      });
 
       // Clean up Gemini service resources
       geminiService.cleanup();

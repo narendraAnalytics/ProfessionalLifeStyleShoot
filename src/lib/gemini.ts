@@ -51,6 +51,8 @@ export class GeminiService {
 
   // Enhance prompt using live model with Google Search (exact structure from Geminicode.md)
   async enhancePrompt(userPrompt: string): Promise<string> {
+    console.log('✨ Starting prompt enhancement for:', userPrompt);
+    
     const model = 'models/gemini-2.5-flash-live-preview';
     
     const tools = [
@@ -68,24 +70,27 @@ export class GeminiService {
     };
 
     try {
+      console.log('🔌 Connecting to live model:', model);
       this.session = await this.ai.live.connect({
         model,
         callbacks: {
-          onopen: () => console.debug('Opened'),
+          onopen: () => console.log('🟢 Live session opened'),
           onmessage: (message: LiveServerMessage) => {
+            console.log('📨 Received live message');
             this.responseQueue.push(message);
           },
-          onerror: (e: ErrorEvent) => console.debug('Error:', e.message),
-          onclose: (e: CloseEvent) => console.debug('Close:', e.reason),
+          onerror: (e: ErrorEvent) => console.error('🔴 Live session error:', e.message),
+          onclose: (e: CloseEvent) => console.log('🔒 Live session closed:', e.reason),
         },
         config
       });
 
       // Send enhancement request with system prompt
+      const enhancementPrompt = `${ENHANCEMENT_SYSTEM_PROMPT}\n\nEnhance this prompt for professional photography: "${userPrompt}"`;
+      console.log('📤 Sending enhancement request...');
+      
       this.session.sendClientContent({
-        turns: [
-          `${ENHANCEMENT_SYSTEM_PROMPT}\n\nEnhance this prompt for professional photography: "${userPrompt}"`
-        ]
+        turns: [enhancementPrompt]
       });
 
       const turn = await this.handleTurn();
@@ -102,9 +107,11 @@ export class GeminiService {
         }
       }
       
-      return enhancedPrompt || userPrompt;
+      const finalPrompt = enhancedPrompt.trim() || userPrompt;
+      console.log('✅ Prompt enhancement completed:', finalPrompt);
+      return finalPrompt;
     } catch (error) {
-      console.error('Enhancement error:', error);
+      console.error('🔴 Enhancement error:', error);
       // Fallback to standard model if live API fails
       return await this.enhancePromptFallback(userPrompt);
     }
@@ -112,15 +119,19 @@ export class GeminiService {
 
   // Fallback enhancement using standard model
   private async enhancePromptFallback(userPrompt: string): Promise<string> {
+    console.log('🔄 Using fallback enhancement method');
     try {
       const model = this.standardAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
       const result = await model.generateContent([
         ENHANCEMENT_SYSTEM_PROMPT,
         `Enhance this prompt for professional photography: "${userPrompt}"`
       ]);
-      return result.response.text();
+      const enhanced = result.response.text().trim();
+      console.log('✅ Fallback enhancement completed:', enhanced);
+      return enhanced;
     } catch (error) {
-      console.error('Fallback enhancement error:', error);
+      console.error('🔴 Fallback enhancement error:', error);
+      console.log('⚠️ Returning original prompt as fallback');
       return userPrompt; // Return original prompt as last resort
     }
   }
@@ -170,14 +181,21 @@ export class GeminiService {
     }
   }
 
-  // Generate image using enhanced prompt (exact structure from Geminicode.md lines 134-179)
+  // Generate image using enhanced prompt (exact structure from Geminicode.md)
   async generateImage(enhancedPrompt: string): Promise<Buffer> {
-    const ai = new GoogleGenAI({
-      apiKey: process.env.GEMINI_API_KEY,
-    });
+    console.log('🎨 Starting image generation with enhanced prompt:', enhancedPrompt);
+    
+    if (!process.env.GEMINI_API_KEY) {
+      throw new Error('GEMINI_API_KEY not configured');
+    }
+
+    // Use the class instance (already configured with @google/genai package)
     
     const config = {
-      responseModalities: ['IMAGE', 'TEXT'],
+      responseModalities: [
+        'IMAGE',
+        'TEXT',
+      ],
     };
     const model = 'gemini-2.5-flash-image-preview';
     const contents = [
@@ -191,49 +209,78 @@ export class GeminiService {
       },
     ];
 
+    console.log('📤 Sending request to model:', model);
+    console.log('⚙️ Config:', JSON.stringify(config, null, 2));
+
     try {
-      const response = await ai.models.generateContentStream({
+      const response = await this.ai.models.generateContentStream({
         model,
         config,
         contents,
       });
       
+      console.log('📥 Received response, processing chunks...');
       let fileIndex = 0;
+      
       for await (const chunk of response) {
+        console.log(`📦 Processing chunk ${fileIndex + 1}`);
+        
         if (!chunk.candidates || !chunk.candidates[0].content || !chunk.candidates[0].content.parts) {
+          console.log('⏭️ Skipping chunk - missing required structure');
           continue;
         }
+        
+        // Match exact structure from Geminicode.md lines 53-63
         if (chunk.candidates?.[0]?.content?.parts?.[0]?.inlineData) {
           const inlineData = chunk.candidates[0].content.parts[0].inlineData;
+          console.log('🖼️ Found image data:', {
+            mimeType: inlineData.mimeType,
+            dataLength: inlineData.data?.length || 0
+          });
+          
           const buffer = Buffer.from(inlineData.data || '', 'base64');
+          console.log('✅ Successfully created image buffer, size:', buffer.length, 'bytes');
           return buffer;
         }
         else {
-          console.log(chunk.text);
+          console.log('📝 Received text response:', chunk.text);
         }
       }
 
+      console.error('❌ No image data found in any chunk');
       throw new Error('No image generated in response');
     } catch (error) {
-      console.error('Image generation error:', error);
+      console.error('💥 Image generation error:', error);
       
       // More specific error messages
       if (error instanceof Error) {
-        if (error.message.includes('quota')) {
+        console.error('Error details:', {
+          message: error.message,
+          stack: error.stack,
+          name: error.name
+        });
+
+        if (error.message.includes('quota') || error.message.includes('QUOTA_EXCEEDED')) {
           throw new Error('API quota exceeded. Please try again later.');
         }
-        if (error.message.includes('not supported')) {
-          throw new Error('Image generation not available with current API key.');
+        if (error.message.includes('not supported') || error.message.includes('MODEL_NOT_FOUND')) {
+          throw new Error('Image generation model not available. Please check your API key permissions.');
         }
-        if (error.message.includes('safety')) {
+        if (error.message.includes('safety') || error.message.includes('SAFETY')) {
           throw new Error('Content filtered for safety. Please try a different prompt.');
         }
-        if (error.message.includes('API key not valid')) {
+        if (error.message.includes('API key not valid') || error.message.includes('INVALID_API_KEY')) {
           throw new Error('Invalid API key for image generation.');
+        }
+        if (error.message.includes('PERMISSION_DENIED')) {
+          throw new Error('API key does not have permission to generate images.');
+        }
+        if (error.message.includes('RESOURCE_EXHAUSTED')) {
+          throw new Error('API resources exhausted. Please try again later.');
         }
       }
       
-      throw new Error('Failed to generate image. Please try again.');
+      throw new Error(`Failed to generate image: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
