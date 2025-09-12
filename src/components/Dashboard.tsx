@@ -5,12 +5,9 @@ import { useUser } from '@clerk/nextjs'
 import DashboardHeader from './DashboardHeader'
 import DashboardSidebar from './DashboardSidebar'
 import AIPhotoshootGenerator from './AIPhotoshootGenerator'
-import ImageUploadArea from './ImageUploadArea'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs'
 import { 
   Sparkles, 
   Image as ImageIcon, 
-  Upload,
   Wand2,
   History
 } from 'lucide-react'
@@ -40,20 +37,6 @@ export default function Dashboard() {
     setRecentImages(prev => [image, ...prev.slice(0, 9)]) // Keep last 10 images
   }
 
-  const handleImagesUploaded = (images: any[]) => {
-    // Convert uploaded images to the same format for consistency
-    const convertedImages = images.map(image => ({
-      id: image.id,
-      imageUrl: image.imageUrl,
-      thumbnailUrl: image.thumbnailUrl,
-      responsiveUrls: image.responsiveUrls,
-      originalPrompt: `Uploaded: ${image.fileName}`,
-      enhancedPrompt: '',
-      style: 'upload',
-      createdAt: image.uploadedAt
-    }))
-    setRecentImages(prev => [...convertedImages, ...prev].slice(0, 10))
-  }
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -96,35 +79,12 @@ export default function Dashboard() {
               </p>
             </div>
 
-            {/* Main Content Tabs */}
-            <Tabs value={activeSection} onValueChange={setActiveSection} className="w-full">
-              <TabsList className="grid w-full grid-cols-3 max-w-md mx-auto mb-8 bg-white/80 backdrop-blur-sm">
-                <TabsTrigger value="create" className="flex items-center gap-2">
-                  <Wand2 className="w-4 h-4" />
-                  Create
-                </TabsTrigger>
-                <TabsTrigger value="upload" className="flex items-center gap-2">
-                  <Upload className="w-4 h-4" />
-                  Upload
-                </TabsTrigger>
-                <TabsTrigger value="gallery" className="flex items-center gap-2">
-                  <History className="w-4 h-4" />
-                  Gallery
-                </TabsTrigger>
-              </TabsList>
+            {/* Main Content - Conditional Rendering */}
+            {activeSection === 'create' && (
+              <AIPhotoshootGenerator onImageGenerated={handleImageGenerated} />
+            )}
 
-              {/* AI Photoshoot Generator */}
-              <TabsContent value="create">
-                <AIPhotoshootGenerator onImageGenerated={handleImageGenerated} />
-              </TabsContent>
-
-              {/* Image Upload Area */}
-              <TabsContent value="upload">
-                <ImageUploadArea onImagesUploaded={handleImagesUploaded} />
-              </TabsContent>
-
-              {/* Gallery/History */}
-              <TabsContent value="gallery">
+            {activeSection === 'gallery' && (
                 <div className="space-y-6">
                   <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-8">
                     <div className="text-center mb-8">
@@ -141,18 +101,12 @@ export default function Dashboard() {
                         </div>
                         <h3 className="text-xl font-semibold text-gray-700 mb-2">No images yet</h3>
                         <p className="text-gray-500 mb-6">Create your first AI photoshoot to get started!</p>
-                        <div className="flex gap-3 justify-center">
+                        <div className="flex justify-center">
                           <button
                             onClick={() => setActiveSection('create')}
                             className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all"
                           >
                             Generate with AI
-                          </button>
-                          <button
-                            onClick={() => setActiveSection('upload')}
-                            className="px-4 py-2 border border-purple-200 text-purple-600 rounded-lg hover:bg-purple-50 transition-all"
-                          >
-                            Upload Images
                           </button>
                         </div>
                       </div>
@@ -201,35 +155,7 @@ export default function Dashboard() {
                     )}
                   </div>
                 </div>
-              </TabsContent>
-            </Tabs>
-
-            {/* Feature Cards - Always visible at bottom */}
-            <div className="grid md:grid-cols-3 gap-6 mt-12">
-              <div className="group bg-white/60 backdrop-blur-sm rounded-xl p-6 border border-white/30 hover:bg-white/80 transition-all duration-300">
-                <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                  <Wand2 className="w-6 h-6 text-white" />
-                </div>
-                <h3 className="font-semibold text-gray-900 mb-2">AI Enhancement</h3>
-                <p className="text-sm text-gray-600">Transform simple prompts into professional photography briefs with Google Search integration</p>
-              </div>
-
-              <div className="group bg-white/60 backdrop-blur-sm rounded-xl p-6 border border-white/30 hover:bg-white/80 transition-all duration-300">
-                <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                  <Upload className="w-6 h-6 text-white" />
-                </div>
-                <h3 className="font-semibold text-gray-900 mb-2">Smart Upload</h3>
-                <p className="text-sm text-gray-600">Upload and enhance your existing photos with AI-powered processing and optimization</p>
-              </div>
-
-              <div className="group bg-white/60 backdrop-blur-sm rounded-xl p-6 border border-white/30 hover:bg-white/80 transition-all duration-300">
-                <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                  <ImageIcon className="w-6 h-6 text-white" />
-                </div>
-                <h3 className="font-semibold text-gray-900 mb-2">Professional Results</h3>
-                <p className="text-sm text-gray-600">Get magazine-quality images optimized for all platforms with responsive delivery</p>
-              </div>
-            </div>
+            )}
           </div>
         </main>
       </div>

@@ -2,17 +2,11 @@
 
 import { useState } from 'react'
 import { Button } from './ui/button'
-import { Badge } from './ui/badge'
 import { 
-  Camera, 
   Sparkles, 
-  Image as ImageIcon, 
-  History, 
   Settings, 
-  Palette,
   Wand2,
   Images,
-  Plus,
   ChevronLeft,
   ChevronRight
 } from 'lucide-react'
@@ -28,35 +22,15 @@ export default function DashboardSidebar({ activeSection, onSectionChange }: Sid
   const menuItems = [
     {
       id: 'create',
-      label: 'Create Shoot',
-      icon: Plus,
-      color: 'from-purple-500 to-pink-500',
-      badge: 'New'
+      label: 'Generate Images',
+      icon: Wand2,
+      color: 'from-purple-500 to-pink-500'
     },
     {
       id: 'gallery',
       label: 'My Gallery',
       icon: Images,
       color: 'from-blue-500 to-cyan-500'
-    },
-    {
-      id: 'history',
-      label: 'Recent',
-      icon: History,
-      color: 'from-green-500 to-emerald-500'
-    },
-    {
-      id: 'styles',
-      label: 'AI Styles',
-      icon: Palette,
-      color: 'from-orange-500 to-red-500',
-      badge: '100+'
-    },
-    {
-      id: 'enhance',
-      label: 'AI Enhance',
-      icon: Wand2,
-      color: 'from-violet-500 to-purple-500'
     }
   ]
 
@@ -80,7 +54,7 @@ export default function DashboardSidebar({ activeSection, onSectionChange }: Sid
             className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 mb-6"
           >
             <Sparkles className="w-4 h-4 mr-2" />
-            Start Creating
+            Create Image
           </Button>
         )}
 
@@ -104,17 +78,7 @@ export default function DashboardSidebar({ activeSection, onSectionChange }: Sid
                 </div>
                 
                 {!collapsed && (
-                  <div className="flex items-center justify-between w-full">
-                    <span className="font-medium">{item.label}</span>
-                    {item.badge && (
-                      <Badge 
-                        variant="secondary" 
-                        className="text-xs bg-purple-100 text-purple-700 hover:bg-purple-200"
-                      >
-                        {item.badge}
-                      </Badge>
-                    )}
-                  </div>
+                  <span className="font-medium">{item.label}</span>
                 )}
               </Button>
             )

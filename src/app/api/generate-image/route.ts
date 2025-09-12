@@ -17,22 +17,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Valid prompt is required' }, { status: 400 });
     }
 
-    // Check user credits
+    // Skip credits check for now
     const user = await prisma.user.findUnique({
       where: { clerkId: userId },
-      select: { id: true, creditsRemaining: true }
+      select: { id: true }
     });
 
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
-    }
-
-    // Smart credit calculation: if prompt is already enhanced, only charge for generation
-    const creditsNeeded = skipEnhancement ? 2 : (enhancedPrompt ? 2 : 3); // 2 for basic/pre-enhanced, 3 for enhance+generate
-    if (user.creditsRemaining < creditsNeeded) {
-      return NextResponse.json({ 
-        error: `Insufficient credits. Need ${creditsNeeded}, have ${user.creditsRemaining}` 
-      }, { status: 403 });
     }
 
     // Initialize services
@@ -81,18 +73,10 @@ export async function POST(req: NextRequest) {
           originalPrompt: prompt,
           enhancedPrompt: actualEnhancedPrompt,
           status: 'completed',
-          creditsUsed: creditsNeeded,
         },
       });
 
-      // Update user credits
-      await prisma.user.update({
-        where: { clerkId: userId },
-        data: {
-          creditsRemaining: { decrement: creditsNeeded },
-          creditsUsed: { increment: creditsNeeded },
-        },
-      });
+      // Credits system disabled for now
 
       // Generate responsive URLs
       const responsiveUrls = imageKitService.getResponsiveUrls(uploadResult.url);
@@ -118,8 +102,6 @@ export async function POST(req: NextRequest) {
           enhancedPrompt: photoshoot.enhancedPrompt,
           createdAt: photoshoot.createdAt,
         },
-        creditsUsed: creditsNeeded,
-        remainingCredits: user.creditsRemaining - creditsNeeded,
       });
 
     } finally {

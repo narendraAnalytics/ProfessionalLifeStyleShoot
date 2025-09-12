@@ -16,39 +16,26 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Valid prompt is required' }, { status: 400 });
     }
 
-    // Check user credits
+    // Skip credits check for now
     const user = await prisma.user.findUnique({
       where: { clerkId: userId },
-      select: { id: true, creditsRemaining: true }
+      select: { id: true }
     });
 
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    const creditsNeeded = 1; // Enhancement only costs 1 credit
-    if (user.creditsRemaining < creditsNeeded) {
-      return NextResponse.json({ 
-        error: `Insufficient credits. Need ${creditsNeeded}, have ${user.creditsRemaining}` 
-      }, { status: 403 });
-    }
-
     // Initialize Gemini service
     const geminiService = new GeminiService();
+    let enhancedPrompt = '';
 
     try {
       // Enhance prompt using gemini-2.5-flash-live-preview
       console.log('✨ Enhancing prompt only:', prompt);
-      const enhancedPrompt = await geminiService.enhancePrompt(prompt.trim());
+      enhancedPrompt = await geminiService.enhancePrompt(prompt.trim());
 
-      // Update user credits (deduct 1 credit for enhancement)
-      await prisma.user.update({
-        where: { clerkId: userId },
-        data: {
-          creditsRemaining: { decrement: creditsNeeded },
-          creditsUsed: { increment: creditsNeeded },
-        },
-      });
+      // Credits system disabled for now
 
       console.log('✅ Prompt enhancement completed successfully');
     } finally {
@@ -59,9 +46,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true,
       originalPrompt: prompt,
-      enhancedPrompt,
-      creditsUsed: creditsNeeded,
-      remainingCredits: user.creditsRemaining - creditsNeeded,
+      enhancedPrompt
     });
 
   } catch (error) {
