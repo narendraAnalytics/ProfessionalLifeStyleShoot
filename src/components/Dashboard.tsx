@@ -1,253 +1,45 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
+import { useUser } from '@clerk/nextjs'
 import DashboardHeader from './DashboardHeader'
 import DashboardSidebar from './DashboardSidebar'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card'
 import { Button } from './ui/button'
-import { Badge } from './ui/badge'
+import { Textarea } from './ui/textarea'
 import { 
-  Camera, 
   Sparkles, 
+  Plus, 
+  Send, 
   Image as ImageIcon, 
-  TrendingUp,
-  Clock,
-  Star,
-  Zap,
-  Users,
-  Download,
-  Heart,
-  Play
+  Upload,
+  Wand2
 } from 'lucide-react'
 
 export default function Dashboard() {
   const [activeSection, setActiveSection] = useState('create')
+  const [prompt, setPrompt] = useState('')
+  const [uploadedImages, setUploadedImages] = useState<File[]>([])
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const { user } = useUser()
 
-  const statsCards = [
-    {
-      title: 'Total Shoots',
-      value: '12',
-      change: '+3 this week',
-      icon: Camera,
-      color: 'from-purple-500 to-pink-500'
-    },
-    {
-      title: 'Generated Images',
-      value: '48',
-      change: '+12 today',
-      icon: ImageIcon,
-      color: 'from-blue-500 to-cyan-500'
-    },
-    {
-      title: 'AI Credits',
-      value: '150',
-      change: '75 remaining',
-      icon: Sparkles,
-      color: 'from-green-500 to-emerald-500'
-    },
-    {
-      title: 'Downloads',
-      value: '24',
-      change: '+8 this week',
-      icon: Download,
-      color: 'from-orange-500 to-red-500'
-    }
-  ]
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || [])
+    setUploadedImages(prev => [...prev, ...files])
+  }
 
-  const recentShots = [
-    {
-      id: 1,
-      title: 'Professional Headshot',
-      style: 'Corporate',
-      timestamp: '2 hours ago',
-      image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=300&fit=crop&crop=face',
-      status: 'completed'
-    },
-    {
-      id: 2,
-      title: 'Fashion Portrait',
-      style: 'Elegant',
-      timestamp: '1 day ago',
-      image: 'https://images.unsplash.com/photo-1494790108755-2616b612b0c5?w=300&h=300&fit=crop&crop=face',
-      status: 'completed'
-    },
-    {
-      id: 3,
-      title: 'Casual Lifestyle',
-      style: 'Natural',
-      timestamp: '3 days ago',
-      image: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=300&h=300&fit=crop&crop=face',
-      status: 'completed'
-    }
-  ]
+  const handleSubmit = () => {
+    if (!prompt.trim() && uploadedImages.length === 0) return
+    
+    console.log('Prompt:', prompt)
+    console.log('Images:', uploadedImages)
+    
+    // Here you would integrate with your AI service
+    setPrompt('')
+    setUploadedImages([])
+  }
 
-  const popularStyles = [
-    { name: 'Professional Headshot', uses: '2.4k', trend: '+12%', color: 'from-blue-500 to-blue-600' },
-    { name: 'Fashion Portrait', uses: '1.8k', trend: '+8%', color: 'from-purple-500 to-purple-600' },
-    { name: 'Casual Lifestyle', uses: '1.5k', trend: '+15%', color: 'from-green-500 to-green-600' },
-    { name: 'Artistic Creative', uses: '1.2k', trend: '+22%', color: 'from-pink-500 to-pink-600' }
-  ]
-
-  const renderMainContent = () => {
-    switch (activeSection) {
-      case 'create':
-        return (
-          <div className="space-y-8">
-            {/* Hero Create Section */}
-            <div className="relative">
-              <Card className="bg-gradient-to-br from-purple-600 via-blue-600 to-pink-600 text-white border-0 shadow-2xl">
-                <CardContent className="p-8">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-4">
-                      <div className="flex items-center space-x-2">
-                        <Sparkles className="w-6 h-6" />
-                        <Badge className="bg-white/20 text-white border-white/30">
-                          AI Powered
-                        </Badge>
-                      </div>
-                      <h2 className="text-3xl font-bold">Create Your Next Shoot</h2>
-                      <p className="text-lg opacity-90">
-                        Transform your photos into professional shoots with AI magic
-                      </p>
-                      <Button 
-                        size="lg" 
-                        className="bg-white text-purple-600 hover:bg-gray-100 font-semibold px-8"
-                      >
-                        <Play className="w-5 h-5 mr-2" />
-                        Start Creating
-                      </Button>
-                    </div>
-                    <div className="hidden lg:block">
-                      <div className="w-32 h-32 bg-white/20 rounded-full flex items-center justify-center">
-                        <Camera className="w-16 h-16 text-white" />
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Quick Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {statsCards.map((stat, index) => (
-                <Card key={index} className="relative overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm text-gray-600 font-medium">{stat.title}</p>
-                        <p className="text-3xl font-bold text-gray-900 mt-2">{stat.value}</p>
-                        <p className="text-sm text-green-600 mt-1 flex items-center">
-                          <TrendingUp className="w-4 h-4 mr-1" />
-                          {stat.change}
-                        </p>
-                      </div>
-                      <div className={`p-3 rounded-full bg-gradient-to-r ${stat.color}`}>
-                        <stat.icon className="w-6 h-6 text-white" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-
-            {/* Recent Shots and Popular Styles */}
-            <div className="grid lg:grid-cols-2 gap-8">
-              {/* Recent Shots */}
-              <Card className="shadow-lg border-0">
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <Clock className="w-5 h-5 text-purple-600" />
-                    <span>Recent Shots</span>
-                  </CardTitle>
-                  <CardDescription>
-                    Your latest AI-generated photoshoots
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {recentShots.map((shot) => (
-                    <div key={shot.id} className="flex items-center space-x-4 p-3 rounded-lg hover:bg-gray-50 transition-colors">
-                      <div className="relative w-12 h-12 rounded-lg overflow-hidden">
-                        <img 
-                          src={shot.image} 
-                          alt={shot.title}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      <div className="flex-1">
-                        <h4 className="font-medium text-gray-900">{shot.title}</h4>
-                        <p className="text-sm text-gray-500">{shot.style} • {shot.timestamp}</p>
-                      </div>
-                      <Badge variant="secondary" className="bg-green-100 text-green-700">
-                        {shot.status}
-                      </Badge>
-                    </div>
-                  ))}
-                  <Button variant="outline" className="w-full mt-4">
-                    View All Shots
-                  </Button>
-                </CardContent>
-              </Card>
-
-              {/* Popular Styles */}
-              <Card className="shadow-lg border-0">
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <Star className="w-5 h-5 text-purple-600" />
-                    <span>Popular Styles</span>
-                  </CardTitle>
-                  <CardDescription>
-                    Trending AI photography styles
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {popularStyles.map((style, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors">
-                      <div className="flex items-center space-x-3">
-                        <div className={`w-3 h-3 rounded-full bg-gradient-to-r ${style.color}`} />
-                        <div>
-                          <h4 className="font-medium text-gray-900">{style.name}</h4>
-                          <p className="text-sm text-gray-500">{style.uses} uses</p>
-                        </div>
-                      </div>
-                      <Badge variant="secondary" className="bg-green-100 text-green-700">
-                        {style.trend}
-                      </Badge>
-                    </div>
-                  ))}
-                  <Button variant="outline" className="w-full mt-4">
-                    Browse All Styles
-                  </Button>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        )
-      
-      default:
-        return (
-          <div className="flex items-center justify-center h-96">
-            <Card className="max-w-md w-full text-center shadow-lg border-0">
-              <CardContent className="p-8">
-                <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Sparkles className="w-8 h-8 text-white" />
-                </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                  Coming Soon
-                </h3>
-                <p className="text-gray-600 mb-4">
-                  This section is under development. We're working hard to bring you amazing features!
-                </p>
-                <Button 
-                  onClick={() => setActiveSection('create')}
-                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
-                >
-                  Back to Create
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
-        )
-    }
+  const removeImage = (index: number) => {
+    setUploadedImages(prev => prev.filter((_, i) => i !== index))
   }
 
   return (
@@ -260,18 +52,180 @@ export default function Dashboard() {
           onSectionChange={setActiveSection} 
         />
         
-        <main className="flex-1 p-6 overflow-auto">
-          <div className="max-w-7xl mx-auto">
-            {renderMainContent()}
+        <main className="flex-1 p-6 overflow-auto relative">
+          {/* Background Elements */}
+          <div className="absolute inset-0 pointer-events-none">
+            <div className="absolute top-20 left-1/4 w-64 h-64 bg-purple-400/5 rounded-full blur-3xl animate-pulse" />
+            <div className="absolute bottom-20 right-1/4 w-80 h-80 bg-blue-400/5 rounded-full blur-3xl animate-pulse delay-1000" />
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-pink-400/3 rounded-full blur-3xl animate-pulse delay-2000" />
+          </div>
+
+          <div className="max-w-4xl mx-auto relative z-10">
+            {/* Welcome Section */}
+            <div className="text-center mb-12 animate-fade-in">
+              <div className="flex items-center justify-center mb-6">
+                <div className="relative">
+                  <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full blur opacity-75 animate-pulse"></div>
+                  <div className="relative w-16 h-16 bg-white rounded-full flex items-center justify-center">
+                    <Sparkles className="w-8 h-8 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent animate-bounce" />
+                  </div>
+                </div>
+              </div>
+              
+              <h1 className="text-4xl md:text-5xl font-bold mb-4">
+                <span className="bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 bg-clip-text text-transparent animate-gradient">
+                  Welcome, {user?.firstName || user?.emailAddresses[0]?.emailAddress?.split('@')[0] || 'Creator'}
+                </span>
+              </h1>
+              
+              <p className="text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
+                Transform your ideas into stunning professional photoshoots with the power of AI
+              </p>
+            </div>
+
+            {/* Chat Interface */}
+            <div className="max-w-3xl mx-auto">
+              <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-8 hover:shadow-3xl transition-all duration-500">
+                <div className="flex items-center space-x-3 mb-6">
+                  <div className="w-3 h-3 rounded-full bg-red-400 animate-pulse"></div>
+                  <div className="w-3 h-3 rounded-full bg-yellow-400 animate-pulse delay-75"></div>
+                  <div className="w-3 h-3 rounded-full bg-green-400 animate-pulse delay-150"></div>
+                  <div className="flex-1 text-center">
+                    <span className="text-sm font-medium text-gray-500">AI Photoshoot Generator</span>
+                  </div>
+                </div>
+
+                {/* Image Upload Area */}
+                {uploadedImages.length > 0 && (
+                  <div className="mb-6">
+                    <div className="flex flex-wrap gap-3">
+                      {uploadedImages.map((image, index) => (
+                        <div key={index} className="relative group">
+                          <div className="w-20 h-20 rounded-xl overflow-hidden bg-gray-100 border-2 border-dashed border-purple-300">
+                            <img 
+                              src={URL.createObjectURL(image)} 
+                              alt={`Upload ${index + 1}`}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          <button
+                            onClick={() => removeImage(index)}
+                            className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center text-white text-xs hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Input Area */}
+                <div className="space-y-4">
+                  <div className="relative">
+                    <Textarea
+                      value={prompt}
+                      onChange={(e) => setPrompt(e.target.value)}
+                      placeholder="Describe your perfect photoshoot... (e.g., 'Professional headshots with soft lighting and modern background')"
+                      className="min-h-[120px] text-lg border-0 shadow-none resize-none bg-gray-50/80 rounded-xl p-4 focus:bg-white transition-colors pr-16"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+                          handleSubmit()
+                        }
+                      }}
+                    />
+                    <div className="absolute bottom-4 right-4">
+                      <Wand2 className="w-5 h-5 text-purple-400 animate-spin-slow" />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <input
+                        type="file"
+                        ref={fileInputRef}
+                        onChange={handleImageUpload}
+                        accept="image/*"
+                        multiple
+                        className="hidden"
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="border-purple-200 text-purple-600 hover:bg-purple-50 hover:border-purple-300 transition-all duration-200"
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add Images
+                      </Button>
+                      <span className="text-sm text-gray-500">
+                        {uploadedImages.length > 0 && `${uploadedImages.length} image${uploadedImages.length > 1 ? 's' : ''} selected`}
+                      </span>
+                    </div>
+
+                    <Button
+                      onClick={handleSubmit}
+                      disabled={!prompt.trim() && uploadedImages.length === 0}
+                      className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-8 py-2 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <Send className="w-4 h-4 mr-2" />
+                      Generate
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Quick Actions */}
+                <div className="mt-8 pt-6 border-t border-gray-200/50">
+                  <p className="text-sm text-gray-500 mb-3">Quick Ideas:</p>
+                  <div className="flex flex-wrap gap-2">
+                    {[
+                      'Professional headshots',
+                      'Fashion portraits',
+                      'Lifestyle photos',
+                      'Corporate shots',
+                      'Creative artistic'
+                    ].map((idea, index) => (
+                      <button
+                        key={index}
+                        onClick={() => setPrompt(idea)}
+                        className="text-sm px-3 py-1 bg-gray-100 hover:bg-purple-100 text-gray-700 hover:text-purple-700 rounded-full transition-colors duration-200"
+                      >
+                        {idea}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Feature Cards */}
+            <div className="grid md:grid-cols-3 gap-6 mt-12">
+              <div className="group bg-white/60 backdrop-blur-sm rounded-xl p-6 border border-white/30 hover:bg-white/80 transition-all duration-300">
+                <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                  <Upload className="w-6 h-6 text-white" />
+                </div>
+                <h3 className="font-semibold text-gray-900 mb-2">Upload & Transform</h3>
+                <p className="text-sm text-gray-600">Upload your photos and transform them with AI-powered enhancements</p>
+              </div>
+
+              <div className="group bg-white/60 backdrop-blur-sm rounded-xl p-6 border border-white/30 hover:bg-white/80 transition-all duration-300">
+                <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                  <Wand2 className="w-6 h-6 text-white" />
+                </div>
+                <h3 className="font-semibold text-gray-900 mb-2">AI Magic</h3>
+                <p className="text-sm text-gray-600">Professional-quality results powered by advanced AI technology</p>
+              </div>
+
+              <div className="group bg-white/60 backdrop-blur-sm rounded-xl p-6 border border-white/30 hover:bg-white/80 transition-all duration-300">
+                <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                  <ImageIcon className="w-6 h-6 text-white" />
+                </div>
+                <h3 className="font-semibold text-gray-900 mb-2">Instant Results</h3>
+                <p className="text-sm text-gray-600">Get stunning professional photoshoots in seconds, not hours</p>
+              </div>
+            </div>
           </div>
         </main>
-      </div>
-
-      {/* Animated background elements */}
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-purple-400/10 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-blue-400/10 rounded-full blur-3xl animate-pulse delay-1000" />
-        <div className="absolute top-3/4 left-3/4 w-64 h-64 bg-pink-400/10 rounded-full blur-3xl animate-pulse delay-2000" />
       </div>
     </div>
   )
