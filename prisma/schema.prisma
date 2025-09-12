@@ -21,8 +21,59 @@ model User {
   lastName          String?
   username          String?   @unique
   profileImageUrl   String?
+  creditsRemaining  Int       @default(10)
+  creditsUsed       Int       @default(0)
+  totalCredits      Int       @default(10)
+  subscriptionTier  String    @default("free")
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
+  // Relations
+  photoshoots       Photoshoot[]
+
   @@map("users")
+}
+
+model Photoshoot {
+  id                    String    @id @default(cuid())
+  userId                String
+  originalImageUrl      String
+  generatedImageUrl     String
+  thumbnailUrl          String?
+  imageKitFileId        String?
+  style                 String    @default("professional")
+  originalPrompt        String
+  enhancedPrompt        String?
+  status                String    @default("pending") // pending, processing, completed, failed
+  creditsUsed           Int       @default(1)
+  parentPhotoshootId    String?   // For refinements/variations
+  metadata              Json?     // Store additional data like file info, feedback, etc.
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  // Relations
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parentPhotoshoot      Photoshoot? @relation("PhotoshootRefinements", fields: [parentPhotoshootId], references: [id])
+  refinements           Photoshoot[] @relation("PhotoshootRefinements")
+
+  @@index([userId, createdAt])
+  @@index([status])
+  @@index([parentPhotoshootId])
+  @@map("photoshoots")
+}
+
+model PhotoshootSession {
+  id                String    @id @default(cuid())
+  userId            String
+  sessionName       String?
+  description       String?
+  totalPhotoshoots  Int       @default(0)
+  totalCreditsUsed  Int       @default(0)
+  status            String    @default("active") // active, completed, archived
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // Relations (if you want to group photoshoots into sessions)
+  @@index([userId, createdAt])
+  @@map("photoshoot_sessions")
 }
