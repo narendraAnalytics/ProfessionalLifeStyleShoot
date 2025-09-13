@@ -6,19 +6,6 @@ export async function POST() {
   console.log('🔧 API /users/sync called')
   
   try {
-    // Check database connection first
-    try {
-      await prisma.$connect()
-      console.log('✅ Database connection established')
-    } catch (dbError) {
-      console.error('❌ Database connection failed:', dbError)
-      return NextResponse.json({ 
-        error: 'Database connection failed',
-        details: 'Unable to connect to the database. Please try again later.',
-        type: 'DatabaseConnectionError'
-      }, { status: 503 })
-    }
-
     const { userId } = await auth()
     console.log('🔐 Auth check - userId:', userId)
     
