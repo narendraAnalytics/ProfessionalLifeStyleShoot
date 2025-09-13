@@ -35,7 +35,15 @@ export default function Dashboard() {
   const [isLoadingImages, setIsLoadingImages] = useState(false)
   const [imagesError, setImagesError] = useState<string | null>(null)
   const [grayscaleStates, setGrayscaleStates] = useState<Record<string, boolean>>({})
+  const [formatStates, setFormatStates] = useState<Record<string, 'jpg' | 'webp' | 'png'>>({})
   const { user } = useUser()
+
+  // Format options
+  const formatOptions = [
+    { value: 'jpg' as const, label: 'JPEG', description: 'Universal' },
+    { value: 'webp' as const, label: 'WebP', description: 'Smaller' },
+    { value: 'png' as const, label: 'PNG', description: 'Quality' }
+  ]
 
   const handleImageGenerated = (image: GeneratedImage) => {
     setRecentImages(prev => [image, ...prev.slice(0, 9)]) // Keep last 10 images
@@ -74,39 +82,53 @@ export default function Dashboard() {
     }
   }, [user])
 
-  const generateGrayscaleUrl = (originalUrl: string) => {
-    // Add grayscale transformation to ImageKit URL
-    if (originalUrl.includes('?')) {
-      return originalUrl.replace('?', '?tr=e-grayscale,')
+  const generateImageUrl = (originalUrl: string, isGrayscale = false, format = 'jpg') => {
+    let transformations = []
+    
+    if (isGrayscale) {
+      transformations.push('e-grayscale')
+    }
+    
+    if (format !== 'jpg') {
+      transformations.push(`f-${format}`)
     } else {
-      return `${originalUrl}?tr=e-grayscale`
+      transformations.push('f-jpg,q-80') // JPEG with quality optimization
+    }
+    
+    const transformString = transformations.join(',')
+    
+    if (originalUrl.includes('?')) {
+      return originalUrl.replace('?', `?tr=${transformString},`)
+    } else {
+      return `${originalUrl}?tr=${transformString}`
     }
   }
 
-  const toggleGrayscale = (imageId: string) => {
-    setGrayscaleStates(prev => ({
-      ...prev,
-      [imageId]: !prev[imageId]
-    }))
-  }
-
-  const handleDownloadImage = async (image: GeneratedImage, isGrayscale = false) => {
+  const handleDownloadImage = async (image: GeneratedImage, isGrayscale = false, format: 'jpg' | 'webp' | 'png' = 'jpg') => {
     try {
-      const imageUrl = isGrayscale 
-        ? generateGrayscaleUrl(image.responsiveUrls.original || image.imageUrl)
-        : (image.responsiveUrls.original || image.imageUrl)
+      const imageUrl = generateImageUrl(
+        image.responsiveUrls.original || image.imageUrl, 
+        isGrayscale, 
+        format
+      )
       
       const response = await fetch(imageUrl)
       const blob = await response.blob()
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = `photoshoot${isGrayscale ? '-grayscale' : ''}-${image.id}.jpg`
+      
+      const formatExt = format === 'jpg' ? 'jpg' : format
+      const grayscaleLabel = isGrayscale ? '-grayscale' : ''
+      a.download = `photoshoot${grayscaleLabel}-${image.id}.${formatExt}`
+      
       document.body.appendChild(a)
       a.click()
       document.body.removeChild(a)
       URL.revokeObjectURL(url)
-      toast.success(`${isGrayscale ? 'Grayscale' : 'Original'} image downloaded successfully!`)
+      
+      const formatLabel = formatOptions.find(f => f.value === format)?.label || format.toUpperCase()
+      toast.success(`${isGrayscale ? 'Grayscale' : 'Original'} ${formatLabel} downloaded successfully!`)
     } catch (error) {
       console.error('Download error:', error)
       toast.error('Failed to download image')
@@ -221,6 +243,7 @@ export default function Dashboard() {
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {recentImages.map((image) => {
                           const isGrayscale = grayscaleStates[image.id] || false
+                          const selectedFormat = formatStates[image.id] || 'jpg'
                           return (
                             <div key={image.id} className="group relative bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300">
                               {/* Image Preview Toggle */}
@@ -251,10 +274,7 @@ export default function Dashboard() {
 
                               <div className="aspect-square overflow-hidden">
                                 <img
-                                  src={isGrayscale 
-                                    ? generateGrayscaleUrl(image.responsiveUrls.medium) 
-                                    : image.responsiveUrls.medium
-                                  }
+                                  src={generateImageUrl(image.responsiveUrls.medium, isGrayscale)}
                                   alt={image.originalPrompt}
                                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                                 />
@@ -278,21 +298,28 @@ export default function Dashboard() {
                                 
                                 {/* Download Options */}
                                 <div className="space-y-2">
-                                  <div className="text-xs font-medium text-gray-600 mb-1">Download:</div>
-                                  <div className="grid grid-cols-2 gap-2">
-                                    <button
-                                      onClick={() => handleDownloadImage(image, false)}
-                                      className="px-2 py-1 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded text-xs transition-colors"
-                                    >
-                                      Original
-                                    </button>
-                                    <button
-                                      onClick={() => handleDownloadImage(image, true)}
-                                      className="px-2 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded text-xs transition-colors"
-                                    >
-                                      Grayscale
-                                    </button>
+                                  <div className="text-xs font-medium text-gray-600 mb-1">Format:</div>
+                                  <div className="grid grid-cols-3 gap-1 mb-2">
+                                    {formatOptions.map((format) => (
+                                      <button
+                                        key={format.value}
+                                        onClick={() => setFormatStates(prev => ({ ...prev, [image.id]: format.value }))}
+                                        className={`px-2 py-1 text-xs rounded transition-all ${
+                                          selectedFormat === format.value
+                                            ? 'bg-purple-600 text-white'
+                                            : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                                        }`}
+                                      >
+                                        {format.label}
+                                      </button>
+                                    ))}
                                   </div>
+                                  <button
+                                    onClick={() => handleDownloadImage(image, isGrayscale, selectedFormat)}
+                                    className="w-full px-2 py-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded text-xs transition-colors font-medium"
+                                  >
+                                    Download {isGrayscale ? 'B&W' : 'Original'} {formatOptions.find(f => f.value === selectedFormat)?.label}
+                                  </button>
                                 </div>
                               </div>
                             </div>

@@ -65,7 +65,15 @@ export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshoot
   const [error, setError] = useState<string | null>(null)
   const [step, setStep] = useState<'input' | 'enhanced' | 'size-selection' | 'generated'>('input')
   const [showGrayscale, setShowGrayscale] = useState(false)
+  const [selectedFormat, setSelectedFormat] = useState<'jpg' | 'webp' | 'png'>('jpg')
   const { user } = useUser()
+
+  // Format options
+  const formatOptions = [
+    { value: 'jpg' as const, label: 'JPEG', description: 'Universal compatibility' },
+    { value: 'webp' as const, label: 'WebP', description: '25-35% smaller files' },
+    { value: 'png' as const, label: 'PNG', description: 'Highest quality' }
+  ]
 
   // Aspect ratio options
   const aspectRatios: AspectRatio[] = [
@@ -194,35 +202,56 @@ export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshoot
     }
   }
 
-  const handleDownloadImage = async (image: GeneratedImage, isGrayscale = false) => {
+  const generateImageUrl = (originalUrl: string, isGrayscale = false, format = 'jpg') => {
+    let transformations = []
+    
+    if (isGrayscale) {
+      transformations.push('e-grayscale')
+    }
+    
+    if (format !== 'jpg') {
+      transformations.push(`f-${format}`)
+    } else {
+      transformations.push('f-jpg,q-80') // JPEG with quality optimization
+    }
+    
+    const transformString = transformations.join(',')
+    
+    if (originalUrl.includes('?')) {
+      return originalUrl.replace('?', `?tr=${transformString},`)
+    } else {
+      return `${originalUrl}?tr=${transformString}`
+    }
+  }
+
+  const handleDownloadImage = async (image: GeneratedImage, isGrayscale = false, format: 'jpg' | 'webp' | 'png' = 'jpg') => {
     try {
-      const imageUrl = isGrayscale 
-        ? generateGrayscaleUrl(image.responsiveUrls.original || image.imageUrl)
-        : (image.responsiveUrls.original || image.imageUrl)
+      const imageUrl = generateImageUrl(
+        image.responsiveUrls.original || image.imageUrl, 
+        isGrayscale, 
+        format
+      )
       
       const response = await fetch(imageUrl)
       const blob = await response.blob()
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = `ai-photoshoot${isGrayscale ? '-grayscale' : ''}-${Date.now()}.jpg`
+      
+      const formatExt = format === 'jpg' ? 'jpg' : format
+      const grayscaleLabel = isGrayscale ? '-grayscale' : ''
+      a.download = `ai-photoshoot${grayscaleLabel}-${Date.now()}.${formatExt}`
+      
       document.body.appendChild(a)
       a.click()
       document.body.removeChild(a)
       URL.revokeObjectURL(url)
-      toast.success(`${isGrayscale ? 'Grayscale' : 'Original'} image downloaded successfully!`)
+      
+      const formatLabel = formatOptions.find(f => f.value === format)?.label || format.toUpperCase()
+      toast.success(`${isGrayscale ? 'Grayscale' : 'Original'} ${formatLabel} downloaded successfully!`)
     } catch (error) {
       console.error('Download error:', error)
       toast.error('Failed to download image')
-    }
-  }
-
-  const generateGrayscaleUrl = (originalUrl: string) => {
-    // Add grayscale transformation to ImageKit URL
-    if (originalUrl.includes('?')) {
-      return originalUrl.replace('?', '?tr=e-grayscale,')
-    } else {
-      return `${originalUrl}?tr=e-grayscale`
     }
   }
 
@@ -234,6 +263,7 @@ export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshoot
     setStep('input')
     setError(null)
     setShowGrayscale(false)
+    setSelectedFormat('jpg')
     // Reset to default aspect ratio
     setSelectedAspectRatio({
       label: '1:1',
@@ -525,7 +555,7 @@ export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshoot
                 ) : (
                   <div className="relative">
                     <img
-                      src={generateGrayscaleUrl(generatedImage.responsiveUrls?.medium || generatedImage.imageUrl)}
+                      src={generateImageUrl(generatedImage.responsiveUrls?.medium || generatedImage.imageUrl, true)}
                       alt="Generated photoshoot - Grayscale"
                       className="w-full object-cover hover:scale-105 transition-transform duration-300"
                     />
@@ -553,33 +583,45 @@ export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshoot
                   </div>
                   
                   {/* Download Options */}
-                  <div className="space-y-2">
-                    <div className="text-sm font-medium text-gray-700 mb-2">Download Options:</div>
-                    <div className="grid grid-cols-2 gap-2">
-                      <Button
-                        onClick={() => handleDownloadImage(generatedImage, false)}
-                        size="sm"
-                        variant="outline"
-                        className="border-blue-200 text-blue-600 hover:bg-blue-50"
-                      >
-                        <Download className="w-4 h-4 mr-2" />
-                        Original
-                      </Button>
-                      <Button
-                        onClick={() => handleDownloadImage(generatedImage, true)}
-                        size="sm"
-                        variant="outline"
-                        className="border-gray-200 text-gray-600 hover:bg-gray-50"
-                      >
-                        <Download className="w-4 h-4 mr-2" />
-                        Grayscale
-                      </Button>
+                  <div className="space-y-3">
+                    <div className="text-sm font-medium text-gray-700">Download Options:</div>
+                    
+                    {/* Format Selector */}
+                    <div className="space-y-2">
+                      <div className="text-xs text-gray-600">Choose format:</div>
+                      <div className="grid grid-cols-3 gap-2">
+                        {formatOptions.map((format) => (
+                          <button
+                            key={format.value}
+                            onClick={() => setSelectedFormat(format.value)}
+                            className={`p-2 rounded-lg border-2 transition-all text-xs ${
+                              selectedFormat === format.value
+                                ? 'border-purple-500 bg-purple-50 text-purple-700'
+                                : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                            }`}
+                          >
+                            <div className="font-medium">{format.label}</div>
+                            <div className="text-xs text-gray-500 mt-1">{format.description}</div>
+                          </button>
+                        ))}
+                      </div>
                     </div>
+
+                    {/* Download Button */}
+                    <Button
+                      onClick={() => handleDownloadImage(generatedImage, showGrayscale, selectedFormat)}
+                      size="sm"
+                      className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white"
+                    >
+                      <Download className="w-4 h-4 mr-2" />
+                      Download {showGrayscale ? 'Grayscale' : 'Original'} {formatOptions.find(f => f.value === selectedFormat)?.label}
+                    </Button>
                     
                     <Button
                       onClick={handleStartOver}
                       size="sm"
-                      className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white w-full mt-3"
+                      variant="outline"
+                      className="w-full"
                     >
                       <Wand2 className="w-4 h-4 mr-2" />
                       Create Another
