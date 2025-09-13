@@ -12,7 +12,10 @@ import {
   Download,
   AlertCircle,
   Loader2,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Edit3,
+  Check,
+  X
 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -63,10 +66,12 @@ export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshoot
   const [isGenerating, setIsGenerating] = useState(false)
   const [progress, setProgress] = useState(0)
   const [error, setError] = useState<string | null>(null)
-  const [step, setStep] = useState<'input' | 'enhanced' | 'size-selection' | 'generated'>('input')
+  const [step, setStep] = useState<'input' | 'enhanced' | 'enhanced-edit' | 'size-selection' | 'generated'>('input')
   const [showGrayscale, setShowGrayscale] = useState(false)
   const [selectedFormat, setSelectedFormat] = useState<'jpg' | 'webp' | 'png'>('jpg')
-  const { user } = useUser()
+  const [isEditingEnhanced, setIsEditingEnhanced] = useState(false)
+  const [tempEnhancedPrompt, setTempEnhancedPrompt] = useState('')
+  useUser() // Keep for auth context
 
   // Format options
   const formatOptions = [
@@ -130,7 +135,8 @@ export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshoot
 
       setOriginalPrompt(data.originalPrompt)
       setEnhancedPrompt(data.enhancedPrompt)
-      setStep('size-selection')
+      setTempEnhancedPrompt(data.enhancedPrompt)
+      setStep('enhanced-edit')
       setProgress(100)
       
       toast.success('Prompt enhanced successfully!')
@@ -147,7 +153,7 @@ export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshoot
   }
 
   const handleGenerateImage = async (promptToUse?: string) => {
-    const finalPrompt = promptToUse || enhancedPrompt || currentPrompt.trim()
+    const finalPrompt = promptToUse || tempEnhancedPrompt || enhancedPrompt || currentPrompt.trim()
     
     if (!finalPrompt) {
       toast.error('Please enter a prompt or enhance one first')
@@ -203,7 +209,7 @@ export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshoot
   }
 
   const generateImageUrl = (originalUrl: string, isGrayscale = false, format = 'jpg') => {
-    let transformations = []
+    const transformations = []
     
     if (isGrayscale) {
       transformations.push('e-grayscale')
@@ -227,7 +233,7 @@ export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshoot
   const handleDownloadImage = async (image: GeneratedImage, isGrayscale = false, format: 'jpg' | 'webp' | 'png' = 'jpg') => {
     try {
       const imageUrl = generateImageUrl(
-        image.responsiveUrls.original || image.imageUrl, 
+        image.responsiveUrls?.original || image.imageUrl, 
         isGrayscale, 
         format
       )
@@ -255,15 +261,37 @@ export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshoot
     }
   }
 
+  const handleProceedToSizeSelection = () => {
+    setEnhancedPrompt(tempEnhancedPrompt)
+    setIsEditingEnhanced(false)
+    setStep('size-selection')
+  }
+
+  const handleEditEnhancedPrompt = () => {
+    setIsEditingEnhanced(true)
+  }
+
+  const handleSaveEnhancedEdit = () => {
+    setEnhancedPrompt(tempEnhancedPrompt)
+    setIsEditingEnhanced(false)
+  }
+
+  const handleCancelEnhancedEdit = () => {
+    setTempEnhancedPrompt(enhancedPrompt)
+    setIsEditingEnhanced(false)
+  }
+
   const handleStartOver = () => {
     setCurrentPrompt('')
     setEnhancedPrompt('')
     setOriginalPrompt('')
+    setTempEnhancedPrompt('')
     setGeneratedImage(null)
     setStep('input')
     setError(null)
     setShowGrayscale(false)
     setSelectedFormat('jpg')
+    setIsEditingEnhanced(false)
     // Reset to default aspect ratio
     setSelectedAspectRatio({
       label: '1:1',
@@ -376,14 +404,108 @@ export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshoot
             </div>
           )}
 
-          {/* Step 2: Size Selection */}
+          {/* Step 2: Enhanced Prompt Editing */}
+          {step === 'enhanced-edit' && (
+            <div className="space-y-4">
+              <div className="text-center">
+                <div className="w-12 h-12 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <Sparkles className="w-6 h-6 text-white" />
+                </div>
+                <h3 className="text-xl font-semibold text-gray-800 mb-2">Step 2: Review & Edit Enhanced Prompt</h3>
+                <p className="text-gray-600">Your prompt has been enhanced. You can edit it or proceed as-is.</p>
+              </div>
+
+              <div className="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-xl p-4">
+                <div className="space-y-3">
+                  <div>
+                    <span className="font-medium text-gray-700 text-sm">Original Prompt:</span>
+                    <div className="mt-1 p-3 bg-gray-50 rounded-lg text-gray-600 italic text-sm">
+                      &ldquo;{originalPrompt}&rdquo;
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-medium text-emerald-700 text-sm">Enhanced Prompt:</span>
+                      {!isEditingEnhanced && (
+                        <Button
+                          onClick={handleEditEnhancedPrompt}
+                          size="sm"
+                          variant="outline"
+                          className="border-emerald-300 text-emerald-600 hover:bg-emerald-50"
+                        >
+                          <Edit3 className="w-3 h-3 mr-1" />
+                          Edit
+                        </Button>
+                      )}
+                    </div>
+                    
+                    {isEditingEnhanced ? (
+                      <div className="space-y-3">
+                        <Textarea
+                          value={tempEnhancedPrompt}
+                          onChange={(e) => setTempEnhancedPrompt(e.target.value)}
+                          className="min-h-[100px] text-sm border-emerald-300 focus:ring-emerald-500 focus:border-emerald-500"
+                          placeholder="Edit your enhanced prompt..."
+                        />
+                        <div className="flex gap-2">
+                          <Button
+                            onClick={handleSaveEnhancedEdit}
+                            size="sm"
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                          >
+                            <Check className="w-3 h-3 mr-1" />
+                            Save Changes
+                          </Button>
+                          <Button
+                            onClick={handleCancelEnhancedEdit}
+                            size="sm"
+                            variant="outline"
+                            className="border-gray-300"
+                          >
+                            <X className="w-3 h-3 mr-1" />
+                            Cancel
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="mt-1 p-3 bg-emerald-50 rounded-lg text-emerald-800 font-medium text-sm">
+                        &ldquo;{tempEnhancedPrompt}&rdquo;
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <Button
+                  onClick={handleStartOver}
+                  variant="outline"
+                  className="border-gray-200 text-gray-600 hover:bg-gray-50"
+                  disabled={isEditingEnhanced}
+                >
+                  Start Over
+                </Button>
+                <Button
+                  onClick={handleProceedToSizeSelection}
+                  className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white flex-1"
+                  disabled={isEditingEnhanced}
+                >
+                  <ImageIcon className="w-4 h-4 mr-2" />
+                  Proceed to Size Selection
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Step 3: Size Selection */}
           {step === 'size-selection' && (
             <div className="space-y-4">
               <div className="text-center">
                 <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full flex items-center justify-center mx-auto mb-3">
                   <ImageIcon className="w-6 h-6 text-white" />
                 </div>
-                <h3 className="text-xl font-semibold text-gray-800 mb-2">Step 2: Choose Image Size</h3>
+                <h3 className="text-xl font-semibold text-gray-800 mb-2">Step 3: Choose Image Size</h3>
                 <p className="text-gray-600">Select your preferred aspect ratio for the generated image</p>
               </div>
 
@@ -393,7 +515,7 @@ export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshoot
                   <div>
                     <span className="font-medium text-gray-700 text-sm">Your Enhanced Prompt:</span>
                     <div className="mt-1 p-3 bg-emerald-50 rounded-lg text-emerald-800 font-medium text-sm">
-                      "{enhancedPrompt}"
+                      &ldquo;{tempEnhancedPrompt || enhancedPrompt}&rdquo;
                     </div>
                   </div>
                 </div>
@@ -431,7 +553,7 @@ export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshoot
                   Start Over
                 </Button>
                 <Button
-                  onClick={() => handleGenerateImage(enhancedPrompt)}
+                  onClick={() => handleGenerateImage(tempEnhancedPrompt || enhancedPrompt)}
                   disabled={isGenerating}
                   className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white flex-1"
                 >
@@ -453,7 +575,7 @@ export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshoot
                 <div className="w-12 h-12 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full flex items-center justify-center mx-auto mb-3">
                   <Sparkles className="w-6 h-6 text-white" />
                 </div>
-                <h3 className="text-xl font-semibold text-gray-800 mb-2">Step 2: Enhanced Prompt Ready!</h3>
+                <h3 className="text-xl font-semibold text-gray-800 mb-2">Step 3: Enhanced Prompt Ready!</h3>
                 <p className="text-gray-600">Your prompt has been enhanced for better results</p>
               </div>
 
@@ -462,13 +584,13 @@ export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshoot
                   <div>
                     <span className="font-medium text-gray-700 text-sm">Original:</span>
                     <div className="mt-1 p-3 bg-gray-50 rounded-lg text-gray-600 italic text-sm">
-                      "{originalPrompt}"
+                      &ldquo;{originalPrompt}&rdquo;
                     </div>
                   </div>
                   <div>
                     <span className="font-medium text-emerald-700 text-sm">Enhanced:</span>
                     <div className="mt-1 p-3 bg-emerald-50 rounded-lg text-emerald-800 font-medium text-sm">
-                      "{enhancedPrompt}"
+                      &ldquo;{enhancedPrompt}&rdquo;
                     </div>
                   </div>
                 </div>
@@ -574,10 +696,10 @@ export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshoot
                         {selectedAspectRatio.label} {selectedAspectRatio.description}
                       </span>
                     </div>
-                    <span className="font-medium">Generated from:</span> "{generatedImage.originalPrompt}"
+                    <span className="font-medium">Generated from:</span> &ldquo;{generatedImage.originalPrompt}&rdquo;
                     {generatedImage.enhancedPrompt && (
                       <div className="mt-1">
-                        <span className="font-medium text-emerald-600">Enhanced:</span> "{generatedImage.enhancedPrompt}"
+                        <span className="font-medium text-emerald-600">Enhanced:</span> &ldquo;{generatedImage.enhancedPrompt}&rdquo;
                       </div>
                     )}
                   </div>
