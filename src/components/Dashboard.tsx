@@ -34,6 +34,7 @@ export default function Dashboard() {
   const [recentImages, setRecentImages] = useState<GeneratedImage[]>([])
   const [isLoadingImages, setIsLoadingImages] = useState(false)
   const [imagesError, setImagesError] = useState<string | null>(null)
+  const [grayscaleStates, setGrayscaleStates] = useState<Record<string, boolean>>({})
   const { user } = useUser()
 
   const handleImageGenerated = (image: GeneratedImage) => {
@@ -73,19 +74,39 @@ export default function Dashboard() {
     }
   }, [user])
 
-  const handleDownloadImage = async (image: GeneratedImage) => {
+  const generateGrayscaleUrl = (originalUrl: string) => {
+    // Add grayscale transformation to ImageKit URL
+    if (originalUrl.includes('?')) {
+      return originalUrl.replace('?', '?tr=e-grayscale,')
+    } else {
+      return `${originalUrl}?tr=e-grayscale`
+    }
+  }
+
+  const toggleGrayscale = (imageId: string) => {
+    setGrayscaleStates(prev => ({
+      ...prev,
+      [imageId]: !prev[imageId]
+    }))
+  }
+
+  const handleDownloadImage = async (image: GeneratedImage, isGrayscale = false) => {
     try {
-      const response = await fetch(image.responsiveUrls.original || image.imageUrl)
+      const imageUrl = isGrayscale 
+        ? generateGrayscaleUrl(image.responsiveUrls.original || image.imageUrl)
+        : (image.responsiveUrls.original || image.imageUrl)
+      
+      const response = await fetch(imageUrl)
       const blob = await response.blob()
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = `photoshoot-${image.id}.jpg`
+      a.download = `photoshoot${isGrayscale ? '-grayscale' : ''}-${image.id}.jpg`
       document.body.appendChild(a)
       a.click()
       document.body.removeChild(a)
       URL.revokeObjectURL(url)
-      toast.success('Image downloaded successfully!')
+      toast.success(`${isGrayscale ? 'Grayscale' : 'Original'} image downloaded successfully!`)
     } catch (error) {
       console.error('Download error:', error)
       toast.error('Failed to download image')
@@ -198,40 +219,85 @@ export default function Dashboard() {
                       </div>
                     ) : (
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {recentImages.map((image) => (
-                          <div key={image.id} className="group relative bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300">
-                            <div className="aspect-square overflow-hidden">
-                              <img
-                                src={image.responsiveUrls.medium}
-                                alt={image.originalPrompt}
-                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                              />
-                            </div>
-                            <div className="p-4">
-                              <div className="flex items-center gap-2 mb-2">
-                                <span className={`px-2 py-1 text-xs rounded-full ${
-                                  image.style === 'upload' 
-                                    ? 'bg-blue-100 text-blue-700' 
-                                    : 'bg-purple-100 text-purple-700'
-                                }`}>
-                                  {image.style === 'upload' ? 'Upload' : 'AI Generated'}
-                                </span>
-                                <span className="text-xs text-gray-500">
-                                  {new Date(image.createdAt).toLocaleDateString()}
-                                </span>
+                        {recentImages.map((image) => {
+                          const isGrayscale = grayscaleStates[image.id] || false
+                          return (
+                            <div key={image.id} className="group relative bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300">
+                              {/* Image Preview Toggle */}
+                              <div className="absolute top-2 right-2 z-10">
+                                <div className="flex gap-1">
+                                  <button
+                                    onClick={() => setGrayscaleStates(prev => ({ ...prev, [image.id]: false }))}
+                                    className={`px-2 py-1 text-xs rounded transition-all ${
+                                      !isGrayscale 
+                                        ? 'bg-blue-600 text-white' 
+                                        : 'bg-white/80 text-gray-700 hover:bg-white'
+                                    }`}
+                                  >
+                                    Original
+                                  </button>
+                                  <button
+                                    onClick={() => setGrayscaleStates(prev => ({ ...prev, [image.id]: true }))}
+                                    className={`px-2 py-1 text-xs rounded transition-all ${
+                                      isGrayscale 
+                                        ? 'bg-gray-600 text-white' 
+                                        : 'bg-white/80 text-gray-700 hover:bg-white'
+                                    }`}
+                                  >
+                                    B&W
+                                  </button>
+                                </div>
                               </div>
-                              <p className="text-sm text-gray-700 line-clamp-2 mb-3">
-                                {image.originalPrompt}
-                              </p>
-                              <button
-                                onClick={() => handleDownloadImage(image)}
-                                className="w-full px-3 py-2 bg-gray-100 hover:bg-purple-100 text-gray-700 hover:text-purple-700 rounded-lg transition-colors text-sm"
-                              >
-                                Download
-                              </button>
+
+                              <div className="aspect-square overflow-hidden">
+                                <img
+                                  src={isGrayscale 
+                                    ? generateGrayscaleUrl(image.responsiveUrls.medium) 
+                                    : image.responsiveUrls.medium
+                                  }
+                                  alt={image.originalPrompt}
+                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                />
+                              </div>
+                              <div className="p-4">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <span className={`px-2 py-1 text-xs rounded-full ${
+                                    image.style === 'upload' 
+                                      ? 'bg-blue-100 text-blue-700' 
+                                      : 'bg-purple-100 text-purple-700'
+                                  }`}>
+                                    {image.style === 'upload' ? 'Upload' : 'AI Generated'}
+                                  </span>
+                                  <span className="text-xs text-gray-500">
+                                    {new Date(image.createdAt).toLocaleDateString()}
+                                  </span>
+                                </div>
+                                <p className="text-sm text-gray-700 line-clamp-2 mb-3">
+                                  {image.originalPrompt}
+                                </p>
+                                
+                                {/* Download Options */}
+                                <div className="space-y-2">
+                                  <div className="text-xs font-medium text-gray-600 mb-1">Download:</div>
+                                  <div className="grid grid-cols-2 gap-2">
+                                    <button
+                                      onClick={() => handleDownloadImage(image, false)}
+                                      className="px-2 py-1 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded text-xs transition-colors"
+                                    >
+                                      Original
+                                    </button>
+                                    <button
+                                      onClick={() => handleDownloadImage(image, true)}
+                                      className="px-2 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded text-xs transition-colors"
+                                    >
+                                      Grayscale
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
                             </div>
-                          </div>
-                        ))}
+                          )
+                        })}
                       </div>
                     )}
                   </div>

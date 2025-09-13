@@ -64,6 +64,7 @@ export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshoot
   const [progress, setProgress] = useState(0)
   const [error, setError] = useState<string | null>(null)
   const [step, setStep] = useState<'input' | 'enhanced' | 'size-selection' | 'generated'>('input')
+  const [showGrayscale, setShowGrayscale] = useState(false)
   const { user } = useUser()
 
   // Aspect ratio options
@@ -193,22 +194,35 @@ export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshoot
     }
   }
 
-  const handleDownloadImage = async (image: GeneratedImage) => {
+  const handleDownloadImage = async (image: GeneratedImage, isGrayscale = false) => {
     try {
-      const response = await fetch(image.responsiveUrls.original || image.imageUrl)
+      const imageUrl = isGrayscale 
+        ? generateGrayscaleUrl(image.responsiveUrls.original || image.imageUrl)
+        : (image.responsiveUrls.original || image.imageUrl)
+      
+      const response = await fetch(imageUrl)
       const blob = await response.blob()
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = `ai-photoshoot-${Date.now()}.jpg`
+      a.download = `ai-photoshoot${isGrayscale ? '-grayscale' : ''}-${Date.now()}.jpg`
       document.body.appendChild(a)
       a.click()
       document.body.removeChild(a)
       URL.revokeObjectURL(url)
-      toast.success('Image downloaded successfully!')
+      toast.success(`${isGrayscale ? 'Grayscale' : 'Original'} image downloaded successfully!`)
     } catch (error) {
       console.error('Download error:', error)
       toast.error('Failed to download image')
+    }
+  }
+
+  const generateGrayscaleUrl = (originalUrl: string) => {
+    // Add grayscale transformation to ImageKit URL
+    if (originalUrl.includes('?')) {
+      return originalUrl.replace('?', '?tr=e-grayscale,')
+    } else {
+      return `${originalUrl}?tr=e-grayscale`
     }
   }
 
@@ -219,6 +233,7 @@ export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshoot
     setGeneratedImage(null)
     setStep('input')
     setError(null)
+    setShowGrayscale(false)
     // Reset to default aspect ratio
     setSelectedAspectRatio({
       label: '1:1',
@@ -464,20 +479,64 @@ export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshoot
                 <p className="text-gray-600">Generated in {selectedAspectRatio.label} aspect ratio</p>
               </div>
 
+              {/* Image Preview Toggle */}
               <div className="bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
-                <div className="relative">
-                  <img
-                    src={generatedImage.responsiveUrls?.medium || generatedImage.imageUrl}
-                    alt="Generated photoshoot"
-                    className="w-full object-cover hover:scale-105 transition-transform duration-300"
-                    onError={(e) => {
-                      console.error('❌ Image failed to load:', e.currentTarget.src)
-                      if (e.currentTarget.src !== generatedImage.imageUrl) {
-                        e.currentTarget.src = generatedImage.imageUrl
-                      }
-                    }}
-                  />
+                <div className="p-4 border-b border-gray-200">
+                  <div className="flex justify-center gap-2">
+                    <Button
+                      onClick={() => setShowGrayscale(false)}
+                      size="sm"
+                      variant={!showGrayscale ? "default" : "outline"}
+                      className={!showGrayscale ? "bg-blue-600 text-white" : ""}
+                    >
+                      Original
+                    </Button>
+                    <Button
+                      onClick={() => setShowGrayscale(true)}
+                      size="sm"
+                      variant={showGrayscale ? "default" : "outline"}
+                      className={showGrayscale ? "bg-gray-600 text-white" : ""}
+                    >
+                      Grayscale
+                    </Button>
+                  </div>
                 </div>
+
+                {/* Before/After Image Display */}
+                {!showGrayscale ? (
+                  <div className="relative">
+                    <img
+                      src={generatedImage.responsiveUrls?.medium || generatedImage.imageUrl}
+                      alt="Generated photoshoot - Original"
+                      className="w-full object-cover hover:scale-105 transition-transform duration-300"
+                      onError={(e) => {
+                        console.error('❌ Image failed to load:', e.currentTarget.src)
+                        if (e.currentTarget.src !== generatedImage.imageUrl) {
+                          e.currentTarget.src = generatedImage.imageUrl
+                        }
+                      }}
+                    />
+                    <div className="absolute top-2 left-2">
+                      <span className="px-2 py-1 bg-blue-600 text-white rounded text-xs font-medium">
+                        Original
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="relative">
+                    <img
+                      src={generateGrayscaleUrl(generatedImage.responsiveUrls?.medium || generatedImage.imageUrl)}
+                      alt="Generated photoshoot - Grayscale"
+                      className="w-full object-cover hover:scale-105 transition-transform duration-300"
+                    />
+                    <div className="absolute top-2 left-2">
+                      <span className="px-2 py-1 bg-gray-600 text-white rounded text-xs font-medium">
+                        Grayscale
+                      </span>
+                    </div>
+                  </div>
+                )}
+
                 <div className="p-4">
                   <div className="text-sm text-gray-600 mb-3">
                     <div className="flex items-center gap-2 mb-2">
@@ -492,20 +551,35 @@ export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshoot
                       </div>
                     )}
                   </div>
-                  <div className="flex gap-2">
-                    <Button
-                      onClick={() => handleDownloadImage(generatedImage)}
-                      size="sm"
-                      variant="outline"
-                      className="border-green-200 text-green-600 hover:bg-green-50 flex-1"
-                    >
-                      <Download className="w-4 h-4 mr-2" />
-                      Download
-                    </Button>
+                  
+                  {/* Download Options */}
+                  <div className="space-y-2">
+                    <div className="text-sm font-medium text-gray-700 mb-2">Download Options:</div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Button
+                        onClick={() => handleDownloadImage(generatedImage, false)}
+                        size="sm"
+                        variant="outline"
+                        className="border-blue-200 text-blue-600 hover:bg-blue-50"
+                      >
+                        <Download className="w-4 h-4 mr-2" />
+                        Original
+                      </Button>
+                      <Button
+                        onClick={() => handleDownloadImage(generatedImage, true)}
+                        size="sm"
+                        variant="outline"
+                        className="border-gray-200 text-gray-600 hover:bg-gray-50"
+                      >
+                        <Download className="w-4 h-4 mr-2" />
+                        Grayscale
+                      </Button>
+                    </div>
+                    
                     <Button
                       onClick={handleStartOver}
                       size="sm"
-                      className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white flex-1"
+                      className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white w-full mt-3"
                     >
                       <Wand2 className="w-4 h-4 mr-2" />
                       Create Another
