@@ -11,6 +11,7 @@ import {
   Wand2,
   History
 } from 'lucide-react'
+import { toast } from 'sonner'
 
 interface GeneratedImage {
   id: string
@@ -71,6 +72,25 @@ export default function Dashboard() {
       fetchExistingImages()
     }
   }, [user])
+
+  const handleDownloadImage = async (image: GeneratedImage) => {
+    try {
+      const response = await fetch(image.responsiveUrls.original || image.imageUrl)
+      const blob = await response.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `photoshoot-${image.id}.jpg`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+      toast.success('Image downloaded successfully!')
+    } catch (error) {
+      console.error('Download error:', error)
+      toast.error('Failed to download image')
+    }
+  }
 
 
   return (
@@ -204,12 +224,7 @@ export default function Dashboard() {
                                 {image.originalPrompt}
                               </p>
                               <button
-                                onClick={() => {
-                                  const a = document.createElement('a')
-                                  a.href = image.responsiveUrls.original
-                                  a.download = `photoshoot-${image.id}.jpg`
-                                  a.click()
-                                }}
+                                onClick={() => handleDownloadImage(image)}
                                 className="w-full px-3 py-2 bg-gray-100 hover:bg-purple-100 text-gray-700 hover:text-purple-700 rounded-lg transition-colors text-sm"
                               >
                                 Download
