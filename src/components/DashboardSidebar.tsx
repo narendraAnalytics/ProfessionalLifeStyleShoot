@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from './ui/button'
 import { 
   Sparkles, 
@@ -18,6 +18,27 @@ interface SidebarProps {
 
 export default function DashboardSidebar({ activeSection, onSectionChange }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false)
+  const [scrollY, setScrollY] = useState(0)
+
+  useEffect(() => {
+    let ticking = false
+
+    const updateScrollY = () => {
+      const currentScrollY = window.scrollY
+      setScrollY(currentScrollY)
+      ticking = false
+    }
+
+    const onScroll = () => {
+      if (!ticking) {
+        requestAnimationFrame(updateScrollY)
+        ticking = true
+      }
+    }
+
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
 
   const menuItems = [
     {
@@ -34,8 +55,22 @@ export default function DashboardSidebar({ activeSection, onSectionChange }: Sid
     }
   ]
 
+  // Calculate sidebar position based on scroll with bounds
+  const maxScroll = typeof document !== 'undefined' 
+    ? Math.max(0, document.documentElement.scrollHeight - window.innerHeight)
+    : 0
+  const scrollProgress = maxScroll > 0 ? scrollY / maxScroll : 0
+  const sidebarTop = 80 + (scrollProgress * 200) // Start at 80px, move up to 280px based on scroll
+  
   return (
-    <aside className={`relative h-full bg-white/80 backdrop-blur-lg border-r border-gray-200/50 shadow-sm transition-all duration-300 ${collapsed ? 'w-16' : 'w-64'}`}>
+    <aside 
+      className={`fixed top-0 left-0 bg-white/80 backdrop-blur-lg border-r border-gray-200/50 shadow-sm transition-all duration-300 z-40 ${collapsed ? 'w-16' : 'w-64'}`}
+      style={{ 
+        top: `${sidebarTop}px`,
+        height: 'calc(100vh - 160px)', // Dynamic height to stay within bounds
+        transition: 'top 0.15s ease-out, width 0.3s ease'
+      }}
+    >
       {/* Collapse Toggle */}
       <Button
         variant="ghost"
@@ -46,9 +81,9 @@ export default function DashboardSidebar({ activeSection, onSectionChange }: Sid
         {collapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronLeft className="w-3 h-3" />}
       </Button>
 
-      {/* Centered Content Container */}
+      {/* Content Container */}
       <div className="h-full flex flex-col justify-center p-4">
-        {/* Main Navigation Panel - Centered */}
+        {/* Main Navigation Panel */}
         <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-6 space-y-4">
           {/* Quick Create Button */}
           {!collapsed && (

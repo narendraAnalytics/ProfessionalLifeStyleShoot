@@ -146,7 +146,7 @@ export default function Dashboard() {
           onSectionChange={setActiveSection} 
         />
         
-        <main className="flex-1 p-6 overflow-auto relative">
+        <main className="flex-1 p-6 overflow-auto relative pl-72">
           {/* Background Elements */}
           <div className="absolute inset-0 pointer-events-none">
             <div className="absolute top-20 left-1/4 w-64 h-64 bg-purple-400/5 rounded-full blur-3xl animate-pulse" />
