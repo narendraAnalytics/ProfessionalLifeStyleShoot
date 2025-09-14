@@ -5,11 +5,14 @@ import { useUser } from '@clerk/nextjs'
 import DashboardHeader from './DashboardHeader'
 import DashboardSidebar from './DashboardSidebar'
 import AIPhotoshootGenerator from './AIPhotoshootGenerator'
+import { useUserSync } from './UserSyncProvider'
 import { 
   Sparkles, 
   Image as ImageIcon, 
   Wand2,
-  History
+  History,
+  Loader2,
+  AlertCircle
 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -36,7 +39,9 @@ export default function Dashboard() {
   const [imagesError, setImagesError] = useState<string | null>(null)
   const [grayscaleStates, setGrayscaleStates] = useState<Record<string, boolean>>({})
   const [formatStates, setFormatStates] = useState<Record<string, 'jpg' | 'webp' | 'png'>>({})
+  const [dashboardReady, setDashboardReady] = useState(false)
   const { user } = useUser()
+  const { isSyncing, syncError, syncSuccess, retrySync } = useUserSync()
 
   // Format options
   const formatOptions = [
@@ -75,10 +80,18 @@ export default function Dashboard() {
     }
   }
 
-  // Fetch existing images when component mounts and user is available
+  // Initialize dashboard immediately - don't wait for sync
+  useEffect(() => {
+    // Make dashboard ready immediately
+    const timer = setTimeout(() => setDashboardReady(true), 100)
+    return () => clearTimeout(timer)
+  }, [])
+
+  // Fetch existing images when user is available - async, non-blocking
   useEffect(() => {
     if (user) {
-      fetchExistingImages()
+      // Fetch images in background, don't block dashboard rendering
+      setTimeout(() => fetchExistingImages(), 0)
     }
   }, [user])
 
@@ -135,10 +148,57 @@ export default function Dashboard() {
     }
   }
 
+  // Show loading state only for first few milliseconds
+  if (!dashboardReady) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 via-blue-50 to-pink-50">
+        <div className="text-center">
+          <div className="w-16 h-16 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
+            <Sparkles className="w-8 h-8 text-white animate-bounce" />
+          </div>
+          <h2 className="text-xl font-semibold text-gray-800 mb-2">Loading Dashboard...</h2>
+          <p className="text-gray-600">Preparing your creative workspace</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen flex flex-col">
       <DashboardHeader />
+      
+      {/* User Sync Status Banner */}
+      {(isSyncing || syncError) && (
+        <div className={`px-4 py-2 text-sm ${
+          syncError 
+            ? 'bg-orange-100 border-orange-200 text-orange-800' 
+            : 'bg-blue-100 border-blue-200 text-blue-800'
+        } border-b`}>
+          <div className="max-w-7xl mx-auto flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              {isSyncing ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Syncing user profile in background...</span>
+                </>
+              ) : syncError ? (
+                <>
+                  <AlertCircle className="w-4 h-4" />
+                  <span>Sync failed: {syncError}</span>
+                </>
+              ) : null}
+            </div>
+            {syncError && (
+              <button 
+                onClick={retrySync}
+                className="px-3 py-1 bg-orange-200 hover:bg-orange-300 rounded transition-colors"
+              >
+                Retry
+              </button>
+            )}
+          </div>
+        </div>
+      )}
       
       <div className="flex flex-1">
         <DashboardSidebar 

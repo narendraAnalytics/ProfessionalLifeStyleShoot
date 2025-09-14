@@ -148,8 +148,18 @@ export default function HeroSection() {
               <SignedIn>
                 <Button 
                   size="lg" 
-                  onClick={() => router.push('/dashboard')}
-                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-8 py-4 rounded-full font-semibold text-lg shadow-2xl hover:shadow-purple-500/25 transform hover:scale-105 transition-all duration-300"
+                  onClick={() => {
+                    // Add immediate visual feedback
+                    const button = document.activeElement as HTMLButtonElement
+                    if (button) {
+                      button.style.transform = 'scale(0.95)'
+                      setTimeout(() => {
+                        button.style.transform = ''
+                      }, 100)
+                    }
+                    router.push('/dashboard')
+                  }}
+                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-8 py-4 rounded-full font-semibold text-lg shadow-2xl hover:shadow-purple-500/25 transform hover:scale-105 transition-all duration-300 active:scale-95"
                 >
                   <Sparkles className="w-5 h-5 mr-2" />
                   Create Your Shoot

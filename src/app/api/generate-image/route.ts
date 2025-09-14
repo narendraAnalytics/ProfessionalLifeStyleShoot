@@ -34,33 +34,56 @@ export async function POST(req: NextRequest) {
 
     try {
       // Enhance prompt if not already enhanced or if skipEnhancement is false
+      // Always re-enhance for aspect ratio-specific instructions if aspectRatio is provided
       if (!skipEnhancement && !enhancedPrompt) {
         console.log('🔄 Enhancing prompt first with aspect ratio:', aspectRatio);
         actualEnhancedPrompt = await geminiService.enhancePrompt(finalPrompt, aspectRatio);
         finalPrompt = actualEnhancedPrompt;
         console.log('✨ Using enhanced prompt for image generation:', finalPrompt);
       } else if (enhancedPrompt) {
-        finalPrompt = enhancedPrompt;
-        console.log('✅ Using pre-enhanced prompt:', finalPrompt);
+        // For critical aspect ratios like 16:9, re-enhance even if we have an enhanced prompt
+        if (aspectRatio === '16-9' || aspectRatio === '16:9') {
+          console.log('🔄 Re-enhancing for 16:9 aspect ratio to prevent face cropping');
+          actualEnhancedPrompt = await geminiService.enhancePrompt(enhancedPrompt, aspectRatio);
+          finalPrompt = actualEnhancedPrompt;
+          console.log('✨ Using re-enhanced prompt for 16:9 generation:', finalPrompt);
+        } else {
+          finalPrompt = enhancedPrompt;
+          console.log('✅ Using pre-enhanced prompt:', finalPrompt);
+        }
       } else {
-        console.log('⚠️ Using original prompt (skip enhancement):', finalPrompt);
+        // If skipping enhancement but we have aspectRatio, still add basic safety instructions
+        if (aspectRatio === '16-9' || aspectRatio === '16:9') {
+          finalPrompt = `${finalPrompt}. CRITICAL: Generate with subject positioned in lower half of image with massive headroom above for landscape cropping. Ensure complete face visibility after 16:9 transformation.`;
+          console.log('⚠️ Using original prompt with 16:9 safety instructions:', finalPrompt);
+        } else {
+          console.log('⚠️ Using original prompt (skip enhancement):', finalPrompt);
+        }
       }
 
       // Generate image using the final prompt
       console.log('🎨 Starting image generation with final prompt:', finalPrompt);
       const imageBuffer = await geminiService.generateImage(finalPrompt);
 
-      // Upload to ImageKit with aspect ratio transformation
+      // Upload to ImageKit with enhanced aspect ratio transformation
+      console.log('📤 Uploading to ImageKit with aspect ratio:', aspectRatio);
       const uploadResult = await imageKitService.uploadImage(
         imageBuffer,
         'ai-generated.png',
         userId,
         {
           folder: `/photoshoots/${userId}`,
-          tags: ['ai-generated', 'professional', style || 'general', aspectRatio ? `ar-${aspectRatio}` : '1-1'],
-          aspectRatio: aspectRatio || '1-1'  // Pass aspect ratio to service
+          tags: [
+            'ai-generated', 
+            'professional', 
+            style || 'general', 
+            aspectRatio ? `ar-${aspectRatio}` : '1-1',
+            aspectRatio === '16-9' ? 'landscape-optimized' : 'standard'
+          ],
+          aspectRatio: aspectRatio || '1-1'  // Pass aspect ratio to service for smart cropping
         }
       );
+      console.log('✅ ImageKit upload successful with smart cropping applied');
 
       // Save to database
       const photoshoot = await prisma.photoshoot.create({

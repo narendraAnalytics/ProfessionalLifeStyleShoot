@@ -47,6 +47,9 @@ ASPECT RATIO & CROPPING AWARENESS:
 - Subject should NEVER be positioned at edges - always centered with space
 - Account for post-processing transformations by including safety margins
 - Different aspect ratios require different padding strategies
+- FOR 16:9 LANDSCAPE: Generate with 2:3 or portrait-like composition, then crop to landscape
+- FACE PRESERVATION: Assume aggressive cropping - position subjects very low in frame
+- SAFETY MARGINS: Include minimum 40% extra headroom for landscape formats
 
 BRAND PHOTOGRAPHY FOCUS:
 - Lifestyle over studio shots
@@ -161,7 +164,11 @@ export class GeminiService {
       
       case '16-9':
       case '16:9':
-        return `ASPECT RATIO CONTEXT: Landscape (16:9) final output - Generate with EXTRA vertical padding especially above head. Subject can be positioned slightly left or right of center with generous headroom. CRITICAL: Include 30-35% extra space above head knowing image will be cropped to landscape format.`;
+        return `ASPECT RATIO CONTEXT: Landscape (16:9) final output - CRITICAL FOR FACE PRESERVATION: Generate with MASSIVE vertical padding especially above head. Subject MUST be positioned in LOWER HALF of image with ENORMOUS headroom above. NEVER position subject in upper third. Include 50-60% extra vertical space above head. Face must be completely visible after landscape cropping. Generate as if for portrait orientation then crop to landscape. ESSENTIAL: Full head and shoulders must remain visible after 16:9 crop transformation.`;
+      
+      case '9-16':
+      case '9:16':
+        return `ASPECT RATIO CONTEXT: Portrait (9:16) final output - Generate with MAXIMUM headroom and vertical padding. Subject should be positioned in lower third with extensive space above. CRITICAL: Include 35-40% extra space above head knowing image will be cropped to tall portrait orientation.`;
       
       case '4-3':
       case '4:3':

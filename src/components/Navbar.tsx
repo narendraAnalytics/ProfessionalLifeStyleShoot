@@ -102,8 +102,18 @@ export default function Navbar() {
             </SignedOut>
             <SignedIn>
               <Button 
-                onClick={() => router.push('/dashboard')}
-                className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-6 py-2 rounded-full font-medium transition-all duration-300 shadow-lg hover:shadow-purple-500/25 hover:shadow-2xl hover:scale-110 relative overflow-hidden cursor-pointer group"
+                onClick={() => {
+                  // Add immediate visual feedback
+                  const button = document.activeElement as HTMLButtonElement
+                  if (button) {
+                    button.style.transform = 'scale(0.95)'
+                    setTimeout(() => {
+                      button.style.transform = ''
+                    }, 100)
+                  }
+                  router.push('/dashboard')
+                }}
+                className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-6 py-2 rounded-full font-medium transition-all duration-300 shadow-lg hover:shadow-purple-500/25 hover:shadow-2xl hover:scale-110 relative overflow-hidden cursor-pointer group active:scale-95"
               >
                 <span className="relative z-10">Start Your Shoot</span>
                 <div className="absolute inset-0 bg-gradient-to-r from-pink-600 to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
@@ -149,10 +159,18 @@ export default function Navbar() {
                 <SignedIn>
                   <Button 
                     onClick={() => {
+                      // Add immediate visual feedback for mobile
+                      const button = document.activeElement as HTMLButtonElement
+                      if (button) {
+                        button.style.transform = 'scale(0.95)'
+                        setTimeout(() => {
+                          button.style.transform = ''
+                        }, 100)
+                      }
                       router.push('/dashboard')
                       setIsMobileMenuOpen(false)
                     }}
-                    className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white py-2 rounded-full font-medium transition-all duration-300"
+                    className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white py-2 rounded-full font-medium transition-all duration-300 active:scale-95"
                   >
                     Start Your Shoot
                   </Button>

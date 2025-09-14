@@ -41,10 +41,12 @@ export class ImageKitService {
         ? `${timestamp}_${sanitizedFileName}` 
         : sanitizedFileName;
 
-      // Build transformation string with aspect ratio
+      // Build transformation string with intelligent aspect ratio handling
       let transformationString = 'w-800,h-800,c-at_max,q-90'; // Base optimization
       if (options?.aspectRatio) {
-        transformationString = `ar-${options.aspectRatio},w-800,c-maintain_ar,q-90`; // Apply aspect ratio first
+        // Use smart cropping for aspect ratios to preserve faces
+        const smartCropMode = this.getSmartCropMode(options.aspectRatio);
+        transformationString = `ar-${options.aspectRatio},w-800,${smartCropMode},q-90`;
       }
 
       const response = await this.imagekit.upload({
@@ -144,6 +146,29 @@ export class ImageKitService {
     });
   }
 
+  // Get smart crop mode based on aspect ratio to preserve faces
+  private getSmartCropMode(aspectRatio: string): string {
+    switch (aspectRatio) {
+      case '16-9':
+      case '16:9':
+        // For landscape, use smart crop that prioritizes face detection and maintains face in frame
+        return 'c-smart_face_center,g-face'; // Smart crop with face detection, centered on faces
+      
+      case '9-16':
+      case '9:16':
+        // For portrait, maintain aspect ratio with face-aware cropping
+        return 'c-maintain_ar,g-face';
+      
+      case '1-1':
+      case '1:1':
+        // For square, use face-centered smart crop
+        return 'c-smart_face_center,g-face';
+      
+      default:
+        return 'c-maintain_ar,g-center';
+    }
+  }
+
   // Generate responsive image URLs for different screen sizes
   getResponsiveUrls(url: string, aspectRatio?: string): {
     small: string;
@@ -151,20 +176,20 @@ export class ImageKitService {
     large: string;
     original: string;
   } {
-    // Use maintain_ar crop mode to preserve aspect ratio
-    const cropMode = aspectRatio ? 'maintain_ar' : 'at_max';
+    // Use smart crop mode for face preservation
+    const cropMode = aspectRatio ? this.getSmartCropMode(aspectRatio) : 'c-at_max';
     
     return {
       small: this.getOptimizedUrl(url, [
-        { width: 400, crop: cropMode },
+        { width: 400, transformation: cropMode },
         { quality: 80, format: 'webp' }
       ]),
       medium: this.getOptimizedUrl(url, [
-        { width: 800, crop: cropMode },
+        { width: 800, transformation: cropMode },
         { quality: 85, format: 'webp' }
       ]),
       large: this.getOptimizedUrl(url, [
-        { width: 1200, crop: cropMode },
+        { width: 1200, transformation: cropMode },
         { quality: 90, format: 'webp' }
       ]),
       original: this.getOptimizedUrl(url, [
@@ -225,6 +250,23 @@ export class ImageKitService {
       token || defaultToken, 
       expire || defaultExpire
     );
+  }
+
+  // Create smart aspect ratio transformations with face preservation
+  getAspectRatioUrl(url: string, aspectRatio: string, options?: {
+    width?: number;
+    quality?: number;
+    format?: string;
+  }): string {
+    const smartCropMode = this.getSmartCropMode(aspectRatio);
+    const width = options?.width || 800;
+    const quality = options?.quality || 90;
+    const format = options?.format || 'auto';
+    
+    return this.getOptimizedUrl(url, [
+      { transformation: `ar-${aspectRatio},w-${width},${smartCropMode}` },
+      { quality, format }
+    ]);
   }
 
   // Create image variations for A/B testing

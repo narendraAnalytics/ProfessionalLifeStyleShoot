@@ -80,27 +80,27 @@ export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshoot
     { value: 'png' as const, label: 'PNG', description: 'Highest quality' }
   ]
 
-  // Aspect ratio options
+  // Aspect ratio options with enhanced descriptions
   const aspectRatios: AspectRatio[] = [
     {
       label: '1:1',
       value: '1-1',
       ratio: '1:1',
-      description: 'Square',
+      description: 'Square - Perfect for social media',
       icon: '⬜'
     },
     {
       label: '16:9',
       value: '16-9',
       ratio: '16:9',
-      description: 'Landscape',
+      description: 'Landscape - Optimized face preservation',
       icon: '▭'
     },
     {
       label: '9:16',
       value: '9-16',
       ratio: '9:16',
-      description: 'Portrait',
+      description: 'Portrait - Stories & reels',
       icon: '▯'
     }
   ]
@@ -524,20 +524,36 @@ export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshoot
               {/* Aspect Ratio Selection */}
               <div className="space-y-4">
                 <h4 className="font-medium text-gray-700 text-center">Choose Aspect Ratio:</h4>
+                
+                {/* 16:9 Special Notice */}
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                  <div className="flex items-start gap-2">
+                    <div className="text-blue-500 text-sm mt-0.5">💡</div>
+                    <div className="text-sm text-blue-700">
+                      <strong>16:9 Landscape:</strong> We've enhanced our system specifically for landscape images to preserve complete faces and prevent cropping issues.
+                    </div>
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-3 gap-4">
                   {aspectRatios.map((ratio) => (
                     <button
                       key={ratio.value}
                       onClick={() => setSelectedAspectRatio(ratio)}
-                      className={`p-4 rounded-xl border-2 transition-all duration-200 flex flex-col items-center gap-2 ${
+                      className={`p-4 rounded-xl border-2 transition-all duration-200 flex flex-col items-center gap-2 relative ${
                         selectedAspectRatio.value === ratio.value
                           ? 'border-purple-500 bg-purple-50 text-purple-700'
                           : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                       }`}
                     >
+                      {ratio.value === '16-9' && (
+                        <div className="absolute -top-2 -right-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full">
+                          Enhanced
+                        </div>
+                      )}
                       <div className="text-2xl">{ratio.icon}</div>
                       <div className="font-medium">{ratio.label}</div>
-                      <div className="text-sm text-gray-500">{ratio.description}</div>
+                      <div className="text-sm text-center text-gray-500">{ratio.description}</div>
                       <div className="text-xs text-gray-400">{ratio.ratio}</div>
                     </button>
                   ))}
