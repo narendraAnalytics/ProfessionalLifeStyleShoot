@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { prompt } = await req.json();
+    const { prompt, aspectRatio } = await req.json();
 
     if (!prompt || typeof prompt !== 'string' || prompt.trim().length === 0) {
       return NextResponse.json({ error: 'Valid prompt is required' }, { status: 400 });
@@ -31,9 +31,9 @@ export async function POST(req: NextRequest) {
     let enhancedPrompt = '';
 
     try {
-      // Enhance prompt using gemini-2.5-flash-live-preview
-      console.log('✨ Enhancing prompt only:', prompt);
-      enhancedPrompt = await geminiService.enhancePrompt(prompt.trim());
+      // Enhance prompt using gemini-2.5-flash-live-preview with aspect ratio context
+      console.log('✨ Enhancing prompt with aspect ratio:', prompt, aspectRatio);
+      enhancedPrompt = await geminiService.enhancePrompt(prompt.trim(), aspectRatio);
 
       // Credits system disabled for now
 

@@ -31,25 +31,40 @@ ESSENTIAL ELEMENTS TO INCLUDE:
 3. BRAND CONTEXT: Lifestyle setting, aspirational mood, target demographic appeal
 4. COMPOSITION: Rule of thirds, depth of field, negative space for text overlay
 5. COLOR PALETTE: Complementary tones, brand-safe colors, mood consistency
-6. FACE COMPOSITION: Complete face visibility, no cropping at forehead/chin/sides, full head framing
-7. TECHNICAL SPECS: Sharp focus, professional depth, high-end finish, full face framing
+6. PORTRAIT FRAMING: MUST include adequate head padding (15-20% space above forehead), NEVER crop at hairline/forehead/top of head, full head visibility with generous padding, portrait bust framing where head occupies 60-70% of frame height
+7. TECHNICAL SPECS: Sharp focus, professional depth, high-end finish, complete head framing with padding
+
+CRITICAL PORTRAIT REQUIREMENTS (NON-NEGOTIABLE):
+- ALWAYS include "generous head padding" in every portrait prompt
+- NEVER allow head cropping at top, forehead, or hairline
+- MUST specify "full head within frame with adequate space above"
+- Portrait should show complete head with breathing room above
+- Head cropping is UNACCEPTABLE - always ensure proper headroom
+
+ASPECT RATIO & CROPPING AWARENESS:
+- CRITICAL: Images will be cropped post-generation to specific aspect ratios
+- ALWAYS generate with EXTRA padding knowing cropping will occur
+- Subject should NEVER be positioned at edges - always centered with space
+- Account for post-processing transformations by including safety margins
+- Different aspect ratios require different padding strategies
 
 BRAND PHOTOGRAPHY FOCUS:
 - Lifestyle over studio shots
-- Aspirational but authentic
+- Aspirational but authentic  
 - Space for branding elements
 - Target audience appeal
 - Commercial usability
-- Complete face visibility, no cutting or cropping
+- Complete face visibility with proper head padding, NEVER crop head
+- Generate crop-safe compositions that remain beautiful after aspect ratio adjustments
 
 Examples:
 Input: "Professional headshots"
-Output: "Executive lifestyle portrait, confident professional in modern office setting, soft natural window lighting, neutral business attire, shallow depth of field, clean composition with negative space, complete face visible with no cropping, aspirational yet approachable expression, commercial-grade quality"
+Output: "Executive lifestyle portrait with generous head padding, confident professional in modern office setting, soft natural window lighting, neutral business attire, shallow depth of field, clean composition with negative space, full head visible with adequate space above forehead, no head cropping, aspirational yet approachable expression, commercial-grade quality"
 
 Input: "Fashion portrait"
-Output: "Upscale lifestyle fashion portrait, contemporary urban background, golden hour rim lighting, styled wardrobe with brand appeal, rule of thirds composition, warm color palette, authentic confident pose, complete face visible with full head framing, commercial photography aesthetic, space for text overlay"
+Output: "Upscale lifestyle fashion portrait with proper head framing and padding, contemporary urban background, golden hour rim lighting, styled wardrobe with brand appeal, rule of thirds composition, warm color palette, authentic confident pose, complete head visible with generous space above hairline, no top cropping, commercial photography aesthetic, space for text overlay"
 
-Create prompts that produce brand-ready, commercial-quality lifestyle imagery.`;
+Create prompts that produce brand-ready, commercial-quality lifestyle imagery with PROPER HEAD FRAMING and NO CROPPING.`;
 
 export class GeminiService {
   private ai: GoogleGenAI;
@@ -63,7 +78,7 @@ export class GeminiService {
   }
 
   // Enhance prompt using live model with Google Search (exact structure from Geminicode.md)
-  async enhancePrompt(userPrompt: string): Promise<string> {
+  async enhancePrompt(userPrompt: string, aspectRatio?: string): Promise<string> {
     console.log('✨ Starting prompt enhancement for:', userPrompt);
     
     const model = 'models/gemini-2.5-flash-live-preview';
@@ -98,9 +113,12 @@ export class GeminiService {
         config
       });
 
-      // Send enhancement request with system prompt
-      const enhancementPrompt = `${ENHANCEMENT_SYSTEM_PROMPT}\n\nEnhance this prompt for professional photography: "${userPrompt}"`;
-      console.log('📤 Sending enhancement request...');
+      // Build aspect ratio context
+      const aspectRatioContext = this.getAspectRatioContext(aspectRatio);
+      
+      // Send enhancement request with system prompt and aspect ratio context
+      const enhancementPrompt = `${ENHANCEMENT_SYSTEM_PROMPT}\n\n${aspectRatioContext}\n\nEnhance this prompt for professional photography: "${userPrompt}"`;
+      console.log('📤 Sending enhancement request with aspect ratio:', aspectRatio);
       
       this.session.sendClientContent({
         turns: [enhancementPrompt]
@@ -126,17 +144,43 @@ export class GeminiService {
     } catch (error) {
       console.error('🔴 Enhancement error:', error);
       // Fallback to standard model if live API fails
-      return await this.enhancePromptFallback(userPrompt);
+      return await this.enhancePromptFallback(userPrompt, aspectRatio);
+    }
+  }
+
+  // Get aspect ratio-specific composition context
+  private getAspectRatioContext(aspectRatio?: string): string {
+    if (!aspectRatio) {
+      return "COMPOSITION: Generate with generous padding on all sides to accommodate potential cropping.";
+    }
+
+    switch (aspectRatio) {
+      case '1-1':
+      case '1:1':
+        return `ASPECT RATIO CONTEXT: Square (1:1) final output - Generate with EXTRA padding on ALL sides (top, bottom, left, right). Subject should be centered with generous space around for square cropping. CRITICAL: Include 25-30% extra headroom above subject knowing image will be cropped to square.`;
+      
+      case '16-9':
+      case '16:9':
+        return `ASPECT RATIO CONTEXT: Landscape (16:9) final output - Generate with EXTRA vertical padding especially above head. Subject can be positioned slightly left or right of center with generous headroom. CRITICAL: Include 30-35% extra space above head knowing image will be cropped to landscape format.`;
+      
+      case '4-3':
+      case '4:3':
+        return `ASPECT RATIO CONTEXT: Portrait (4:3) final output - Generate with MAXIMUM headroom and vertical padding. Subject should be positioned in lower third with extensive space above. CRITICAL: Include 35-40% extra space above head knowing image will be cropped to portrait orientation.`;
+      
+      default:
+        return `ASPECT RATIO CONTEXT: Custom ratio (${aspectRatio}) - Generate with generous padding on all sides, especially above the head. CRITICAL: Account for post-generation cropping by including extra space around subject.`;
     }
   }
 
   // Fallback enhancement using standard model
-  private async enhancePromptFallback(userPrompt: string): Promise<string> {
+  private async enhancePromptFallback(userPrompt: string, aspectRatio?: string): Promise<string> {
     console.log('🔄 Using fallback enhancement method');
     try {
       const model = this.standardAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
+      const aspectRatioContext = this.getAspectRatioContext(aspectRatio);
       const result = await model.generateContent([
         ENHANCEMENT_SYSTEM_PROMPT,
+        aspectRatioContext,
         `Enhance this prompt for professional photography: "${userPrompt}"`
       ]);
       const enhanced = result.response.text().trim();

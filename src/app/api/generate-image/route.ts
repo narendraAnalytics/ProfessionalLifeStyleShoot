@@ -35,8 +35,8 @@ export async function POST(req: NextRequest) {
     try {
       // Enhance prompt if not already enhanced or if skipEnhancement is false
       if (!skipEnhancement && !enhancedPrompt) {
-        console.log('🔄 Enhancing prompt first...');
-        actualEnhancedPrompt = await geminiService.enhancePrompt(finalPrompt);
+        console.log('🔄 Enhancing prompt first with aspect ratio:', aspectRatio);
+        actualEnhancedPrompt = await geminiService.enhancePrompt(finalPrompt, aspectRatio);
         finalPrompt = actualEnhancedPrompt;
         console.log('✨ Using enhanced prompt for image generation:', finalPrompt);
       } else if (enhancedPrompt) {
