@@ -27,47 +27,69 @@ PROFESSIONAL STANDARDS: 60-85 words maximum. Focus on commercial-grade details.
 
 ESSENTIAL ELEMENTS TO INCLUDE:
 1. SUBJECT STYLING: Wardrobe, grooming, poses that sell brands
-2. LIGHTING TECHNIQUE: Soft box, natural window light, rim lighting, golden hour
+2. ADVANCED LIGHTING MASTERY: 
+   - Key lighting: Soft box, beauty dish, ring light for flattering portraits
+   - Fill lighting: Natural window light, reflector bounce, ambient fill
+   - Accent lighting: Rim lighting, hair light, practical lights, golden hour backlighting
+   - Mood lighting: Cinematic shadows, ethereal backlighting, warm golden tones, cool blue undertones
+   - Color temperature: Specify warm (3200K), neutral (5600K), or cool (6500K) lighting
 3. BRAND CONTEXT: Lifestyle setting, aspirational mood, target demographic appeal
 4. COMPOSITION: Rule of thirds, depth of field, negative space for text overlay
-5. COLOR PALETTE: Complementary tones, brand-safe colors, mood consistency
-6. PORTRAIT FRAMING: MUST include adequate head padding (15-20% space above forehead), NEVER crop at hairline/forehead/top of head, full head visibility with generous padding, portrait bust framing where head occupies 60-70% of frame height
-7. TECHNICAL SPECS: Sharp focus, professional depth, high-end finish, complete head framing with padding
+5. SOPHISTICATED COLOR PALETTE: 
+   - Brand alignment: Monochromatic elegance, complementary contrasts, analogous harmony
+   - Color psychology: Luxurious deep tones, energetic bright hues, serene pastels, authentic earth tones
+   - Color grading: Film-inspired looks, modern digital aesthetic, vintage warmth, contemporary cool tones
+6. FULL BODY FRAMING: MUST show complete figure from head to legs, proper positioning within frame, never crop at feet or head, full body visibility with appropriate spacing
+7. TECHNICAL SPECS: Sharp focus, professional depth, high-end finish, complete figure framing
 
-CRITICAL PORTRAIT REQUIREMENTS (NON-NEGOTIABLE):
-- ALWAYS include "generous head padding" in every portrait prompt
-- NEVER allow head cropping at top, forehead, or hairline
-- MUST specify "full head within frame with adequate space above"
-- Portrait should show complete head with breathing room above
-- Head cropping is UNACCEPTABLE - always ensure proper headroom
+CRITICAL FULL BODY REQUIREMENTS (NON-NEGOTIABLE):
+- ALWAYS include "complete figure visibility" in every prompt
+- NEVER allow cropping at head, feet, or limbs
+- MUST specify "full body from head to legs within frame"
+- Show complete person with proper spacing above and below
+- Any body part cropping is UNACCEPTABLE - ensure full figure visibility
 
 ASPECT RATIO & CROPPING AWARENESS:
 - CRITICAL: Images will be cropped post-generation to specific aspect ratios
 - ALWAYS generate with EXTRA padding knowing cropping will occur
 - Subject should NEVER be positioned at edges - always centered with space
 - Account for post-processing transformations by including safety margins
-- Different aspect ratios require different padding strategies
-- FOR 16:9 LANDSCAPE: Generate with 2:3 or portrait-like composition, then crop to landscape
-- FACE PRESERVATION: Assume aggressive cropping - position subjects very low in frame
-- SAFETY MARGINS: Include minimum 40% extra headroom for landscape formats
+- FULL BODY PRESERVATION: Position complete figure with adequate margins
+- SAFETY MARGINS: Include minimum 15% extra space above head and below feet
+- Center positioning ensures full body remains visible after square cropping
 
 BRAND PHOTOGRAPHY FOCUS:
-- Lifestyle over studio shots
-- Aspirational but authentic  
-- Space for branding elements
-- Target audience appeal
-- Commercial usability
-- Complete face visibility with proper head padding, NEVER crop head
+- Lifestyle over studio shots with authentic environmental storytelling
+- Aspirational yet relatable mood: luxurious sophistication, effortless elegance, confident authenticity
+- Mood variations: Editorial drama, commercial warmth, lifestyle energy, serene minimalism, urban dynamism
+- Space for branding elements and text overlays
+- Target audience appeal with demographic-specific styling
+- Commercial usability with versatile composition
+- Complete figure visibility with proper full body framing, NEVER crop any body parts
 - Generate crop-safe compositions that remain beautiful after aspect ratio adjustments
 
-Examples:
-Input: "Professional headshots"
-Output: "Executive lifestyle portrait with generous head padding, confident professional in modern office setting, soft natural window lighting, neutral business attire, shallow depth of field, clean composition with negative space, full head visible with adequate space above forehead, no head cropping, aspirational yet approachable expression, commercial-grade quality"
+MOOD & ATMOSPHERE MASTERY:
+- Cinematic storytelling: Film-inspired lighting with dramatic depth
+- Editorial sophistication: Magazine-quality composition with refined aesthetics  
+- Lifestyle authenticity: Natural moments with genuine expressions
+- Commercial appeal: Aspirational yet accessible brand alignment
+- Seasonal adaptation: Warm summer glow, crisp autumn light, soft spring ambiance, cozy winter tones
 
-Input: "Fashion portrait"
-Output: "Upscale lifestyle fashion portrait with proper head framing and padding, contemporary urban background, golden hour rim lighting, styled wardrobe with brand appeal, rule of thirds composition, warm color palette, authentic confident pose, complete head visible with generous space above hairline, no top cropping, commercial photography aesthetic, space for text overlay"
+ENHANCED EXAMPLES WITH ADVANCED LIGHTING & MOOD:
 
-Create prompts that produce brand-ready, commercial-quality lifestyle imagery with PROPER HEAD FRAMING and NO CROPPING.`;
+Input: "Professional full body shots"
+Output: "Executive lifestyle full body composition with complete figure visibility, confident professional in modern office setting, soft box key lighting with natural window fill (5600K), neutral business attire with monochromatic elegance, shallow depth of field, cinematic storytelling mood, full body from head to legs with 20% safety margins, no body cropping, aspirational sophistication with commercial appeal"
+
+Input: "Fashion full body"  
+Output: "Editorial fashion full body with complete figure framing, contemporary urban background, golden hour rim lighting with warm backlighting (3200K), styled wardrobe with complementary color harmony, rule of thirds composition, film-inspired color grading, authentic confident pose, complete person visible from head to legs with generous spacing, editorial drama meets lifestyle authenticity, magazine-quality aesthetic"
+
+Input: "Portrait lifestyle shot"
+Output: "Lifestyle portrait with complete figure visibility, serene minimalist setting, beauty dish key lighting with reflector fill, ethereal backlighting creating warm golden tones, analogous color palette with earth tones, cinematic depth of field, full body positioning with editorial spacing, effortless elegance mood, commercial warmth with aspirational appeal, crop-safe composition"
+
+Input: "Magazine style portrait" (4:5 format)
+Output: "Editorial magazine portrait with complete figure framing, sophisticated editorial environment, hair light with soft key lighting (5600K), luxurious deep tones with monochromatic elegance, magazine-quality composition with rule of thirds, film-inspired color grading, confident editorial pose, complete person from head to legs with 25% safety margins, editorial sophistication meets commercial appeal, Pinterest-optimized aesthetic"
+
+Create prompts that produce brand-ready, commercial-quality lifestyle imagery with PROPER FULL BODY FRAMING and NO CROPPING.`;
 
 export class GeminiService {
   private ai: GoogleGenAI;
@@ -162,17 +184,13 @@ export class GeminiService {
       case '1:1':
         return `ASPECT RATIO CONTEXT: Square (1:1) final output - Generate with EXTRA padding on ALL sides (top, bottom, left, right). Subject should be centered with generous space around for square cropping. CRITICAL: Include 25-30% extra headroom above subject knowing image will be cropped to square.`;
       
-      case '16-9':
-      case '16:9':
-        return `ASPECT RATIO CONTEXT: Landscape (16:9) final output - CRITICAL FOR FACE PRESERVATION: Generate with MASSIVE vertical padding especially above head. Subject MUST be positioned in LOWER HALF of image with ENORMOUS headroom above. NEVER position subject in upper third. Include 50-60% extra vertical space above head. Face must be completely visible after landscape cropping. Generate as if for portrait orientation then crop to landscape. ESSENTIAL: Full head and shoulders must remain visible after 16:9 crop transformation.`;
-      
       case '9-16':
       case '9:16':
-        return `ASPECT RATIO CONTEXT: Portrait (9:16) final output - Generate with MAXIMUM headroom and vertical padding. Subject should be positioned in lower third with extensive space above. CRITICAL: Include 35-40% extra space above head knowing image will be cropped to tall portrait orientation.`;
+        return `ASPECT RATIO CONTEXT: Portrait (9:16) final output - PERFECT for full body shots. Generate complete figure from head to legs with proper vertical positioning. Subject should be centered with balanced spacing above and below. CRITICAL: Show entire body within frame with 10-15% margin above head and below feet. This vertical format naturally accommodates full human figure beautifully.`;
       
-      case '4-3':
-      case '4:3':
-        return `ASPECT RATIO CONTEXT: Portrait (4:3) final output - Generate with MAXIMUM headroom and vertical padding. Subject should be positioned in lower third with extensive space above. CRITICAL: Include 35-40% extra space above head knowing image will be cropped to portrait orientation.`;
+      case '4-5':
+      case '4:5':
+        return `ASPECT RATIO CONTEXT: Portrait Post (4:5) final output - PERFECT for magazine-style editorial compositions. Generate with balanced vertical composition showing complete figure with professional editorial spacing. Dimensions 1080x1350. CRITICAL: Position subject with 20-25% margin above head and below feet for elegant portrait post cropping. Ideal for Instagram portrait posts, Pinterest pins, and magazine covers - maintain sophisticated editorial aesthetic with proper full-body framing.`;
       
       default:
         return `ASPECT RATIO CONTEXT: Custom ratio (${aspectRatio}) - Generate with generous padding on all sides, especially above the head. CRITICAL: Account for post-generation cropping by including extra space around subject.`;
@@ -284,7 +302,7 @@ export class GeminiService {
       });
       
       console.log('📥 Received response, processing chunks...');
-      let fileIndex = 0;
+      const fileIndex = 0;
       
       for await (const chunk of response) {
         console.log(`📦 Processing chunk ${fileIndex + 1}`);

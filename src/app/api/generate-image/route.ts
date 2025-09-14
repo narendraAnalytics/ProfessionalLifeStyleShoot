@@ -41,24 +41,10 @@ export async function POST(req: NextRequest) {
         finalPrompt = actualEnhancedPrompt;
         console.log('✨ Using enhanced prompt for image generation:', finalPrompt);
       } else if (enhancedPrompt) {
-        // For critical aspect ratios like 16:9, re-enhance even if we have an enhanced prompt
-        if (aspectRatio === '16-9' || aspectRatio === '16:9') {
-          console.log('🔄 Re-enhancing for 16:9 aspect ratio to prevent face cropping');
-          actualEnhancedPrompt = await geminiService.enhancePrompt(enhancedPrompt, aspectRatio);
-          finalPrompt = actualEnhancedPrompt;
-          console.log('✨ Using re-enhanced prompt for 16:9 generation:', finalPrompt);
-        } else {
-          finalPrompt = enhancedPrompt;
-          console.log('✅ Using pre-enhanced prompt:', finalPrompt);
-        }
+        finalPrompt = enhancedPrompt;
+        console.log('✅ Using pre-enhanced prompt:', finalPrompt);
       } else {
-        // If skipping enhancement but we have aspectRatio, still add basic safety instructions
-        if (aspectRatio === '16-9' || aspectRatio === '16:9') {
-          finalPrompt = `${finalPrompt}. CRITICAL: Generate with subject positioned in lower half of image with massive headroom above for landscape cropping. Ensure complete face visibility after 16:9 transformation.`;
-          console.log('⚠️ Using original prompt with 16:9 safety instructions:', finalPrompt);
-        } else {
-          console.log('⚠️ Using original prompt (skip enhancement):', finalPrompt);
-        }
+        console.log('⚠️ Using original prompt (skip enhancement):', finalPrompt);
       }
 
       // Generate image using the final prompt
@@ -78,7 +64,7 @@ export async function POST(req: NextRequest) {
             'professional', 
             style || 'general', 
             aspectRatio ? `ar-${aspectRatio}` : '1-1',
-            aspectRatio === '16-9' ? 'landscape-optimized' : 'standard'
+            'standard'
           ],
           aspectRatio: aspectRatio || '1-1'  // Pass aspect ratio to service for smart cropping
         }

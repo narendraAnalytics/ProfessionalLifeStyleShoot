@@ -149,11 +149,6 @@ export class ImageKitService {
   // Get smart crop mode based on aspect ratio to preserve faces
   private getSmartCropMode(aspectRatio: string): string {
     switch (aspectRatio) {
-      case '16-9':
-      case '16:9':
-        // For landscape, use smart crop that prioritizes face detection and maintains face in frame
-        return 'c-smart_face_center,g-face'; // Smart crop with face detection, centered on faces
-      
       case '9-16':
       case '9:16':
         // For portrait, maintain aspect ratio with face-aware cropping
@@ -163,6 +158,11 @@ export class ImageKitService {
       case '1:1':
         // For square, use face-centered smart crop
         return 'c-smart_face_center,g-face';
+      
+      case '4-5':
+      case '4:5':
+        // For portrait post, use face-aware cropping with aspect ratio maintenance
+        return 'c-maintain_ar,g-face';
       
       default:
         return 'c-maintain_ar,g-center';
@@ -179,17 +179,45 @@ export class ImageKitService {
     // Use smart crop mode for face preservation
     const cropMode = aspectRatio ? this.getSmartCropMode(aspectRatio) : 'c-at_max';
     
+    // Define optimal dimensions for each aspect ratio
+    const getDimensions = (size: 'small' | 'medium' | 'large') => {
+      if (!aspectRatio) return {};
+      
+      switch (aspectRatio) {
+        case '1-1':
+        case '1:1':
+          return size === 'small' ? { width: 400, height: 400 } :
+                 size === 'medium' ? { width: 800, height: 800 } :
+                 { width: 1200, height: 1200 };
+        
+        case '4-5':
+        case '4:5':
+          return size === 'small' ? { width: 400, height: 500 } :
+                 size === 'medium' ? { width: 800, height: 1000 } :
+                 { width: 1080, height: 1350 };
+        
+        case '9-16':
+        case '9:16':
+          return size === 'small' ? { width: 400, height: 711 } :
+                 size === 'medium' ? { width: 600, height: 1067 } :
+                 { width: 1080, height: 1920 };
+        
+        default:
+          return {};
+      }
+    };
+    
     return {
       small: this.getOptimizedUrl(url, [
-        { width: 400, transformation: cropMode },
+        { ...getDimensions('small'), transformation: cropMode },
         { quality: 80, format: 'webp' }
       ]),
       medium: this.getOptimizedUrl(url, [
-        { width: 800, transformation: cropMode },
+        { ...getDimensions('medium'), transformation: cropMode },
         { quality: 85, format: 'webp' }
       ]),
       large: this.getOptimizedUrl(url, [
-        { width: 1200, transformation: cropMode },
+        { ...getDimensions('large'), transformation: cropMode },
         { quality: 90, format: 'webp' }
       ]),
       original: this.getOptimizedUrl(url, [

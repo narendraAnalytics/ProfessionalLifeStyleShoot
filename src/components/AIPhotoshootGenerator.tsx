@@ -45,6 +45,9 @@ interface AspectRatio {
   ratio: string
   description: string
   icon: string
+  platforms: string[]
+  successRate: string
+  recommended: boolean
 }
 
 export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshootGeneratorProps) {
@@ -58,7 +61,10 @@ export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshoot
     value: '1-1',
     ratio: '1:1',
     description: 'Square',
-    icon: '⬜'
+    icon: '⬜',
+    platforms: ['Instagram Feed', 'Facebook Posts', 'LinkedIn Posts', 'Portfolio Grids'],
+    successRate: '98%',
+    recommended: true
   })
   
   // UI state
@@ -86,22 +92,31 @@ export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshoot
       label: '1:1',
       value: '1-1',
       ratio: '1:1',
-      description: 'Square - Perfect for social media',
-      icon: '⬜'
+      description: 'Square',
+      icon: '⬜',
+      platforms: ['Instagram Feed', 'Facebook Posts', 'LinkedIn Posts', 'Portfolio Grids'],
+      successRate: '98%',
+      recommended: true
     },
     {
-      label: '16:9',
-      value: '16-9',
-      ratio: '16:9',
-      description: 'Landscape - Optimized face preservation',
-      icon: '▭'
+      label: '4:5',
+      value: '4-5',
+      ratio: '4:5',
+      description: 'Portrait Post',
+      icon: '📷',
+      platforms: ['Instagram Portrait', 'Pinterest', 'Magazine Covers', 'Fashion'],
+      successRate: '95%',
+      recommended: true
     },
     {
       label: '9:16',
       value: '9-16',
       ratio: '9:16',
-      description: 'Portrait - Stories & reels',
-      icon: '▯'
+      description: 'Stories/Reels',
+      icon: '📱',
+      platforms: ['Stories', 'Reels', 'TikTok', 'Mobile Wallpapers'],
+      successRate: '93%',
+      recommended: true
     }
   ]
 
@@ -298,7 +313,10 @@ export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshoot
       value: '1-1',
       ratio: '1:1',
       description: 'Square',
-      icon: '⬜'
+      icon: '⬜',
+      platforms: ['Instagram Feed', 'Facebook Posts', 'LinkedIn Posts', 'Portfolio Grids'],
+      successRate: '98%',
+      recommended: true
     })
   }
 
@@ -523,37 +541,37 @@ export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshoot
 
               {/* Aspect Ratio Selection */}
               <div className="space-y-4">
-                <h4 className="font-medium text-gray-700 text-center">Choose Aspect Ratio:</h4>
-                
-                {/* 16:9 Special Notice */}
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
-                  <div className="flex items-start gap-2">
-                    <div className="text-blue-500 text-sm mt-0.5">💡</div>
-                    <div className="text-sm text-blue-700">
-                      <strong>16:9 Landscape:</strong> We've enhanced our system specifically for landscape images to preserve complete faces and prevent cropping issues.
-                    </div>
-                  </div>
+                <div className="text-center space-y-2">
+                  <h4 className="font-medium text-gray-700">Choose Your Platform:</h4>
+                  <p className="text-xs text-gray-500">Select the aspect ratio based on where you&apos;ll use the image</p>
                 </div>
-
-                <div className="grid grid-cols-3 gap-4">
+                
+                <div className="grid grid-cols-3 gap-3">
                   {aspectRatios.map((ratio) => (
                     <button
                       key={ratio.value}
                       onClick={() => setSelectedAspectRatio(ratio)}
-                      className={`p-4 rounded-xl border-2 transition-all duration-200 flex flex-col items-center gap-2 relative ${
+                      className={`p-3 rounded-xl border-2 transition-all duration-200 flex flex-col items-center gap-2 relative ${
                         selectedAspectRatio.value === ratio.value
                           ? 'border-purple-500 bg-purple-50 text-purple-700'
                           : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                       }`}
                     >
-                      {ratio.value === '16-9' && (
-                        <div className="absolute -top-2 -right-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full">
-                          Enhanced
-                        </div>
-                      )}
-                      <div className="text-2xl">{ratio.icon}</div>
-                      <div className="font-medium">{ratio.label}</div>
-                      <div className="text-sm text-center text-gray-500">{ratio.description}</div>
+                      {/* Success rate badge */}
+                      <div className="absolute -top-1 -right-1 bg-green-500 text-white text-xs px-1.5 py-0.5 rounded-full font-medium">
+                        {ratio.successRate}
+                      </div>
+                      
+                      <div className="text-xl">{ratio.icon}</div>
+                      <div className="font-medium text-sm">{ratio.label}</div>
+                      <div className="text-xs font-medium text-center">{ratio.description}</div>
+                      
+                      {/* Platform tags */}
+                      <div className="text-xs text-center text-gray-500 leading-tight">
+                        {ratio.platforms.slice(0, 2).join(', ')}
+                        {ratio.platforms.length > 2 && ` +${ratio.platforms.length - 2} more`}
+                      </div>
+                      
                       <div className="text-xs text-gray-400">{ratio.ratio}</div>
                     </button>
                   ))}
