@@ -236,6 +236,10 @@ export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshoot
       transformations.push('f-jpg,q-80') // JPEG with quality optimization
     }
     
+    // Add cache-busting parameter to prevent browser caching issues
+    const cacheBuster = `cb-${Date.now()}`
+    transformations.push(cacheBuster)
+    
     const transformString = transformations.join(',')
     
     if (originalUrl.includes('?')) {
@@ -672,7 +676,7 @@ export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshoot
                       onClick={() => setShowGrayscale(false)}
                       size="sm"
                       variant={!showGrayscale ? "default" : "outline"}
-                      className={!showGrayscale ? "bg-blue-600 text-white" : ""}
+                      className={!showGrayscale ? "bg-blue-600 hover:bg-blue-700 text-white" : "hover:bg-gray-50"}
                     >
                       Original
                     </Button>
@@ -680,9 +684,9 @@ export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshoot
                       onClick={() => setShowGrayscale(true)}
                       size="sm"
                       variant={showGrayscale ? "default" : "outline"}
-                      className={showGrayscale ? "bg-gray-600 text-white" : ""}
+                      className={showGrayscale ? "bg-gray-600 hover:bg-gray-700 text-white" : "hover:bg-gray-50"}
                     >
-                      Grayscale
+                      B&W
                     </Button>
                   </div>
                 </div>
@@ -691,7 +695,8 @@ export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshoot
                 {!showGrayscale ? (
                   <div className="relative">
                     <img
-                      src={generatedImage.responsiveUrls?.medium || generatedImage.imageUrl}
+                      key={`original-${generatedImage.id}-${showGrayscale}`}
+                      src={generateImageUrl(generatedImage.responsiveUrls?.medium || generatedImage.imageUrl, false)}
                       alt="Generated photoshoot - Original"
                       className="w-full object-cover hover:scale-105 transition-transform duration-300"
                       onError={(e) => {
@@ -710,13 +715,19 @@ export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshoot
                 ) : (
                   <div className="relative">
                     <img
+                      key={`grayscale-${generatedImage.id}-${showGrayscale}`}
                       src={generateImageUrl(generatedImage.responsiveUrls?.medium || generatedImage.imageUrl, true)}
                       alt="Generated photoshoot - Grayscale"
                       className="w-full object-cover hover:scale-105 transition-transform duration-300"
+                      onError={(e) => {
+                        console.error('❌ Grayscale image failed to load:', e.currentTarget.src)
+                        // Fallback to original image if grayscale fails
+                        e.currentTarget.src = generatedImage.responsiveUrls?.medium || generatedImage.imageUrl
+                      }}
                     />
                     <div className="absolute top-2 left-2">
                       <span className="px-2 py-1 bg-gray-600 text-white rounded text-xs font-medium">
-                        Grayscale
+                        B&W
                       </span>
                     </div>
                   </div>
