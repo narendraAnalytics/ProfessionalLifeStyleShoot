@@ -71,30 +71,40 @@ export async function POST(req: NextRequest) {
       );
       console.log('✅ ImageKit upload successful with smart cropping applied');
 
-      // Save to database
+      // Generate responsive URLs with aspect ratio
+      const responsiveUrls = imageKitService.getResponsiveUrls(uploadResult.url, aspectRatio);
+      
+      // Generate B&W versions immediately for instant access
+      const bwUrls = imageKitService.generateBWUrls(uploadResult.url, aspectRatio);
+
+      // Save to database with B&W URL
       const photoshoot = await prisma.photoshoot.create({
         data: {
           userId: user.id,
           originalImageUrl: uploadResult.url,
           generatedImageUrl: uploadResult.url,
           thumbnailUrl: uploadResult.thumbnailUrl,
+          bwImageUrl: bwUrls.original, // Store the B&W original for quick access
           imageKitFileId: uploadResult.fileId,
           style: style || 'professional',
           originalPrompt: prompt,
           enhancedPrompt: actualEnhancedPrompt,
           status: 'completed',
+          metadata: {
+            responsiveUrls,
+            bwUrls,  // Store all B&W variations
+            aspectRatio
+          }
         },
       });
 
       // Credits system disabled for now
 
-      // Generate responsive URLs with aspect ratio
-      const responsiveUrls = imageKitService.getResponsiveUrls(uploadResult.url, aspectRatio);
-
       console.log('📊 Image URLs generated:', {
         originalUrl: uploadResult.url,
         thumbnailUrl: uploadResult.thumbnailUrl,
-        responsiveUrls
+        responsiveUrls,
+        bwUrls
       });
 
       // Clean up Gemini service resources
@@ -106,7 +116,9 @@ export async function POST(req: NextRequest) {
           id: photoshoot.id,
           imageUrl: uploadResult.url,
           thumbnailUrl: uploadResult.thumbnailUrl,
+          bwImageUrl: photoshoot.bwImageUrl,
           responsiveUrls,
+          bwUrls, // Include B&W responsive URLs
           style: photoshoot.style,
           originalPrompt: photoshoot.originalPrompt,
           enhancedPrompt: photoshoot.enhancedPrompt,

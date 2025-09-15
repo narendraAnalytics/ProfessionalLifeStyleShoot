@@ -48,9 +48,10 @@ export async function GET(req: NextRequest) {
         original: photoshoot.generatedImageUrl
       }
 
-      // Try to parse metadata for responsive URLs
+      // Parse metadata for responsive URLs and B&W URLs
+      let bwUrls = null
       if (photoshoot.metadata && typeof photoshoot.metadata === 'object') {
-        const metadata = photoshoot.metadata as any
+        const metadata = photoshoot.metadata as Record<string, unknown>
         if (metadata.responsiveUrls) {
           responsiveUrls = {
             small: metadata.responsiveUrls.small || photoshoot.generatedImageUrl,
@@ -59,13 +60,19 @@ export async function GET(req: NextRequest) {
             original: metadata.responsiveUrls.original || photoshoot.generatedImageUrl
           }
         }
+        // Extract B&W URLs from metadata
+        if (metadata.bwUrls) {
+          bwUrls = metadata.bwUrls
+        }
       }
 
       return {
         id: photoshoot.id,
         imageUrl: photoshoot.generatedImageUrl,
         thumbnailUrl: photoshoot.thumbnailUrl || photoshoot.generatedImageUrl,
+        bwImageUrl: photoshoot.bwImageUrl, // Include B&W image URL
         responsiveUrls,
+        bwUrls, // Include B&W responsive URLs
         originalPrompt: photoshoot.originalPrompt,
         enhancedPrompt: photoshoot.enhancedPrompt || photoshoot.originalPrompt,
         style: photoshoot.style,

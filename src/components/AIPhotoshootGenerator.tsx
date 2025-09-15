@@ -23,7 +23,14 @@ interface GeneratedImage {
   id: string
   imageUrl: string
   thumbnailUrl: string
+  bwImageUrl?: string
   responsiveUrls: {
+    small: string
+    medium: string
+    large: string
+    original: string
+  }
+  bwUrls?: {
     small: string
     medium: string
     large: string
@@ -265,24 +272,43 @@ export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshoot
 
   const handleDownloadImage = async (image: GeneratedImage, isGrayscale = false, format: 'jpg' | 'webp' | 'png' = 'jpg') => {
     try {
-      // Generate download URL with proper transformations
-      let downloadUrl = image.responsiveUrls?.original || image.imageUrl
-      const transformations = []
+      let downloadUrl: string;
       
-      if (isGrayscale) {
-        transformations.push('e-grayscale')
-      }
+      console.log('🔽 AI Generator Download request:', { isGrayscale, format, hasBwUrls: !!image.bwUrls?.original });
       
-      if (format !== 'jpg') {
-        transformations.push(`f-${format}`)
+      if (isGrayscale && image.bwUrls?.original) {
+        // Use pre-generated B&W URL if available
+        downloadUrl = image.bwUrls.original;
+        
+        // Apply format transformation if needed
+        if (format !== 'jpg') {
+          const separator = downloadUrl.includes('?') ? '&' : '?'
+          downloadUrl = `${downloadUrl}${separator}tr=f-${format}`
+        }
+        
+        console.log('✅ Using B&W URL:', downloadUrl);
       } else {
-        transformations.push('f-jpg,q-90') // Higher quality for download
-      }
-      
-      if (transformations.length > 0) {
-        const transformString = transformations.join(',')
-        const separator = downloadUrl.includes('?') ? '&' : '?'
-        downloadUrl = `${downloadUrl}${separator}tr=${transformString}`
+        // Generate download URL with proper transformations
+        downloadUrl = image.responsiveUrls?.original || image.imageUrl
+        const transformations = []
+        
+        if (isGrayscale) {
+          transformations.push('e-grayscale')
+        }
+        
+        if (format !== 'jpg') {
+          transformations.push(`f-${format}`)
+        } else {
+          transformations.push('f-jpg,q-90') // Higher quality for download
+        }
+        
+        if (transformations.length > 0) {
+          const transformString = transformations.join(',')
+          const separator = downloadUrl.includes('?') ? '&' : '?'
+          downloadUrl = `${downloadUrl}${separator}tr=${transformString}`
+        }
+        
+        console.log(isGrayscale ? '🔄 Using fallback B&W transformation:' : '📷 Using original URL:', downloadUrl);
       }
       
       const response = await fetch(downloadUrl, {
@@ -310,7 +336,7 @@ export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshoot
       const formatLabel = formatOptions.find(f => f.value === format)?.label || format.toUpperCase()
       toast.success(`${isGrayscale ? 'B&W' : 'Original'} ${formatLabel} downloaded successfully!`)
     } catch (error) {
-      console.error('Download error:', error)
+      console.error('❌ Download error:', error)
       toast.error('Failed to download image. Please try again.')
     }
   }

@@ -40,6 +40,7 @@ model Photoshoot {
   originalImageUrl      String
   generatedImageUrl     String
   thumbnailUrl          String?
+  bwImageUrl            String?   // Black & white version URL
   imageKitFileId        String?
   style                 String    @default("professional")
   originalPrompt        String

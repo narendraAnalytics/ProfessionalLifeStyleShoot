@@ -20,7 +20,14 @@ interface GeneratedImage {
   id: string
   imageUrl: string
   thumbnailUrl: string
+  bwImageUrl?: string // B&W image URL
   responsiveUrls: {
+    small: string
+    medium: string
+    large: string
+    original: string
+  }
+  bwUrls?: {
     small: string
     medium: string
     large: string
@@ -40,6 +47,7 @@ export default function Dashboard() {
   const [grayscaleStates, setGrayscaleStates] = useState<Record<string, boolean>>({})
   const [formatStates, setFormatStates] = useState<Record<string, 'jpg' | 'webp' | 'png'>>({})
   const [dashboardReady, setDashboardReady] = useState(false)
+  const [newlyGeneratedImages, setNewlyGeneratedImages] = useState<Set<string>>(new Set())
   const { user } = useUser()
   const { isSyncing, syncError, syncSuccess, retrySync } = useUserSync()
 
@@ -51,7 +59,33 @@ export default function Dashboard() {
   ]
 
   const handleImageGenerated = (image: GeneratedImage) => {
+    // Initialize states for the newly generated image
+    setGrayscaleStates(prev => ({ ...prev, [image.id]: false }))
+    setFormatStates(prev => ({ ...prev, [image.id]: 'jpg' }))
+    
+    // Mark as newly generated (for special handling)
+    setNewlyGeneratedImages(prev => new Set([...prev, image.id]))
+    
+    // Add the image to the gallery
     setRecentImages(prev => [image, ...prev.slice(0, 9)]) // Keep last 10 images
+    
+    // Remove from newly generated after 10 seconds (ImageKit propagation time)
+    setTimeout(() => {
+      setNewlyGeneratedImages(prev => {
+        const updated = new Set(prev)
+        updated.delete(image.id)
+        return updated
+      })
+      console.log('✅ Image propagation complete for:', image.id)
+    }, 10000) // 10 seconds should be enough for ImageKit propagation
+    
+    // Log for debugging
+    console.log('🆕 New image added to gallery:', {
+      imageId: image.id,
+      imageUrl: image.imageUrl,
+      responsiveUrls: image.responsiveUrls,
+      willBeTreatedAsNewFor: '10 seconds'
+    })
   }
 
   const fetchExistingImages = async () => {
@@ -71,6 +105,13 @@ export default function Dashboard() {
       
       if (data.success && data.images) {
         setRecentImages(data.images)
+        
+        // Clear any stale "newly generated" states for fetched images
+        setNewlyGeneratedImages(prev => {
+          const updated = new Set(prev)
+          data.images.forEach((image: GeneratedImage) => updated.delete(image.id))
+          return updated
+        })
       }
     } catch (error) {
       console.error('Error fetching existing images:', error)
@@ -137,21 +178,52 @@ export default function Dashboard() {
 
   const handleDownloadImage = async (image: GeneratedImage, isGrayscale = false, format: 'jpg' | 'webp' | 'png' = 'jpg') => {
     try {
-      const imageUrl = generateImageUrl(
-        image.responsiveUrls.original || image.imageUrl, 
-        isGrayscale, 
-        format
-      )
+      let imageUrl: string;
+      
+      console.log('🔽 Download request:', { isGrayscale, format, hasBwUrls: !!image.bwUrls?.original });
+      
+      if (isGrayscale && image.bwUrls?.original) {
+        // Use pre-generated B&W URL if available
+        imageUrl = image.bwUrls.original;
+        
+        // Apply format transformation if needed
+        if (format !== 'jpg') {
+          const separator = imageUrl.includes('?') ? '&' : '?'
+          imageUrl = `${imageUrl}${separator}tr=f-${format}`
+        }
+        
+        console.log('✅ Using B&W URL:', imageUrl);
+      } else if (isGrayscale) {
+        // Fallback to transformation method for B&W
+        imageUrl = generateImageUrl(
+          image.responsiveUrls.original || image.imageUrl, 
+          true, // Force grayscale
+          format
+        )
+        console.log('🔄 Using fallback B&W transformation:', imageUrl);
+      } else {
+        // Original image
+        imageUrl = generateImageUrl(
+          image.responsiveUrls.original || image.imageUrl, 
+          false, 
+          format
+        )
+        console.log('📷 Using original URL:', imageUrl);
+      }
       
       const response = await fetch(imageUrl)
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      
       const blob = await response.blob()
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
       
       const formatExt = format === 'jpg' ? 'jpg' : format
-      const grayscaleLabel = isGrayscale ? '-grayscale' : ''
-      a.download = `photoshoot${grayscaleLabel}-${image.id}.${formatExt}`
+      const grayscaleLabel = isGrayscale ? '-bw' : ''
+      a.download = `photoshoot${grayscaleLabel}-${Date.now()}.${formatExt}`
       
       document.body.appendChild(a)
       a.click()
@@ -159,10 +231,10 @@ export default function Dashboard() {
       URL.revokeObjectURL(url)
       
       const formatLabel = formatOptions.find(f => f.value === format)?.label || format.toUpperCase()
-      toast.success(`${isGrayscale ? 'Grayscale' : 'Original'} ${formatLabel} downloaded successfully!`)
+      toast.success(`${isGrayscale ? 'B&W' : 'Original'} ${formatLabel} downloaded successfully!`)
     } catch (error) {
-      console.error('Download error:', error)
-      toast.error('Failed to download image')
+      console.error('❌ Download error:', error)
+      toast.error('Failed to download image. Please try again.')
     }
   }
 
@@ -322,6 +394,7 @@ export default function Dashboard() {
                         {recentImages.map((image) => {
                           const isGrayscale = grayscaleStates[image.id] || false
                           const selectedFormat = formatStates[image.id] || 'jpg'
+                          const isNewlyGenerated = newlyGeneratedImages.has(image.id)
                           return (
                             <div key={image.id} className="group relative bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300">
                               {/* Image Preview Toggle */}
@@ -343,9 +416,10 @@ export default function Dashboard() {
                                       isGrayscale 
                                         ? 'bg-gray-600 text-white' 
                                         : 'bg-white/80 text-gray-700 hover:bg-white'
-                                    }`}
+                                    } ${isNewlyGenerated ? 'animate-pulse' : ''}`}
+                                    title={isNewlyGenerated ? 'Newly generated - B&W may take a moment to load' : 'Switch to black & white'}
                                   >
-                                    B&W
+                                    {isNewlyGenerated ? 'B&W ⏳' : 'B&W'}
                                   </button>
                                 </div>
                               </div>
@@ -353,17 +427,32 @@ export default function Dashboard() {
                               <div className="aspect-square overflow-hidden">
                                 <img
                                   key={`gallery-image-${image.id}-${isGrayscale ? 'bw' : 'original'}`}
-                                  src={generateImageUrl(image.responsiveUrls.medium, isGrayscale)}
+                                  src={isGrayscale 
+                                    ? (image.bwUrls?.medium || generateImageUrl(image.responsiveUrls.medium, isGrayscale))
+                                    : image.responsiveUrls.medium
+                                  }
                                   alt={image.originalPrompt}
                                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                                   crossOrigin="anonymous"
                                   loading="lazy"
                                   onError={(e) => {
                                     console.error('❌ Gallery image failed to load:', e.currentTarget.src)
-                                    // Fallback to original image without transformation
-                                    const fallbackUrl = image.responsiveUrls.medium || image.imageUrl
-                                    if (e.currentTarget.src !== fallbackUrl) {
-                                      e.currentTarget.src = fallbackUrl
+                                    
+                                    // Try fallback based on type
+                                    if (isGrayscale) {
+                                      // For B&W images, try the fallback B&W URL or transformation
+                                      const fallbackUrl = image.bwImageUrl || generateImageUrl(image.responsiveUrls.medium, true)
+                                      if (e.currentTarget.src !== fallbackUrl) {
+                                        console.log('🔄 Trying B&W fallback URL for image:', image.id)
+                                        e.currentTarget.src = fallbackUrl
+                                      }
+                                    } else {
+                                      // For original images, try different sizes
+                                      const fallbackUrl = image.responsiveUrls.original || image.imageUrl
+                                      if (e.currentTarget.src !== fallbackUrl) {
+                                        console.log('🔄 Trying fallback URL for image:', image.id)
+                                        e.currentTarget.src = fallbackUrl
+                                      }
                                     }
                                   }}
                                 />
@@ -377,6 +466,11 @@ export default function Dashboard() {
                                   }`}>
                                     {image.style === 'upload' ? 'Upload' : 'AI Generated'}
                                   </span>
+                                  {isNewlyGenerated && (
+                                    <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-700 animate-pulse">
+                                      Just created ✨
+                                    </span>
+                                  )}
                                   <span className="text-xs text-gray-500">
                                     {new Date(image.createdAt).toLocaleDateString()}
                                   </span>

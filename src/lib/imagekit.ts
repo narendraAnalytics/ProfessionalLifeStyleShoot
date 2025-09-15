@@ -116,7 +116,7 @@ export class ImageKitService {
   }
 
   // Generate optimized URLs with transformations
-  getOptimizedUrl(url: string, transformations?: Array<Record<string, any>>): string {
+  getOptimizedUrl(url: string, transformations?: Array<Record<string, unknown>>): string {
     const defaultTransformations = [
       {
         quality: 90,
@@ -302,13 +302,74 @@ export class ImageKitService {
     originalUrl: string,
     variations: Array<{
       name: string;
-      transformations: Array<Record<string, any>>;
+      transformations: Array<Record<string, unknown>>;
     }>
   ): Promise<Array<{ name: string; url: string }>> {
     return variations.map(variation => ({
       name: variation.name,
       url: this.getOptimizedUrl(originalUrl, variation.transformations)
     }));
+  }
+
+  // Generate B&W version URLs for immediate access
+  generateBWUrls(originalUrl: string, aspectRatio?: string): {
+    small: string;
+    medium: string;
+    large: string;
+    original: string;
+  } {
+    // Use smart crop mode for face preservation
+    const cropMode = aspectRatio ? this.getSmartCropMode(aspectRatio) : 'c-at_max';
+    
+    // Define optimal dimensions for each aspect ratio with B&W transformation
+    const getDimensions = (size: 'small' | 'medium' | 'large') => {
+      if (!aspectRatio) return {};
+      
+      switch (aspectRatio) {
+        case '1-1':
+        case '1:1':
+          return size === 'small' ? { width: 400, height: 400 } :
+                 size === 'medium' ? { width: 800, height: 800 } :
+                 { width: 1200, height: 1200 };
+        
+        case '4-5':
+        case '4:5':
+          return size === 'small' ? { width: 400, height: 500 } :
+                 size === 'medium' ? { width: 800, height: 1000 } :
+                 { width: 1080, height: 1350 };
+        
+        case '9-16':
+        case '9:16':
+          return size === 'small' ? { width: 400, height: 711 } :
+                 size === 'medium' ? { width: 600, height: 1067 } :
+                 { width: 1080, height: 1920 };
+        
+        default:
+          return {};
+      }
+    };
+    
+    return {
+      small: this.getOptimizedUrl(originalUrl, [
+        { transformation: `${cropMode},e-grayscale` },
+        { ...getDimensions('small') },
+        { quality: 80, format: 'webp' }
+      ]),
+      medium: this.getOptimizedUrl(originalUrl, [
+        { transformation: `${cropMode},e-grayscale` },
+        { ...getDimensions('medium') },
+        { quality: 85, format: 'webp' }
+      ]),
+      large: this.getOptimizedUrl(originalUrl, [
+        { transformation: `${cropMode},e-grayscale` },
+        { ...getDimensions('large') },
+        { quality: 90, format: 'webp' }
+      ]),
+      original: this.getOptimizedUrl(originalUrl, [
+        { transformation: 'e-grayscale' },
+        { quality: 95, format: 'auto' }
+      ])
+    };
   }
 
   // Analyze image and extract metadata
