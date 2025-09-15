@@ -563,16 +563,15 @@ export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshoot
                       </div>
                       
                       <div className="text-xl">{ratio.icon}</div>
-                      <div className="font-medium text-sm">{ratio.label}</div>
-                      <div className="text-xs font-medium text-center">{ratio.description}</div>
+                      <div className="font-bold text-sm">{ratio.label}</div>
+                      <div className="text-xs font-semibold text-center">{ratio.description}</div>
                       
                       {/* Platform tags */}
-                      <div className="text-xs text-center text-gray-500 leading-tight">
-                        {ratio.platforms.slice(0, 2).join(', ')}
-                        {ratio.platforms.length > 2 && ` +${ratio.platforms.length - 2} more`}
+                      <div className="text-xs text-center text-gray-600 leading-tight font-medium">
+                        {ratio.platforms.join(', ')}
                       </div>
                       
-                      <div className="text-xs text-gray-400">{ratio.ratio}</div>
+                      <div className="text-xs text-gray-500 font-medium">{ratio.ratio}</div>
                     </button>
                   ))}
                 </div>
