@@ -96,12 +96,14 @@ export default function Dashboard() {
   }, [user])
 
   const generateImageUrl = (originalUrl: string, isGrayscale = false, format = 'jpg') => {
-    let transformations = []
+    const transformations = []
     
+    // Add grayscale transformation first for proper ImageKit processing
     if (isGrayscale) {
       transformations.push('e-grayscale')
     }
     
+    // Add format transformation
     if (format !== 'jpg') {
       transformations.push(`f-${format}`)
     } else {
@@ -110,11 +112,27 @@ export default function Dashboard() {
     
     const transformString = transformations.join(',')
     
-    if (originalUrl.includes('?')) {
-      return originalUrl.replace('?', `?tr=${transformString},`)
+    // Generate URL with proper cache-busting via timestamp - always fresh
+    const timestamp = Date.now() + Math.random() * 1000
+    const separator = originalUrl.includes('?') ? '&' : '?'
+    
+    let finalUrl: string
+    if (transformString) {
+      finalUrl = `${originalUrl}${separator}tr=${transformString}&v=${Math.floor(timestamp)}`
     } else {
-      return `${originalUrl}?tr=${transformString}`
+      finalUrl = `${originalUrl}${separator}v=${Math.floor(timestamp)}`
     }
+    
+    // Debug logging for gallery
+    console.log('🖼️ Gallery ImageKit URL Generation:', {
+      originalUrl,
+      isGrayscale,
+      format,
+      transformations,
+      finalUrl
+    })
+    
+    return finalUrl
   }
 
   const handleDownloadImage = async (image: GeneratedImage, isGrayscale = false, format: 'jpg' | 'webp' | 'png' = 'jpg') => {
@@ -334,9 +352,20 @@ export default function Dashboard() {
 
                               <div className="aspect-square overflow-hidden">
                                 <img
+                                  key={`gallery-image-${image.id}-${isGrayscale ? 'bw' : 'original'}`}
                                   src={generateImageUrl(image.responsiveUrls.medium, isGrayscale)}
                                   alt={image.originalPrompt}
                                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                  crossOrigin="anonymous"
+                                  loading="lazy"
+                                  onError={(e) => {
+                                    console.error('❌ Gallery image failed to load:', e.currentTarget.src)
+                                    // Fallback to original image without transformation
+                                    const fallbackUrl = image.responsiveUrls.medium || image.imageUrl
+                                    if (e.currentTarget.src !== fallbackUrl) {
+                                      e.currentTarget.src = fallbackUrl
+                                    }
+                                  }}
                                 />
                               </div>
                               <div className="p-4">

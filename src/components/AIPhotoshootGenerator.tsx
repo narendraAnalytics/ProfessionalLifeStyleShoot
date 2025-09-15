@@ -73,7 +73,6 @@ export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshoot
   const [progress, setProgress] = useState(0)
   const [error, setError] = useState<string | null>(null)
   const [step, setStep] = useState<'input' | 'enhanced' | 'enhanced-edit' | 'size-selection' | 'generated'>('input')
-  const [showGrayscale, setShowGrayscale] = useState(false)
   const [selectedFormat, setSelectedFormat] = useState<'jpg' | 'webp' | 'png'>('jpg')
   const [isEditingEnhanced, setIsEditingEnhanced] = useState(false)
   const [tempEnhancedPrompt, setTempEnhancedPrompt] = useState('')
@@ -223,18 +222,6 @@ export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshoot
     }
   }
 
-  // Optimized callback handlers to prevent scroll issues
-  const handleToggleOriginal = useCallback((e: React.MouseEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setShowGrayscale(false)
-  }, [])
-
-  const handleToggleBW = useCallback((e: React.MouseEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setShowGrayscale(true)
-  }, [])
 
   const generateImageUrl = useCallback((originalUrl: string, isGrayscale = false, format = 'jpg') => {
     const transformations = []
@@ -253,15 +240,15 @@ export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshoot
     
     const transformString = transformations.join(',')
     
-    // Generate URL with proper cache-busting via timestamp
-    const timestamp = Date.now()
+    // Generate URL with proper cache-busting via timestamp - always fresh
+    const timestamp = Date.now() + Math.random() * 1000
     const separator = originalUrl.includes('?') ? '&' : '?'
     
     let finalUrl: string
     if (transformString) {
-      finalUrl = `${originalUrl}${separator}tr=${transformString}&v=${timestamp}`
+      finalUrl = `${originalUrl}${separator}tr=${transformString}&v=${Math.floor(timestamp)}`
     } else {
-      finalUrl = `${originalUrl}${separator}v=${timestamp}`
+      finalUrl = `${originalUrl}${separator}v=${Math.floor(timestamp)}`
     }
     
     // Debug logging
@@ -356,7 +343,6 @@ export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshoot
     setGeneratedImage(null)
     setStep('input')
     setError(null)
-    setShowGrayscale(false)
     setSelectedFormat('jpg')
     setIsEditingEnhanced(false)
     // Reset to default aspect ratio
@@ -716,65 +702,30 @@ export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshoot
                 <p className="text-gray-600">Generated in {selectedAspectRatio.label} aspect ratio</p>
               </div>
 
-              {/* Image Preview Toggle */}
+              {/* Image Preview */}
               <div className="bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
-                <div className="p-4 border-b border-gray-200">
-                  <div className="flex justify-center gap-2">
-                    <Button
-                      onClick={handleToggleOriginal}
-                      size="sm"
-                      variant={!showGrayscale ? "default" : "outline"}
-                      className={!showGrayscale ? "bg-blue-600 hover:bg-blue-700 text-white" : "hover:bg-gray-50"}
-                    >
-                      Original
-                    </Button>
-                    <Button
-                      onClick={handleToggleBW}
-                      size="sm"
-                      variant={showGrayscale ? "default" : "outline"}
-                      className={showGrayscale ? "bg-gray-600 hover:bg-gray-700 text-white" : "hover:bg-gray-50"}
-                    >
-                      B&W
-                    </Button>
-                  </div>
-                </div>
 
-                {/* Image Display with Smooth Transitions */}
+                {/* Image Display */}
                 <div className="relative">
                   <img
-                    key={`image-${generatedImage.id}-${showGrayscale ? 'bw' : 'orig'}-${Date.now()}`}
-                    src={generateImageUrl(generatedImage.responsiveUrls?.medium || generatedImage.imageUrl, showGrayscale)}
-                    alt={`Generated photoshoot - ${showGrayscale ? 'Black & White' : 'Original'}`}
+                    key={`image-${generatedImage.id}-original`}
+                    src={generatedImage.responsiveUrls?.medium || generatedImage.imageUrl}
+                    alt="Generated photoshoot"
                     className="w-full object-cover hover:scale-105 transition-all duration-500"
                     crossOrigin="anonymous"
                     loading="eager"
                     onLoad={() => {
-                      // Image loaded successfully - smooth transition
+                      // Image loaded successfully
                     }}
                     onError={(e) => {
                       console.error('❌ Image failed to load:', e.currentTarget.src)
-                      // Fallback to original image without transformation
-                      const fallbackUrl = generatedImage.responsiveUrls?.medium || generatedImage.imageUrl
+                      // Fallback to original image
+                      const fallbackUrl = generatedImage.responsiveUrls?.original || generatedImage.imageUrl
                       if (e.currentTarget.src !== fallbackUrl) {
                         e.currentTarget.src = fallbackUrl
                       }
                     }}
                   />
-                  <div className="absolute top-2 left-2">
-                    <span className={`px-2 py-1 rounded text-xs font-medium transition-colors duration-300 ${
-                      showGrayscale 
-                        ? 'bg-gray-600 text-white' 
-                        : 'bg-blue-600 text-white'
-                    }`}>
-                      {showGrayscale ? 'B&W' : 'Original'}
-                    </span>
-                  </div>
-                  {/* Loading indicator overlay - optional */}
-                  <div className="absolute inset-0 bg-white bg-opacity-50 hidden" id="loading-overlay">
-                    <div className="flex items-center justify-center h-full">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-600"></div>
-                    </div>
-                  </div>
                 </div>
 
                 <div className="p-4">
@@ -819,12 +770,12 @@ export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshoot
 
                     {/* Download Button */}
                     <Button
-                      onClick={() => handleDownloadImage(generatedImage, showGrayscale, selectedFormat)}
+                      onClick={() => handleDownloadImage(generatedImage, false, selectedFormat)}
                       size="sm"
                       className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white"
                     >
                       <Download className="w-4 h-4 mr-2" />
-                      Download {showGrayscale ? 'Grayscale' : 'Original'} {formatOptions.find(f => f.value === selectedFormat)?.label}
+                      Download {formatOptions.find(f => f.value === selectedFormat)?.label}
                     </Button>
                     
                     <Button
