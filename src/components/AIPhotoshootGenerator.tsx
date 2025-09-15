@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useCallback, useEffect } from 'react'
 import { useUser } from '@clerk/nextjs'
 import { Button } from './ui/button'
 import { Textarea } from './ui/textarea'
@@ -223,48 +223,96 @@ export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshoot
     }
   }
 
-  const generateImageUrl = (originalUrl: string, isGrayscale = false, format = 'jpg') => {
+  // Optimized callback handlers to prevent scroll issues
+  const handleToggleOriginal = useCallback((e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setShowGrayscale(false)
+  }, [])
+
+  const handleToggleBW = useCallback((e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setShowGrayscale(true)
+  }, [])
+
+  const generateImageUrl = useCallback((originalUrl: string, isGrayscale = false, format = 'jpg') => {
     const transformations = []
     
+    // Add grayscale transformation first for proper ImageKit processing
     if (isGrayscale) {
       transformations.push('e-grayscale')
     }
     
+    // Add format transformation
     if (format !== 'jpg') {
       transformations.push(`f-${format}`)
     } else {
       transformations.push('f-jpg,q-80') // JPEG with quality optimization
     }
     
-    // Add cache-busting parameter to prevent browser caching issues
-    const cacheBuster = `cb-${Date.now()}`
-    transformations.push(cacheBuster)
-    
     const transformString = transformations.join(',')
     
-    if (originalUrl.includes('?')) {
-      return originalUrl.replace('?', `?tr=${transformString},`)
+    // Generate URL with proper cache-busting via timestamp
+    const timestamp = Date.now()
+    const separator = originalUrl.includes('?') ? '&' : '?'
+    
+    let finalUrl: string
+    if (transformString) {
+      finalUrl = `${originalUrl}${separator}tr=${transformString}&v=${timestamp}`
     } else {
-      return `${originalUrl}?tr=${transformString}`
+      finalUrl = `${originalUrl}${separator}v=${timestamp}`
     }
-  }
+    
+    // Debug logging
+    console.log('🎨 ImageKit URL Generation:', {
+      originalUrl,
+      isGrayscale,
+      format,
+      transformations,
+      finalUrl
+    })
+    
+    return finalUrl
+  }, [])
 
   const handleDownloadImage = async (image: GeneratedImage, isGrayscale = false, format: 'jpg' | 'webp' | 'png' = 'jpg') => {
     try {
-      const imageUrl = generateImageUrl(
-        image.responsiveUrls?.original || image.imageUrl, 
-        isGrayscale, 
-        format
-      )
+      // Generate download URL with proper transformations
+      let downloadUrl = image.responsiveUrls?.original || image.imageUrl
+      const transformations = []
       
-      const response = await fetch(imageUrl)
+      if (isGrayscale) {
+        transformations.push('e-grayscale')
+      }
+      
+      if (format !== 'jpg') {
+        transformations.push(`f-${format}`)
+      } else {
+        transformations.push('f-jpg,q-90') // Higher quality for download
+      }
+      
+      if (transformations.length > 0) {
+        const transformString = transformations.join(',')
+        const separator = downloadUrl.includes('?') ? '&' : '?'
+        downloadUrl = `${downloadUrl}${separator}tr=${transformString}`
+      }
+      
+      const response = await fetch(downloadUrl, {
+        mode: 'cors'
+      })
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      
       const blob = await response.blob()
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
       
       const formatExt = format === 'jpg' ? 'jpg' : format
-      const grayscaleLabel = isGrayscale ? '-grayscale' : ''
+      const grayscaleLabel = isGrayscale ? '-bw' : ''
       a.download = `ai-photoshoot${grayscaleLabel}-${Date.now()}.${formatExt}`
       
       document.body.appendChild(a)
@@ -273,10 +321,10 @@ export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshoot
       URL.revokeObjectURL(url)
       
       const formatLabel = formatOptions.find(f => f.value === format)?.label || format.toUpperCase()
-      toast.success(`${isGrayscale ? 'Grayscale' : 'Original'} ${formatLabel} downloaded successfully!`)
+      toast.success(`${isGrayscale ? 'B&W' : 'Original'} ${formatLabel} downloaded successfully!`)
     } catch (error) {
       console.error('Download error:', error)
-      toast.error('Failed to download image')
+      toast.error('Failed to download image. Please try again.')
     }
   }
 
@@ -673,7 +721,7 @@ export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshoot
                 <div className="p-4 border-b border-gray-200">
                   <div className="flex justify-center gap-2">
                     <Button
-                      onClick={() => setShowGrayscale(false)}
+                      onClick={handleToggleOriginal}
                       size="sm"
                       variant={!showGrayscale ? "default" : "outline"}
                       className={!showGrayscale ? "bg-blue-600 hover:bg-blue-700 text-white" : "hover:bg-gray-50"}
@@ -681,7 +729,7 @@ export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshoot
                       Original
                     </Button>
                     <Button
-                      onClick={() => setShowGrayscale(true)}
+                      onClick={handleToggleBW}
                       size="sm"
                       variant={showGrayscale ? "default" : "outline"}
                       className={showGrayscale ? "bg-gray-600 hover:bg-gray-700 text-white" : "hover:bg-gray-50"}
@@ -691,47 +739,43 @@ export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshoot
                   </div>
                 </div>
 
-                {/* Before/After Image Display */}
-                {!showGrayscale ? (
-                  <div className="relative">
-                    <img
-                      key={`original-${generatedImage.id}-${showGrayscale}`}
-                      src={generateImageUrl(generatedImage.responsiveUrls?.medium || generatedImage.imageUrl, false)}
-                      alt="Generated photoshoot - Original"
-                      className="w-full object-cover hover:scale-105 transition-transform duration-300"
-                      onError={(e) => {
-                        console.error('❌ Image failed to load:', e.currentTarget.src)
-                        if (e.currentTarget.src !== generatedImage.imageUrl) {
-                          e.currentTarget.src = generatedImage.imageUrl
-                        }
-                      }}
-                    />
-                    <div className="absolute top-2 left-2">
-                      <span className="px-2 py-1 bg-blue-600 text-white rounded text-xs font-medium">
-                        Original
-                      </span>
+                {/* Image Display with Smooth Transitions */}
+                <div className="relative">
+                  <img
+                    key={`image-${generatedImage.id}-${showGrayscale ? 'bw' : 'orig'}-${Date.now()}`}
+                    src={generateImageUrl(generatedImage.responsiveUrls?.medium || generatedImage.imageUrl, showGrayscale)}
+                    alt={`Generated photoshoot - ${showGrayscale ? 'Black & White' : 'Original'}`}
+                    className="w-full object-cover hover:scale-105 transition-all duration-500"
+                    crossOrigin="anonymous"
+                    loading="eager"
+                    onLoad={() => {
+                      // Image loaded successfully - smooth transition
+                    }}
+                    onError={(e) => {
+                      console.error('❌ Image failed to load:', e.currentTarget.src)
+                      // Fallback to original image without transformation
+                      const fallbackUrl = generatedImage.responsiveUrls?.medium || generatedImage.imageUrl
+                      if (e.currentTarget.src !== fallbackUrl) {
+                        e.currentTarget.src = fallbackUrl
+                      }
+                    }}
+                  />
+                  <div className="absolute top-2 left-2">
+                    <span className={`px-2 py-1 rounded text-xs font-medium transition-colors duration-300 ${
+                      showGrayscale 
+                        ? 'bg-gray-600 text-white' 
+                        : 'bg-blue-600 text-white'
+                    }`}>
+                      {showGrayscale ? 'B&W' : 'Original'}
+                    </span>
+                  </div>
+                  {/* Loading indicator overlay - optional */}
+                  <div className="absolute inset-0 bg-white bg-opacity-50 hidden" id="loading-overlay">
+                    <div className="flex items-center justify-center h-full">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-600"></div>
                     </div>
                   </div>
-                ) : (
-                  <div className="relative">
-                    <img
-                      key={`grayscale-${generatedImage.id}-${showGrayscale}`}
-                      src={generateImageUrl(generatedImage.responsiveUrls?.medium || generatedImage.imageUrl, true)}
-                      alt="Generated photoshoot - Grayscale"
-                      className="w-full object-cover hover:scale-105 transition-transform duration-300"
-                      onError={(e) => {
-                        console.error('❌ Grayscale image failed to load:', e.currentTarget.src)
-                        // Fallback to original image if grayscale fails
-                        e.currentTarget.src = generatedImage.responsiveUrls?.medium || generatedImage.imageUrl
-                      }}
-                    />
-                    <div className="absolute top-2 left-2">
-                      <span className="px-2 py-1 bg-gray-600 text-white rounded text-xs font-medium">
-                        B&W
-                      </span>
-                    </div>
-                  </div>
-                )}
+                </div>
 
                 <div className="p-4">
                   <div className="text-sm text-gray-600 mb-3">

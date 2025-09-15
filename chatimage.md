@@ -1,61 +1,51 @@
-module = await import("https://esm.sh/@google/genai@1.4.0");
-GoogleGenAI = module.GoogleGenAI;
-ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-
-MODEL_ID = "gemini-2.5-flash-image-preview"
+ Advanced composition: Combining multiple images
+Provide multiple images as context to create a new, composite scene. This is perfect for product mockups or creative collages.
 
 
+import { GoogleGenAI, Modality } from "@google/genai";
+import * as fs from "node:fs";
 
-Chat mode (recommended method)
-So far you’ve used unary calls, but Image-out is actually made to work better with chat mode as it’s easier to iterate on an image turn after turn.
+async function main() {
 
+  const ai = new GoogleGenAI({});
 
+  const imagePath1 = "/path/to/your/dress.png";
+  const imageData1 = fs.readFileSync(imagePath1);
+  const base64Image1 = imageData1.toString("base64");
+  const imagePath2 = "/path/to/your/model.png";
+  const imageData2 = fs.readFileSync(imagePath2);
+  const base64Image2 = imageData2.toString("base64");
 
-chat = ai.chats.create({
-    model: MODEL_ID
-})
+  const prompt = [
+    {
+      inlineData: {
+        mimeType: "image/png",
+        data: base64Image1,
+      },
+    },
+    {
+      inlineData: {
+        mimeType: "image/png",
+        data: base64Image2,
+      },
+    },
+    { text: "Create a professional e-commerce fashion photo. Take the blue floral dress from the first image and let the woman from the second image wear it. Generate a realistic, full-body shot of the woman wearing the dress, with the lighting and shadows adjusted to match the outdoor environment." },
+  ];
 
-message = "create a image of a plastic toy fox figurine in a kid's bedroom, it can have accessories but no weapon";
-
-response = await chat.sendMessage({ message: message });
-
-for (const part of response.candidates[0].content.parts) {
-  if (part.text !== undefined) {
-    console.log(part.text);
-  }
-  if (part.inlineData !== undefined) {
-    foxFigurineImage = part.inlineData.data
-    console.image(foxFigurineImage);
-  }
-}
-
-output : Here is an image of a plastic toy fox figurine in a kid's bedroom, with accessories:
-
-message = "Add a blue planet on the figuring's helmet or hat (add one if needed)";
-
-response = await chat.sendMessage({ message: message });
-
-for (const part of response.candidates[0].content.parts) {
-  if (part.text !== undefined) {
-    console.log(part.text);
-  }
-  if (part.inlineData !== undefined) {
-    console.image(part.inlineData.data);
-  }
-}
-
-output : Here's the toy fox figurine with a blue planet on its helmet:
-
-
-message = "Move that figurine on a beach";
-
-response = await chat.sendMessage({ message: message });
-
-for (const part of response.candidates[0].content.parts) {
-  if (part.text !== undefined) {
-    console.log(part.text);
-  }
-  if (part.inlineData !== undefined) {
-    console.image(part.inlineData.data);
+  const response = await ai.models.generateContent({
+    model: "gemini-2.5-flash-image-preview",
+    contents: prompt,
+  });
+  for (const part of response.candidates[0].content.parts) {
+    if (part.text) {
+      console.log(part.text);
+    } else if (part.inlineData) {
+      const imageData = part.inlineData.data;
+      const buffer = Buffer.from(imageData, "base64");
+      fs.writeFileSync("fashion_ecommerce_shot.png", buffer);
+      console.log("Image saved as fashion_ecommerce_shot.png");
+    }
   }
 }
+
+main();
