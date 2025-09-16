@@ -263,6 +263,102 @@ export class GeminiService {
     }
   }
 
+  // Generate image composition from multiple images (following chatimage.md structure)
+  async generateImageFromComposition(enhancedPrompt: string, images: { buffer: Buffer; mimeType: string }[]): Promise<Buffer> {
+    console.log('🎨 Starting image composition generation with enhanced prompt:', enhancedPrompt);
+    console.log('🖼️ Number of input images:', images.length);
+    
+    if (!process.env.GEMINI_API_KEY) {
+      throw new Error('GEMINI_API_KEY not configured');
+    }
+
+    if (images.length !== 2) {
+      throw new Error('Exactly 2 images are required for composition');
+    }
+
+    try {
+      // Convert images to base64 format as per chatimage.md
+      const imagePrompts = images.map((img, index) => ({
+        inlineData: {
+          mimeType: img.mimeType,
+          data: img.buffer.toString('base64'),
+        },
+      }));
+
+      // Create the prompt array following chatimage.md structure
+      const prompt = [
+        ...imagePrompts,
+        { text: enhancedPrompt },
+      ];
+
+      console.log('📤 Sending composition request to gemini-2.5-flash-image-preview');
+      
+      const response = await this.ai.models.generateContent({
+        model: 'gemini-2.5-flash-image-preview',
+        contents: prompt,
+      });
+
+      console.log('📥 Received composition response, processing...');
+
+      // Process response to extract image
+      if (!response.candidates || !response.candidates[0] || !response.candidates[0].content) {
+        throw new Error('Invalid response structure from Gemini API');
+      }
+
+      if (!response.candidates[0].content.parts) {
+        throw new Error('No parts found in response content');
+      }
+
+      for (const part of response.candidates[0].content.parts) {
+        if (part.text) {
+          console.log('📝 Received text response:', part.text);
+        } else if (part.inlineData) {
+          const imageData = part.inlineData.data;
+          if (!imageData) {
+            throw new Error('No image data found in response part');
+          }
+          const buffer = Buffer.from(imageData, 'base64');
+          console.log('✅ Successfully created composition buffer, size:', buffer.length, 'bytes');
+          return buffer;
+        }
+      }
+
+      console.error('❌ No image data found in composition response');
+      throw new Error('No image generated in composition response');
+    } catch (error) {
+      console.error('💥 Image composition error:', error);
+      
+      if (error instanceof Error) {
+        console.error('Error details:', {
+          message: error.message,
+          stack: error.stack,
+          name: error.name
+        });
+
+        if (error.message.includes('quota') || error.message.includes('QUOTA_EXCEEDED')) {
+          throw new Error('API quota exceeded. Please try again later.');
+        }
+        if (error.message.includes('not supported') || error.message.includes('MODEL_NOT_FOUND')) {
+          throw new Error('Image composition model not available. Please check your API key permissions.');
+        }
+        if (error.message.includes('safety') || error.message.includes('SAFETY')) {
+          throw new Error('Content filtered for safety. Please try a different prompt or images.');
+        }
+        if (error.message.includes('API key not valid') || error.message.includes('INVALID_API_KEY')) {
+          throw new Error('Invalid API key for image composition.');
+        }
+        if (error.message.includes('PERMISSION_DENIED')) {
+          throw new Error('API key does not have permission to generate image compositions.');
+        }
+        if (error.message.includes('RESOURCE_EXHAUSTED')) {
+          throw new Error('API resources exhausted. Please try again later.');
+        }
+      }
+      
+      throw new Error(`Failed to generate image composition: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
   // Generate image using enhanced prompt (exact structure from Geminicode.md)
   async generateImage(enhancedPrompt: string): Promise<Buffer> {
     console.log('🎨 Starting image generation with enhanced prompt:', enhancedPrompt);

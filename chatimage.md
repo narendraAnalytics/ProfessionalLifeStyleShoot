@@ -1,3 +1,5 @@
+ // javascript
+ 
  Advanced composition: Combining multiple images
 Provide multiple images as context to create a new, composite scene. This is perfect for product mockups or creative collages.
 

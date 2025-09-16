@@ -5,6 +5,7 @@ import { useUser } from '@clerk/nextjs'
 import DashboardHeader from './DashboardHeader'
 import DashboardSidebar from './DashboardSidebar'
 import AIPhotoshootGenerator from './AIPhotoshootGenerator'
+import ImageCompositionGenerator from './ImageCompositionGenerator'
 import { useUserSync } from './UserSyncProvider'
 import { 
   Sparkles, 
@@ -12,7 +13,8 @@ import {
   Wand2,
   History,
   Loader2,
-  AlertCircle
+  AlertCircle,
+  Plus
 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -48,6 +50,7 @@ export default function Dashboard() {
   const [formatStates, setFormatStates] = useState<Record<string, 'jpg' | 'webp' | 'png'>>({})
   const [dashboardReady, setDashboardReady] = useState(false)
   const [newlyGeneratedImages, setNewlyGeneratedImages] = useState<Set<string>>(new Set())
+  const [showImageComposer, setShowImageComposer] = useState(false)
   const { user } = useUser()
   const { isSyncing, syncError, syncSuccess, retrySync } = useUserSync()
 
@@ -429,9 +432,32 @@ export default function Dashboard() {
               </p>
             </div>
 
+            {/* Quick Action Button */}
+            <div className="flex justify-center mb-8">
+              <button
+                onClick={() => setShowImageComposer(!showImageComposer)}
+                className="group relative overflow-hidden bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500 hover:from-purple-600 hover:via-pink-600 hover:to-orange-600 text-white font-bold py-4 px-8 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 animate-pulse"
+                title="Upload and combine images"
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-400 via-pink-400 to-orange-400 animate-gradient-x opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <div className="relative flex items-center gap-3">
+                  <div className="bg-white/20 p-2 rounded-full">
+                    <Plus className="w-6 h-6 animate-bounce" />
+                  </div>
+                  <span className="text-lg">
+                    {showImageComposer ? 'Back to AI Generator' : 'Upload & Combine Images'}
+                  </span>
+                </div>
+              </button>
+            </div>
+
             {/* Main Content - Conditional Rendering */}
-            {activeSection === 'create' && (
+            {activeSection === 'create' && !showImageComposer && (
               <AIPhotoshootGenerator onImageGenerated={handleImageGenerated} />
+            )}
+
+            {activeSection === 'create' && showImageComposer && (
+              <ImageCompositionGenerator onImageGenerated={handleImageGenerated} />
             )}
 
             {activeSection === 'gallery' && (
