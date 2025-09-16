@@ -52,6 +52,14 @@ export async function GET(req: NextRequest) {
       let bwUrls = null
       if (photoshoot.metadata && typeof photoshoot.metadata === 'object') {
         const metadata = photoshoot.metadata as Record<string, unknown>
+        console.log('📊 Processing photoshoot metadata for image:', photoshoot.id, {
+          hasMetadata: !!photoshoot.metadata,
+          metadataKeys: Object.keys(metadata),
+          hasResponsiveUrls: !!metadata.responsiveUrls,
+          hasBwUrls: !!metadata.bwUrls,
+          bwImageUrl: photoshoot.bwImageUrl
+        })
+        
         if (metadata.responsiveUrls) {
           responsiveUrls = {
             small: metadata.responsiveUrls.small || photoshoot.generatedImageUrl,
@@ -63,10 +71,15 @@ export async function GET(req: NextRequest) {
         // Extract B&W URLs from metadata
         if (metadata.bwUrls) {
           bwUrls = metadata.bwUrls
+          console.log('✅ B&W URLs extracted from metadata for image:', photoshoot.id, bwUrls)
+        } else {
+          console.log('⚠️ No B&W URLs found in metadata for image:', photoshoot.id)
         }
+      } else {
+        console.log('⚠️ No metadata found for image:', photoshoot.id)
       }
 
-      return {
+      const formattedImage = {
         id: photoshoot.id,
         imageUrl: photoshoot.generatedImageUrl,
         thumbnailUrl: photoshoot.thumbnailUrl || photoshoot.generatedImageUrl,
@@ -78,6 +91,15 @@ export async function GET(req: NextRequest) {
         style: photoshoot.style,
         createdAt: photoshoot.createdAt.toISOString()
       }
+
+      console.log('📤 Formatted image response for:', photoshoot.id, {
+        hasBwImageUrl: !!formattedImage.bwImageUrl,
+        hasBwUrls: !!formattedImage.bwUrls,
+        bwImageUrl: formattedImage.bwImageUrl,
+        bwUrlsOriginal: formattedImage.bwUrls?.original
+      })
+
+      return formattedImage
     })
 
     // Also get total count for pagination

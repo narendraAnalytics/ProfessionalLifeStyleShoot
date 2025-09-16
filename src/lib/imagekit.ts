@@ -311,63 +311,104 @@ export class ImageKitService {
     }));
   }
 
-  // Generate B&W version URLs for immediate access
+  // Generate B&W version URLs for immediate access using manual URL construction
   generateBWUrls(originalUrl: string, aspectRatio?: string): {
     small: string;
     medium: string;
     large: string;
     original: string;
   } {
+    // Helper function to create B&W URL with dimensions
+    const createBWUrl = (url: string, transformations: string[]) => {
+      // Filter out empty transformations
+      const validTransforms = transformations.filter(t => t && t.trim())
+      const transformString = validTransforms.join(',')
+      const timestamp = Date.now() + Math.random() * 1000
+      const separator = url.includes('?') ? '&' : '?'
+      
+      console.log('🔗 Creating B&W URL:', {
+        url,
+        transformations,
+        validTransforms,
+        transformString,
+        finalUrl: `${url}${separator}tr=${transformString}&v=${Math.floor(timestamp)}`
+      })
+      
+      return `${url}${separator}tr=${transformString}&v=${Math.floor(timestamp)}`
+    }
+
     // Use smart crop mode for face preservation
     const cropMode = aspectRatio ? this.getSmartCropMode(aspectRatio) : 'c-at_max';
     
     // Define optimal dimensions for each aspect ratio with B&W transformation
-    const getDimensions = (size: 'small' | 'medium' | 'large') => {
-      if (!aspectRatio) return {};
+    const getDimensionTransforms = (size: 'small' | 'medium' | 'large') => {
+      if (!aspectRatio) return [];
+      
+      const transforms = []
       
       switch (aspectRatio) {
         case '1-1':
         case '1:1':
-          return size === 'small' ? { width: 400, height: 400 } :
-                 size === 'medium' ? { width: 800, height: 800 } :
-                 { width: 1200, height: 1200 };
+          if (size === 'small') transforms.push('w-400', 'h-400')
+          else if (size === 'medium') transforms.push('w-800', 'h-800')
+          else transforms.push('w-1200', 'h-1200')
+          break;
         
         case '4-5':
         case '4:5':
-          return size === 'small' ? { width: 400, height: 500 } :
-                 size === 'medium' ? { width: 800, height: 1000 } :
-                 { width: 1080, height: 1350 };
+          if (size === 'small') transforms.push('w-400', 'h-500')
+          else if (size === 'medium') transforms.push('w-800', 'h-1000')
+          else transforms.push('w-1080', 'h-1350')
+          break;
         
         case '9-16':
         case '9:16':
-          return size === 'small' ? { width: 400, height: 711 } :
-                 size === 'medium' ? { width: 600, height: 1067 } :
-                 { width: 1080, height: 1920 };
-        
-        default:
-          return {};
+          if (size === 'small') transforms.push('w-400', 'h-711')
+          else if (size === 'medium') transforms.push('w-600', 'h-1067')
+          else transforms.push('w-1080', 'h-1920')
+          break;
       }
+      
+      return transforms
     };
     
+    // Split cropMode if it contains multiple transformations
+    const cropTransforms = cropMode.includes(',') ? cropMode.split(',') : [cropMode];
+    
+    console.log('🔧 B&W URL generation debug:', {
+      aspectRatio,
+      cropMode,
+      cropTransforms,
+      originalUrl
+    });
+
     return {
-      small: this.getOptimizedUrl(originalUrl, [
-        { transformation: `${cropMode},e-grayscale` },
-        { ...getDimensions('small') },
-        { quality: 80, format: 'webp' }
+      small: createBWUrl(originalUrl, [
+        ...getDimensionTransforms('small'),
+        ...cropTransforms,
+        'e-grayscale',
+        'q-80',
+        'f-webp'
       ]),
-      medium: this.getOptimizedUrl(originalUrl, [
-        { transformation: `${cropMode},e-grayscale` },
-        { ...getDimensions('medium') },
-        { quality: 85, format: 'webp' }
+      medium: createBWUrl(originalUrl, [
+        ...getDimensionTransforms('medium'),
+        ...cropTransforms,
+        'e-grayscale',
+        'q-85',
+        'f-webp'
       ]),
-      large: this.getOptimizedUrl(originalUrl, [
-        { transformation: `${cropMode},e-grayscale` },
-        { ...getDimensions('large') },
-        { quality: 90, format: 'webp' }
+      large: createBWUrl(originalUrl, [
+        ...getDimensionTransforms('large'),
+        ...cropTransforms,
+        'e-grayscale',
+        'q-90',
+        'f-webp'
       ]),
-      original: this.getOptimizedUrl(originalUrl, [
-        { transformation: 'e-grayscale' },
-        { quality: 95, format: 'auto' }
+      original: createBWUrl(originalUrl, [
+        ...cropTransforms,
+        'e-grayscale',
+        'q-95',
+        'f-auto'
       ])
     };
   }

@@ -72,12 +72,22 @@ export async function POST(req: NextRequest) {
       console.log('✅ ImageKit upload successful with smart cropping applied');
 
       // Generate responsive URLs with aspect ratio
+      console.log('📏 Generating responsive URLs for aspect ratio:', aspectRatio)
       const responsiveUrls = imageKitService.getResponsiveUrls(uploadResult.url, aspectRatio);
+      console.log('📏 Responsive URLs generated:', responsiveUrls)
       
       // Generate B&W versions immediately for instant access
+      console.log('⚫ Generating B&W URLs for aspect ratio:', aspectRatio)
       const bwUrls = imageKitService.generateBWUrls(uploadResult.url, aspectRatio);
+      console.log('⚫ B&W URLs generated:', bwUrls)
 
       // Save to database with B&W URL
+      console.log('💾 Saving to database with B&W data:', {
+        bwImageUrl: bwUrls.original,
+        bwUrls: bwUrls,
+        aspectRatio: aspectRatio
+      })
+      
       const photoshoot = await prisma.photoshoot.create({
         data: {
           userId: user.id,
@@ -97,6 +107,12 @@ export async function POST(req: NextRequest) {
           }
         },
       });
+
+      console.log('💾 Database save successful:', {
+        photoshootId: photoshoot.id,
+        storedBwImageUrl: photoshoot.bwImageUrl,
+        metadataKeys: Object.keys(photoshoot.metadata || {})
+      })
 
       // Credits system disabled for now
 
