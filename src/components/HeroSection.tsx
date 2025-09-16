@@ -165,14 +165,40 @@ export default function HeroSection() {
                   Create Your Shoot
                 </Button>
               </SignedIn>
-              <Button 
-                size="lg" 
-                variant="outline" 
-                className="border-gray-300 text-gray-800 hover:bg-gray-100 px-8 py-4 rounded-full font-semibold text-lg backdrop-blur-sm transition-all duration-300 hover:scale-105"
-              >
-                <Camera className="w-5 h-5 mr-2" />
-                View Gallery
-              </Button>
+              <SignedOut>
+                <SignInButton mode="modal">
+                  <Button 
+                    size="lg" 
+                    variant="outline" 
+                    className="border-gray-300 text-gray-800 hover:bg-gray-100 px-8 py-4 rounded-full font-semibold text-lg backdrop-blur-sm transition-all duration-300 hover:scale-105"
+                  >
+                    <Camera className="w-5 h-5 mr-2" />
+                    View Gallery
+                  </Button>
+                </SignInButton>
+              </SignedOut>
+              <SignedIn>
+                <Button 
+                  size="lg" 
+                  variant="outline" 
+                  onClick={() => {
+                    // Add immediate visual feedback
+                    const button = document.activeElement as HTMLButtonElement
+                    if (button) {
+                      button.style.transform = 'scale(0.95)'
+                      setTimeout(() => {
+                        button.style.transform = ''
+                      }, 100)
+                    }
+                    // Navigate to dashboard with gallery section active
+                    router.push('/dashboard?section=gallery')
+                  }}
+                  className="border-gray-300 text-gray-800 hover:bg-gray-100 px-8 py-4 rounded-full font-semibold text-lg backdrop-blur-sm transition-all duration-300 hover:scale-105 active:scale-95"
+                >
+                  <Camera className="w-5 h-5 mr-2" />
+                  View Gallery
+                </Button>
+              </SignedIn>
             </div>
 
             {/* Trust badges */}

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useUser } from '@clerk/nextjs'
+import { useSearchParams } from 'next/navigation'
 import DashboardHeader from './DashboardHeader'
 import DashboardSidebar from './DashboardSidebar'
 import AIPhotoshootGenerator from './AIPhotoshootGenerator'
@@ -42,6 +43,7 @@ interface GeneratedImage {
 }
 
 export default function Dashboard() {
+  const searchParams = useSearchParams()
   const [activeSection, setActiveSection] = useState('create')
   const [recentImages, setRecentImages] = useState<GeneratedImage[]>([])
   const [isLoadingImages, setIsLoadingImages] = useState(false)
@@ -138,6 +140,14 @@ export default function Dashboard() {
       setIsLoadingImages(false)
     }
   }
+
+  // Handle URL section parameter on mount
+  useEffect(() => {
+    const section = searchParams.get('section')
+    if (section === 'gallery') {
+      setActiveSection('gallery')
+    }
+  }, [searchParams])
 
   // Initialize dashboard immediately - don't wait for sync
   useEffect(() => {
