@@ -20,12 +20,12 @@ export default function Navbar() {
   }, [])
 
   const navItems = [
-    { name: 'Home', href: '#home' },
-    { name: 'How It Works', href: '#how-it-works' },
-    { name: 'Gallery', href: '#gallery' },
-    { name: 'Pricing', href: '#pricing' },
-    { name: 'About', href: '#about' },
-    { name: 'Contact', href: '#contact' }
+    { name: 'Home', href: '#home', isRoute: false },
+    { name: 'How It Works', href: '#how-it-works', isRoute: false },
+    { name: 'Gallery', href: '/gallery', isRoute: true },
+    { name: 'Pricing', href: '#pricing', isRoute: false },
+    { name: 'About', href: '#about', isRoute: false },
+    { name: 'Contact', href: '#contact', isRoute: false }
   ]
 
   const handleNavClick = (href: string) => {
@@ -75,8 +75,10 @@ export default function Navbar() {
                   key={item.name}
                   href={item.href}
                   onClick={(e) => {
-                    e.preventDefault()
-                    handleNavClick(item.href)
+                    if (!item.isRoute) {
+                      e.preventDefault()
+                      handleNavClick(item.href)
+                    }
                   }}
                   className="text-gray-800/80 hover:text-gray-800 px-3 py-2 text-sm font-medium transition-all duration-300 relative group cursor-pointer"
                   style={{ animationDelay: `${index * 100}ms` }}
@@ -143,7 +145,13 @@ export default function Navbar() {
                   key={item.name}
                   href={item.href}
                   className="text-gray-800/80 hover:text-gray-800 block px-3 py-2 text-base font-medium transition-colors duration-300"
-                  onClick={() => setIsMobileMenuOpen(false)}
+                  onClick={(e) => {
+                    if (!item.isRoute) {
+                      e.preventDefault()
+                      handleNavClick(item.href)
+                    }
+                    setIsMobileMenuOpen(false)
+                  }}
                 >
                   {item.name}
                 </a>
