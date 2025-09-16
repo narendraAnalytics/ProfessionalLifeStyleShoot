@@ -121,13 +121,29 @@ export default function PublicGallery() {
         </div>
 
         <div className="max-w-7xl mx-auto text-center relative z-10">
-          {/* Main Heading */}
-          <div className="flex items-center justify-center mb-6">
-            <div className="relative">
-              <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full blur opacity-75 animate-pulse"></div>
-              <div className="relative w-20 h-20 bg-white rounded-full flex items-center justify-center">
-                <Sparkles className="w-10 h-10 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent animate-bounce" />
+          {/* Professional Logo */}
+          <div className="flex items-center justify-center mb-8">
+            <div className="relative group">
+              {/* Multiple layered glow effects - scaled for larger logo */}
+              <div className="absolute -inset-12 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full blur-3xl opacity-60 animate-pulse" />
+              <div className="absolute -inset-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full blur-2xl opacity-50 animate-pulse" style={{animationDelay: '0.5s'}} />
+              <div className="absolute -inset-8 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full blur-xl opacity-40 animate-pulse" style={{animationDelay: '1s'}} />
+              <div className="absolute -inset-6 bg-gradient-to-r from-purple-300 to-pink-300 rounded-full blur-lg opacity-30 animate-pulse" style={{animationDelay: '1.5s'}} />
+              
+              {/* Logo with bright background - larger size */}
+              <div className="relative bg-white rounded-full p-1 shadow-2xl">
+                <Image
+                  src="/images/dasboardicon.png"
+                  alt="Professional Life Shoot Dashboard Logo"
+                  width={128}
+                  height={128}
+                  className="relative z-10 rounded-full transition-all duration-500 group-hover:scale-110 shadow-lg w-28 h-28 md:w-32 md:h-32"
+                  priority
+                />
               </div>
+              
+              {/* Additional bright overlay - scaled */}
+              <div className="absolute -inset-2 bg-gradient-to-r from-purple-400/20 to-pink-400/20 rounded-full animate-pulse" style={{animationDelay: '2s'}} />
             </div>
           </div>
 

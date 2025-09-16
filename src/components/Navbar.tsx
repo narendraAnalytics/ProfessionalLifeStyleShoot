@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Image from 'next/image'
 import { Menu, X } from 'lucide-react'
 import { Button } from './ui/button'
 import { SignedIn, SignedOut, SignInButton, UserButton } from '@clerk/nextjs'
@@ -58,12 +59,23 @@ export default function Navbar() {
                 e.preventDefault()
                 handleNavClick('#home')
               }}
-              className="text-2xl font-bold transition-all duration-300 group-hover:scale-110"
+              className="flex items-center transition-all duration-300 group-hover:scale-200 relative z-20"
             >
-              <span className="bg-gradient-to-r from-purple-400 via-blue-400 to-pink-400 bg-clip-text text-transparent relative">
-                PLS
-                <div className="absolute -inset-2 bg-gradient-to-r from-purple-600/20 to-pink-600/20 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10" />
-              </span>
+              <div className="relative">
+                {/* Glow effect background */}
+                <div className="absolute -inset-2 bg-gradient-to-r from-purple-600/20 to-pink-600/20 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-sm" />
+                <div className="absolute -inset-1 bg-gradient-to-r from-purple-400/10 to-pink-400/10 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                
+                {/* Logo Image */}
+                <Image
+                  src="/images/iconWebsite.png"
+                  alt="Professional Life Shoot Logo"
+                  width={44}
+                  height={44}
+                  className="relative z-10 rounded-full transition-all duration-300 group-hover:shadow-lg group-hover:shadow-purple-500/25 w-10 h-10 sm:w-11 sm:h-11"
+                  priority
+                />
+              </div>
             </a>
           </div>
 

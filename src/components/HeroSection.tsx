@@ -11,7 +11,13 @@ import Image from 'next/image'
 export default function HeroSection() {
   const [currentImage, setCurrentImage] = useState(0)
   const [animatedText, setAnimatedText] = useState('')
-  const fullText = "Transform Into a Professional Model with AI"
+  const [currentWordIndex, setCurrentWordIndex] = useState(0)
+  const [isWordAnimating, setIsWordAnimating] = useState(false)
+  
+  const staticText = "Transform Into a Professional "
+  const rotatingWords = ["Model", "Brand", "Designer", "Creator", "Influencer"]
+  const endingText = " with AI"
+  
   const router = useRouter()
 
   // Professional lifestyle photoshoot images
@@ -48,19 +54,50 @@ export default function HeroSection() {
     }
   ]
 
-  // Animate text on load
+  // Animate initial text
   useEffect(() => {
     let index = 0
+    const fullInitialText = staticText + rotatingWords[0] + endingText
     const interval = setInterval(() => {
-      if (index < fullText.length) {
-        setAnimatedText(fullText.slice(0, index + 1))
+      if (index < fullInitialText.length) {
+        setAnimatedText(fullInitialText.slice(0, index + 1))
         index++
       } else {
         clearInterval(interval)
+        // Start rotating words after initial animation
+        setTimeout(() => {
+          startWordRotation()
+        }, 2000)
       }
-    }, 100)
+    }, 80)
     return () => clearInterval(interval)
   }, [])
+
+  // Word rotation logic
+  const startWordRotation = () => {
+    const rotateWords = () => {
+      setIsWordAnimating(true)
+      
+      setTimeout(() => {
+        setCurrentWordIndex((prev) => (prev + 1) % rotatingWords.length)
+        const newText = staticText + rotatingWords[(currentWordIndex + 1) % rotatingWords.length] + endingText
+        setAnimatedText(newText)
+        setIsWordAnimating(false)
+      }, 300)
+    }
+
+    // Start the rotation cycle
+    const interval = setInterval(rotateWords, 3100)
+    return () => clearInterval(interval)
+  }
+
+  // Update animated text when word changes
+  useEffect(() => {
+    if (currentWordIndex > 0) {
+      const newText = staticText + rotatingWords[currentWordIndex] + endingText
+      setAnimatedText(newText)
+    }
+  }, [currentWordIndex])
 
   // Auto-rotate images
   useEffect(() => {
@@ -107,8 +144,20 @@ export default function HeroSection() {
             {/* Animated headline */}
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-tight">
               <span className="bg-gradient-to-r from-purple-400 via-blue-400 to-pink-400 bg-clip-text text-transparent">
-                {animatedText}
-                <span className="animate-pulse">|</span>
+                {staticText}
+                <span className={`transition-all duration-300 ${isWordAnimating ? 'opacity-0 transform scale-95' : 'opacity-100 transform scale-100'}`}>
+                  <span className={`bg-gradient-to-r from-pink-400 via-purple-400 to-blue-400 bg-clip-text text-transparent font-extrabold ${
+                    rotatingWords[currentWordIndex] === 'Designer'
+                      ? 'text-4xl md:text-5xl lg:text-6xl'
+                      : rotatingWords[currentWordIndex] === 'Influencer'
+                      ? 'text-3xl md:text-4xl lg:text-5xl'
+                      : ''
+                  }`}>
+                    {rotatingWords[currentWordIndex]}
+                  </span>
+                </span>
+                {endingText}
+                <span className="animate-pulse ml-1">|</span>
               </span>
             </h1>
 
@@ -166,25 +215,36 @@ export default function HeroSection() {
                 </Button>
               </SignedIn>
               <SignedOut>
-                <Button 
-                  size="lg" 
-                  onClick={() => {
-                    // Add immediate visual feedback
-                    const button = document.activeElement as HTMLButtonElement
-                    if (button) {
-                      button.style.transform = 'scale(0.95)'
-                      setTimeout(() => {
-                        button.style.transform = ''
-                      }, 100)
-                    }
-                    // Navigate to public gallery
-                    router.push('/gallery')
-                  }}
-                  className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white px-8 py-4 rounded-full font-semibold text-lg shadow-2xl hover:shadow-blue-500/25 transition-all duration-300 hover:scale-105 active:scale-95"
-                >
-                  <Camera className="w-5 h-5 mr-2" />
-                  View Gallery
-                </Button>
+                <div className="relative group">
+                  {/* Tooltip */}
+                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-3 opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none z-50">
+                    <div className="bg-gray-900/95 backdrop-blur-sm text-white px-4 py-3 rounded-xl shadow-2xl border border-gray-700/50 whitespace-nowrap">
+                      <p className="text-sm font-medium">Click to view stunning images created by AI</p>
+                      {/* Arrow pointer */}
+                      <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-[6px] border-r-[6px] border-t-[6px] border-l-transparent border-r-transparent border-t-gray-900/95"></div>
+                    </div>
+                  </div>
+                  
+                  <Button 
+                    size="lg" 
+                    onClick={() => {
+                      // Add immediate visual feedback
+                      const button = document.activeElement as HTMLButtonElement
+                      if (button) {
+                        button.style.transform = 'scale(0.95)'
+                        setTimeout(() => {
+                          button.style.transform = ''
+                        }, 100)
+                      }
+                      // Navigate to public gallery
+                      router.push('/gallery')
+                    }}
+                    className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white px-8 py-4 rounded-full font-semibold text-lg shadow-2xl hover:shadow-blue-500/25 transition-all duration-300 hover:scale-105 active:scale-95"
+                  >
+                    <Camera className="w-5 h-5 mr-2" />
+                    View Gallery
+                  </Button>
+                </div>
               </SignedOut>
               <SignedIn>
                 <Button 
