@@ -6,16 +6,12 @@ import { Button } from './ui/button'
 import { Textarea } from './ui/textarea'
 import { Progress } from './ui/progress'
 import { 
-  Sparkles, 
   Send, 
   Wand2, 
   Download,
   AlertCircle,
   Loader2,
   Image as ImageIcon,
-  Edit3,
-  Check,
-  X,
   Upload,
   Trash2
 } from 'lucide-react'
@@ -69,7 +65,6 @@ export default function ImageCompositionGenerator({ onImageGenerated }: ImageCom
   // Image upload state
   const [uploadedImages, setUploadedImages] = useState<UploadedImageFile[]>([])
   const [currentPrompt, setCurrentPrompt] = useState('')
-  const [enhancedPrompt, setEnhancedPrompt] = useState('')
   const [originalPrompt, setOriginalPrompt] = useState('')
   const [generatedImage, setGeneratedImage] = useState<GeneratedImage | null>(null)
   const [selectedAspectRatio, setSelectedAspectRatio] = useState<AspectRatio>({
@@ -84,14 +79,11 @@ export default function ImageCompositionGenerator({ onImageGenerated }: ImageCom
   })
   
   // UI state
-  const [isEnhancing, setIsEnhancing] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
   const [progress, setProgress] = useState(0)
   const [error, setError] = useState<string | null>(null)
-  const [step, setStep] = useState<'upload' | 'enhanced-edit' | 'size-selection' | 'generated'>('upload')
+  const [step, setStep] = useState<'upload' | 'size-selection' | 'generated'>('upload')
   const [selectedFormat, setSelectedFormat] = useState<'jpg' | 'webp' | 'png'>('jpg')
-  const [isEditingEnhanced, setIsEditingEnhanced] = useState(false)
-  const [tempEnhancedPrompt, setTempEnhancedPrompt] = useState('')
   const [isDragOver, setIsDragOver] = useState(false)
   useUser() // Keep for auth context
 
@@ -196,8 +188,8 @@ export default function ImageCompositionGenerator({ onImageGenerated }: ImageCom
     setUploadedImages(prev => prev.filter((_, i) => i !== index))
   }
 
-  // Handle enhance prompt
-  const handleEnhancePrompt = async () => {
+  // Handle proceed to size selection
+  const handleProceedToSizeSelection = () => {
     if (!currentPrompt.trim()) {
       toast.error('Please enter a prompt')
       return
@@ -208,50 +200,13 @@ export default function ImageCompositionGenerator({ onImageGenerated }: ImageCom
       return
     }
 
-    setError(null)
-    setIsEnhancing(true)
-    setProgress(10)
-
-    try {
-      const response = await fetch('/api/enhance-prompt', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          prompt: currentPrompt.trim()
-        }),
-      })
-
-      setProgress(80)
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to enhance prompt')
-      }
-
-      setOriginalPrompt(data.originalPrompt)
-      setEnhancedPrompt(data.enhancedPrompt)
-      setTempEnhancedPrompt(data.enhancedPrompt)
-      setStep('enhanced-edit')
-      setProgress(100)
-      
-      toast.success('Prompt enhanced successfully!')
-
-    } catch (error) {
-      console.error('Enhancement error:', error)
-      const errorMessage = error instanceof Error ? error.message : 'Failed to enhance prompt'
-      setError(errorMessage)
-      toast.error(errorMessage)
-    } finally {
-      setIsEnhancing(false)
-      setProgress(0)
-    }
+    setOriginalPrompt(currentPrompt.trim())
+    setStep('size-selection')
   }
 
   // Handle generate composition
-  const handleGenerateComposition = async (promptToUse?: string) => {
-    const finalPrompt = promptToUse || tempEnhancedPrompt || enhancedPrompt || currentPrompt.trim()
+  const handleGenerateComposition = async () => {
+    const finalPrompt = originalPrompt || currentPrompt.trim()
     
     if (!finalPrompt) {
       toast.error('Please enter a prompt')
@@ -273,8 +228,7 @@ export default function ImageCompositionGenerator({ onImageGenerated }: ImageCom
       uploadedImages.forEach((img, index) => {
         formData.append(`image${index + 1}`, img.file)
       })
-      formData.append('prompt', originalPrompt || currentPrompt.trim())
-      formData.append('enhancedPrompt', finalPrompt)
+      formData.append('prompt', finalPrompt)
       formData.append('aspectRatio', selectedAspectRatio.value)
 
       const response = await fetch('/api/compose-images', {
@@ -398,37 +352,15 @@ export default function ImageCompositionGenerator({ onImageGenerated }: ImageCom
     }
   }
 
-  const handleProceedToSizeSelection = () => {
-    setEnhancedPrompt(tempEnhancedPrompt)
-    setIsEditingEnhanced(false)
-    setStep('size-selection')
-  }
-
-  const handleEditEnhancedPrompt = () => {
-    setIsEditingEnhanced(true)
-  }
-
-  const handleSaveEnhancedEdit = () => {
-    setEnhancedPrompt(tempEnhancedPrompt)
-    setIsEditingEnhanced(false)
-  }
-
-  const handleCancelEnhancedEdit = () => {
-    setTempEnhancedPrompt(enhancedPrompt)
-    setIsEditingEnhanced(false)
-  }
 
   const handleStartOver = () => {
     setUploadedImages([])
     setCurrentPrompt('')
-    setEnhancedPrompt('')
     setOriginalPrompt('')
-    setTempEnhancedPrompt('')
     setGeneratedImage(null)
     setStep('upload')
     setError(null)
     setSelectedFormat('jpg')
-    setIsEditingEnhanced(false)
     setSelectedAspectRatio({
       label: '1:1',
       value: '1-1',
@@ -457,13 +389,11 @@ export default function ImageCompositionGenerator({ onImageGenerated }: ImageCom
       <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border border-white/30 p-6">
         
         {/* Progress Bar */}
-        {(isEnhancing || isGenerating) && (
+        {isGenerating && (
           <div className="mb-6">
             <div className="space-y-2">
               <div className="flex justify-between text-sm text-gray-600">
-                <span>
-                  {isEnhancing ? 'Enhancing your prompt...' : 'Generating your composition...'}
-                </span>
+                <span>Generating your composition...</span>
                 <span>{progress}%</span>
               </div>
               <Progress value={progress} className="w-full" />
@@ -569,35 +499,18 @@ export default function ImageCompositionGenerator({ onImageGenerated }: ImageCom
                       onChange={(e) => setCurrentPrompt(e.target.value)}
                       placeholder="e.g., Create a professional e-commerce fashion photo. Take the blue floral dress from the first image and let the woman from the second image wear it..."
                       className="min-h-[120px] text-base border border-gray-200 shadow-sm resize-none bg-white rounded-xl p-4 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
-                      disabled={isEnhancing || isGenerating}
+                      disabled={isGenerating}
                     />
                   </div>
 
                   <div className="flex gap-3">
                     <Button
-                      onClick={handleEnhancePrompt}
-                      disabled={!currentPrompt.trim() || isEnhancing || isGenerating}
-                      variant="outline"
-                      className="border-emerald-200 text-emerald-600 hover:bg-emerald-50 hover:border-emerald-300 flex-1"
-                    >
-                      {isEnhancing ? (
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      ) : (
-                        <Sparkles className="w-4 h-4 mr-2" />
-                      )}
-                      Enhance Prompt
-                    </Button>
-                    <Button
-                      onClick={() => handleGenerateComposition(currentPrompt)}
-                      disabled={!currentPrompt.trim() || isEnhancing || isGenerating}
+                      onClick={handleProceedToSizeSelection}
+                      disabled={!currentPrompt.trim() || isGenerating}
                       className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white flex-1"
                     >
-                      {isGenerating ? (
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      ) : (
-                        <Send className="w-4 h-4 mr-2" />
-                      )}
-                      Generate Composition
+                      <ImageIcon className="w-4 h-4 mr-2" />
+                      Proceed to Size Selection
                     </Button>
                   </div>
                 </div>
@@ -605,118 +518,24 @@ export default function ImageCompositionGenerator({ onImageGenerated }: ImageCom
             </div>
           )}
 
-          {/* Step 2: Enhanced Prompt Editing */}
-          {step === 'enhanced-edit' && (
-            <div className="space-y-4">
-              <div className="text-center">
-                <div className="w-12 h-12 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <Sparkles className="w-6 h-6 text-white" />
-                </div>
-                <h3 className="text-xl font-semibold text-gray-800 mb-2">Step 2: Review & Edit Enhanced Prompt</h3>
-                <p className="text-gray-600">Your prompt has been enhanced. You can edit it or proceed as-is.</p>
-              </div>
-
-              <div className="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-xl p-4">
-                <div className="space-y-3">
-                  <div>
-                    <span className="font-medium text-gray-700 text-sm">Original Prompt:</span>
-                    <div className="mt-1 p-3 bg-gray-50 rounded-lg text-gray-600 italic text-sm">
-                      &ldquo;{originalPrompt}&rdquo;
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="font-medium text-emerald-700 text-sm">Enhanced Prompt:</span>
-                      {!isEditingEnhanced && (
-                        <Button
-                          onClick={handleEditEnhancedPrompt}
-                          size="sm"
-                          variant="outline"
-                          className="border-emerald-300 text-emerald-600 hover:bg-emerald-50"
-                        >
-                          <Edit3 className="w-3 h-3 mr-1" />
-                          Edit
-                        </Button>
-                      )}
-                    </div>
-                    
-                    {isEditingEnhanced ? (
-                      <div className="space-y-3">
-                        <Textarea
-                          value={tempEnhancedPrompt}
-                          onChange={(e) => setTempEnhancedPrompt(e.target.value)}
-                          className="min-h-[100px] text-sm border-emerald-300 focus:ring-emerald-500 focus:border-emerald-500"
-                          placeholder="Edit your enhanced prompt..."
-                        />
-                        <div className="flex gap-2">
-                          <Button
-                            onClick={handleSaveEnhancedEdit}
-                            size="sm"
-                            className="bg-emerald-600 hover:bg-emerald-700 text-white"
-                          >
-                            <Check className="w-3 h-3 mr-1" />
-                            Save Changes
-                          </Button>
-                          <Button
-                            onClick={handleCancelEnhancedEdit}
-                            size="sm"
-                            variant="outline"
-                            className="border-gray-300"
-                          >
-                            <X className="w-3 h-3 mr-1" />
-                            Cancel
-                          </Button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="mt-1 p-3 bg-emerald-50 rounded-lg text-emerald-800 font-medium text-sm">
-                        &ldquo;{tempEnhancedPrompt}&rdquo;
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex gap-3">
-                <Button
-                  onClick={handleStartOver}
-                  variant="outline"
-                  className="border-gray-200 text-gray-600 hover:bg-gray-50"
-                  disabled={isEditingEnhanced}
-                >
-                  Start Over
-                </Button>
-                <Button
-                  onClick={handleProceedToSizeSelection}
-                  className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white flex-1"
-                  disabled={isEditingEnhanced}
-                >
-                  <ImageIcon className="w-4 h-4 mr-2" />
-                  Proceed to Size Selection
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {/* Step 3: Size Selection */}
+          {/* Step 2: Size Selection */}
           {step === 'size-selection' && (
             <div className="space-y-4">
               <div className="text-center">
                 <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full flex items-center justify-center mx-auto mb-3">
                   <ImageIcon className="w-6 h-6 text-white" />
                 </div>
-                <h3 className="text-xl font-semibold text-gray-800 mb-2">Step 3: Choose Image Size</h3>
+                <h3 className="text-xl font-semibold text-gray-800 mb-2">Step 2: Choose Image Size</h3>
                 <p className="text-gray-600">Select your preferred aspect ratio for the composition</p>
               </div>
 
-              {/* Enhanced Prompt Display */}
-              <div className="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-xl p-4 mb-6">
+              {/* Prompt Display */}
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4 mb-6">
                 <div className="space-y-3">
                   <div>
-                    <span className="font-medium text-gray-700 text-sm">Your Enhanced Prompt:</span>
-                    <div className="mt-1 p-3 bg-emerald-50 rounded-lg text-emerald-800 font-medium text-sm">
-                      &ldquo;{tempEnhancedPrompt || enhancedPrompt}&rdquo;
+                    <span className="font-medium text-gray-700 text-sm">Your Composition Prompt:</span>
+                    <div className="mt-1 p-3 bg-blue-50 rounded-lg text-blue-800 font-medium text-sm">
+                      &ldquo;{originalPrompt || currentPrompt}&rdquo;
                     </div>
                   </div>
                 </div>
@@ -769,7 +588,7 @@ export default function ImageCompositionGenerator({ onImageGenerated }: ImageCom
                   Start Over
                 </Button>
                 <Button
-                  onClick={() => handleGenerateComposition(tempEnhancedPrompt || enhancedPrompt)}
+                  onClick={handleGenerateComposition}
                   disabled={isGenerating}
                   className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white flex-1"
                 >
@@ -784,7 +603,7 @@ export default function ImageCompositionGenerator({ onImageGenerated }: ImageCom
             </div>
           )}
 
-          {/* Step 4: Generated Composition */}
+          {/* Step 3: Generated Composition */}
           {step === 'generated' && generatedImage && (
             <div className="space-y-4">
               <div className="text-center">

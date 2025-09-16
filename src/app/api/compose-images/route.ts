@@ -15,15 +15,14 @@ export async function POST(req: NextRequest) {
     const image1 = formData.get('image1') as File;
     const image2 = formData.get('image2') as File;
     const prompt = formData.get('prompt') as string;
-    const enhancedPrompt = formData.get('enhancedPrompt') as string;
     const aspectRatio = formData.get('aspectRatio') as string;
 
     if (!image1 || !image2) {
       return NextResponse.json({ error: 'Exactly 2 images are required' }, { status: 400 });
     }
 
-    if (!prompt || !enhancedPrompt) {
-      return NextResponse.json({ error: 'Both prompt and enhanced prompt are required' }, { status: 400 });
+    if (!prompt) {
+      return NextResponse.json({ error: 'Prompt is required' }, { status: 400 });
     }
 
     // Validate file types and sizes
@@ -72,7 +71,7 @@ export async function POST(req: NextRequest) {
       // Generate composition using Gemini
       console.log('🎨 Generating composition with Gemini...');
       const generatedBuffer = await geminiService.generateImageFromComposition(
-        enhancedPrompt,
+        prompt,
         imageBuffers
       );
 
@@ -126,7 +125,7 @@ export async function POST(req: NextRequest) {
           imageKitFileId: uploadResult.fileId,
           style: 'composition',
           originalPrompt: prompt,
-          enhancedPrompt: enhancedPrompt,
+          enhancedPrompt: null,
           status: 'completed',
           creditsUsed: 0, // No credits for now as per request
           metadata: {
@@ -167,7 +166,7 @@ export async function POST(req: NextRequest) {
           bwUrls, // Include B&W responsive URLs
           style: photoshoot.style,
           originalPrompt: photoshoot.originalPrompt,
-          enhancedPrompt: photoshoot.enhancedPrompt,
+          enhancedPrompt: null,
           createdAt: photoshoot.createdAt,
         },
       });
