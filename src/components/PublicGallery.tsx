@@ -110,25 +110,25 @@ export default function PublicGallery() {
   ]
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-purple-50">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-purple-50 overflow-x-hidden">
       {/* Header Section */}
       <div className="relative py-20 px-4 sm:px-6 lg:px-8">
         {/* Background Elements */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-20 left-1/4 w-64 h-64 bg-purple-400/5 rounded-full blur-3xl animate-pulse" />
-          <div className="absolute bottom-20 right-1/4 w-80 h-80 bg-blue-400/5 rounded-full blur-3xl animate-pulse delay-1000" />
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-pink-400/3 rounded-full blur-3xl animate-pulse delay-2000" />
+          <div className="absolute top-20 left-1/4 w-32 h-32 md:w-48 md:h-48 bg-purple-400/5 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute bottom-20 right-1/4 w-40 h-40 md:w-56 md:h-56 bg-blue-400/5 rounded-full blur-3xl animate-pulse delay-1000" />
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-48 h-48 md:w-64 md:h-64 bg-pink-400/3 rounded-full blur-3xl animate-pulse delay-2000" />
         </div>
 
         <div className="max-w-7xl mx-auto text-center relative z-10">
           {/* Professional Logo */}
           <div className="flex items-center justify-center mb-8">
             <div className="relative group">
-              {/* Multiple layered glow effects - scaled for larger logo */}
-              <div className="absolute -inset-12 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full blur-3xl opacity-60 animate-pulse" />
-              <div className="absolute -inset-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full blur-2xl opacity-50 animate-pulse" style={{animationDelay: '0.5s'}} />
-              <div className="absolute -inset-8 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full blur-xl opacity-40 animate-pulse" style={{animationDelay: '1s'}} />
-              <div className="absolute -inset-6 bg-gradient-to-r from-purple-300 to-pink-300 rounded-full blur-lg opacity-30 animate-pulse" style={{animationDelay: '1.5s'}} />
+              {/* Multiple layered glow effects - optimized for no overflow */}
+              <div className="absolute -inset-6 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full blur-2xl opacity-60 animate-pulse" />
+              <div className="absolute -inset-4 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full blur-xl opacity-50 animate-pulse" style={{animationDelay: '0.5s'}} />
+              <div className="absolute -inset-3 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full blur-lg opacity-40 animate-pulse" style={{animationDelay: '1s'}} />
+              <div className="absolute -inset-2 bg-gradient-to-r from-purple-300 to-pink-300 rounded-full blur-md opacity-30 animate-pulse" style={{animationDelay: '1.5s'}} />
               
               {/* Logo with bright background - larger size */}
               <div className="relative bg-white rounded-full p-1 shadow-2xl">
@@ -142,8 +142,8 @@ export default function PublicGallery() {
                 />
               </div>
               
-              {/* Additional bright overlay - scaled */}
-              <div className="absolute -inset-2 bg-gradient-to-r from-purple-400/20 to-pink-400/20 rounded-full animate-pulse" style={{animationDelay: '2s'}} />
+              {/* Additional bright overlay - optimized */}
+              <div className="absolute -inset-1 bg-gradient-to-r from-purple-400/20 to-pink-400/20 rounded-full animate-pulse" style={{animationDelay: '2s'}} />
             </div>
           </div>
 

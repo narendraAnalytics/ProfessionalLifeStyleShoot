@@ -51,3 +51,9 @@ async function main() {
 }
 
 main();
+
+
+
+
+- Root Cause Found: Global CSS * selector applying borders to every element
+  - Secondary Issue: Viewport-width (vw) units in responsive text classes    
