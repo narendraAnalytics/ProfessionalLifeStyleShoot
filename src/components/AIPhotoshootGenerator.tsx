@@ -105,7 +105,7 @@ export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshoot
       recommended: true
     },
     {
-      label: '4:5',
+    label: '4:5',
       value: '4-5',
       ratio: '4:5',
       description: 'Portrait Post',
