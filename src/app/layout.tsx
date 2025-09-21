@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ClerkProvider } from '@clerk/nextjs';
-import UserSyncProvider from '@/components/UserSyncProvider';
+// Temporarily commented out to fix AbortError
+// import UserSyncProvider from '@/components/UserSyncProvider';
 import "./globals.css";
 
 const geistSans = Geist({
@@ -25,14 +26,29 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider>
+    <ClerkProvider
+      appearance={{
+        elements: {
+          modalContent: "relative",
+          modalCloseButton: "block",
+          card: "shadow-lg",
+          headerTitle: "text-lg font-semibold",
+          headerSubtitle: "text-sm text-gray-600"
+        },
+        layout: {
+          showOptionalFields: false,
+          socialButtonsPlacement: "top"
+        }
+      }}
+    >
       <html lang="en">
         <body
           className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         >
-          <UserSyncProvider>
+          {/* Temporarily commented out UserSyncProvider to fix AbortError */}
+          {/* <UserSyncProvider> */}
             {children}
-          </UserSyncProvider>
+          {/* </UserSyncProvider> */}
         </body>
       </html>
     </ClerkProvider>

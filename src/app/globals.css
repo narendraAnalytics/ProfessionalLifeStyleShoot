@@ -313,4 +313,40 @@
       transform: translateY(0);
     }
   }
+
+  /* Clerk modal close button styles */
+  .cl-modal .cl-modalCloseButton,
+  .cl-modal .cl-closeButton,
+  .cl-modal [data-testid="close-button"],
+  .cl-modal button[aria-label="Close"] {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    position: absolute !important;
+    top: 1rem !important;
+    right: 1rem !important;
+    z-index: 1000 !important;
+    background: rgba(0, 0, 0, 0.5) !important;
+    border: none !important;
+    border-radius: 50% !important;
+    width: 32px !important;
+    height: 32px !important;
+    color: white !important;
+    cursor: pointer !important;
+  }
+
+  /* Add close icon if not present */
+  .cl-modal .cl-modalCloseButton::after,
+  .cl-modal .cl-closeButton::after {
+    content: "×" !important;
+    font-size: 18px !important;
+    font-weight: bold !important;
+    line-height: 1 !important;
+  }
+
+  /* Make sure modal has relative positioning */
+  .cl-modal,
+  .cl-modalContent {
+    position: relative !important;
+  }
 }
