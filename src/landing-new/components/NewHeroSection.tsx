@@ -10,14 +10,14 @@ export default function NewHeroSection() {
   return (
     <main className="w-full min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 pt-16">
       <div className="w-full max-w-4xl mx-auto text-center">
-        <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 leading-tight text-slate-800">
+        <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 leading-tight text-white drop-shadow-2xl">
           Transform Your Vision into
-          <span className="block bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent">
+          <span className="block bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 bg-clip-text text-transparent drop-shadow-lg">
             Professional Reality
           </span>
         </h1>
         
-        <p className="text-lg sm:text-xl lg:text-2xl mb-12 text-slate-600 max-w-3xl mx-auto leading-relaxed">
+        <p className="text-lg sm:text-xl lg:text-2xl mb-12 text-white/90 max-w-3xl mx-auto leading-relaxed drop-shadow-lg">
           Create stunning professional lifestyle photoshoots with AI-powered technology. 
           Elegant design with perfect user experience.
         </p>
