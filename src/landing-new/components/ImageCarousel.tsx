@@ -13,7 +13,13 @@ const carouselImages = [
   {
     src: '/CarouselImages/Image2Carousel.png', 
     alt: 'Professional lifestyle photoshoot - Image 2',
-    objectPosition: 'center center', // Centers image for full width coverage
+    objectPosition: 'center 15%', // Proper headroom spacing with full width coverage
+    objectFit: 'cover' as const
+  },
+  {
+    src: '/CarouselImages/image3carosel.png', 
+    alt: 'Professional lifestyle photoshoot - Image 3',
+    objectPosition: 'center 15%', // Same headroom positioning with full width coverage
     objectFit: 'cover' as const
   }
 ]
