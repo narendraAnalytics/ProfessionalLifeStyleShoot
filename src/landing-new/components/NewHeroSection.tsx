@@ -83,7 +83,7 @@ export default function NewHeroSection() {
 
           <SignedIn>
             <button 
-              onClick={() => router.push('/my-gallery')}
+              onClick={() => router.push('/gallery')}
               className="group relative w-full sm:w-auto px-10 py-5 bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 hover:from-purple-500 hover:via-pink-500 hover:to-rose-500 rounded-2xl text-white font-bold text-lg transition-all duration-300 transform hover:scale-110 hover:-translate-y-1 shadow-2xl hover:shadow-purple-500/25 active:scale-95 overflow-hidden"
             >
               {/* Animated background glow */}
