@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import NewNavbar from './components/NewNavbar'
 import NewHeroSection from './components/NewHeroSection'
+import NewFeaturesSection from './components/NewFeaturesSection'
 import ImageCarousel from './components/ImageCarousel'
 
 export default function NewLandingPage() {
@@ -17,18 +18,26 @@ export default function NewLandingPage() {
   }
 
   return (
-    <div className="min-h-screen w-full overflow-x-hidden">
-      {/* Dynamic Carousel Background */}
-      <ImageCarousel />
+    <div className="w-full overflow-x-hidden">
+      {/* Hero Section with Carousel Background */}
+      <div className="relative min-h-screen">
+        {/* Dynamic Carousel Background - Hero Only */}
+        <ImageCarousel />
 
-      {/* Content wrapper with proper constraints - floats above carousel */}
-      <div className="relative z-20 w-full max-w-none">
-        {/* Navigation */}
-        <NewNavbar />
+        {/* Hero Content - floats above carousel */}
+        <div className="relative z-20 w-full max-w-none">
+          {/* Navigation */}
+          <NewNavbar />
 
-        {/* Hero Section */}
-        <NewHeroSection />
+          {/* Hero Section */}
+          <NewHeroSection />
+        </div>
       </div>
+
+      {/* Features Section with Clean Professional Background */}
+      {/* <div className="relative bg-gradient-to-br from-slate-50 via-gray-50 to-blue-50">
+        <NewFeaturesSection />
+      </div> */}
     </div>
   )
 }
