@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import NewNavbar from './components/NewNavbar'
 import NewHeroSection from './components/NewHeroSection'
-import NewFeaturesSection from './components/NewFeaturesSection'
 import ImageCarousel from './components/ImageCarousel'
 
 export default function NewLandingPage() {
@@ -25,7 +24,7 @@ export default function NewLandingPage() {
         <ImageCarousel />
 
         {/* Hero Content - floats above carousel */}
-        <div className="relative z-20 w-full max-w-none">
+        <div className="relative z-20 w-full overflow-hidden">
           {/* Navigation */}
           <NewNavbar />
 
@@ -33,11 +32,6 @@ export default function NewLandingPage() {
           <NewHeroSection />
         </div>
       </div>
-
-      {/* Features Section with Clean Professional Background */}
-      {/* <div className="relative bg-gradient-to-br from-slate-50 via-gray-50 to-blue-50">
-        <NewFeaturesSection />
-      </div> */}
     </div>
   )
 }

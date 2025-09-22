@@ -22,13 +22,13 @@ export default function NewHeroSection() {
           Elegant design with perfect user experience.
         </p>
 
-        <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
+        <div className="flex flex-col sm:flex-row gap-6 justify-center items-center overflow-hidden">
           {/* Create Your Shoot Button - Conditional based on auth */}
           <SignedOut>
             <SignInButton mode="modal">
-              <button className="group relative w-full sm:w-auto px-10 py-5 bg-gradient-to-r from-cyan-500 via-emerald-500 to-lime-500 hover:from-cyan-400 hover:via-emerald-400 hover:to-lime-400 rounded-2xl text-white font-bold text-lg transition-all duration-300 transform hover:scale-110 hover:-translate-y-1 shadow-2xl hover:shadow-cyan-500/25 active:scale-95 overflow-hidden">
+              <button className="group relative w-full sm:w-auto px-10 py-5 bg-gradient-to-r from-cyan-500 via-emerald-500 to-lime-500 hover:from-cyan-400 hover:via-emerald-400 hover:to-lime-400 rounded-2xl text-white font-bold text-lg transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 shadow-2xl hover:shadow-cyan-500/25 active:scale-95 overflow-hidden">
                 {/* Animated background glow */}
-                <div className="absolute inset-0 bg-gradient-to-r from-cyan-400 via-emerald-400 to-lime-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-xl"></div>
+                <div className="absolute inset-0 bg-gradient-to-r from-cyan-400 via-emerald-400 to-lime-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-lg"></div>
                 
                 {/* Button content */}
                 <div className="relative flex items-center justify-center space-x-3">
@@ -37,7 +37,7 @@ export default function NewHeroSection() {
                 </div>
                 
                 {/* Shimmer effect */}
-                <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12"></div>
+                <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/20 to-transparent overflow-hidden"></div>
               </button>
             </SignInButton>
           </SignedOut>
@@ -45,10 +45,10 @@ export default function NewHeroSection() {
           <SignedIn>
             <button 
               onClick={() => router.push('/dashboard')}
-              className="group relative w-full sm:w-auto px-10 py-5 bg-gradient-to-r from-cyan-500 via-emerald-500 to-lime-500 hover:from-cyan-400 hover:via-emerald-400 hover:to-lime-400 rounded-2xl text-white font-bold text-lg transition-all duration-300 transform hover:scale-110 hover:-translate-y-1 shadow-2xl hover:shadow-cyan-500/25 active:scale-95 overflow-hidden"
+              className="group relative w-full sm:w-auto px-10 py-5 bg-gradient-to-r from-cyan-500 via-emerald-500 to-lime-500 hover:from-cyan-400 hover:via-emerald-400 hover:to-lime-400 rounded-2xl text-white font-bold text-lg transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 shadow-2xl hover:shadow-cyan-500/25 active:scale-95 overflow-hidden"
             >
               {/* Animated background glow */}
-              <div className="absolute inset-0 bg-gradient-to-r from-cyan-400 via-emerald-400 to-lime-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-xl"></div>
+              <div className="absolute inset-0 bg-gradient-to-r from-cyan-400 via-emerald-400 to-lime-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-lg"></div>
               
               {/* Button content */}
               <div className="relative flex items-center justify-center space-x-3">
@@ -57,7 +57,7 @@ export default function NewHeroSection() {
               </div>
               
               {/* Shimmer effect */}
-              <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12"></div>
+              <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/20 to-transparent overflow-hidden"></div>
             </button>
           </SignedIn>
 
@@ -65,10 +65,10 @@ export default function NewHeroSection() {
           <SignedOut>
             <button 
               onClick={() => router.push('/gallery')}
-              className="group relative w-full sm:w-auto px-10 py-5 bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 hover:from-purple-500 hover:via-pink-500 hover:to-rose-500 rounded-2xl text-white font-bold text-lg transition-all duration-300 transform hover:scale-110 hover:-translate-y-1 shadow-2xl hover:shadow-purple-500/25 active:scale-95 overflow-hidden"
+              className="group relative w-full sm:w-auto px-10 py-5 bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 hover:from-purple-500 hover:via-pink-500 hover:to-rose-500 rounded-2xl text-white font-bold text-lg transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 shadow-2xl hover:shadow-purple-500/25 active:scale-95 overflow-hidden"
             >
               {/* Animated background glow */}
-              <div className="absolute inset-0 bg-gradient-to-r from-purple-500 via-pink-500 to-rose-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-xl"></div>
+              <div className="absolute inset-0 bg-gradient-to-r from-purple-500 via-pink-500 to-rose-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-lg"></div>
               
               {/* Button content */}
               <div className="relative flex items-center justify-center space-x-3">
@@ -77,17 +77,17 @@ export default function NewHeroSection() {
               </div>
               
               {/* Shimmer effect */}
-              <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12"></div>
+              <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/20 to-transparent overflow-hidden"></div>
             </button>
           </SignedOut>
 
           <SignedIn>
             <button 
               onClick={() => router.push('/gallery')}
-              className="group relative w-full sm:w-auto px-10 py-5 bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 hover:from-purple-500 hover:via-pink-500 hover:to-rose-500 rounded-2xl text-white font-bold text-lg transition-all duration-300 transform hover:scale-110 hover:-translate-y-1 shadow-2xl hover:shadow-purple-500/25 active:scale-95 overflow-hidden"
+              className="group relative w-full sm:w-auto px-10 py-5 bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 hover:from-purple-500 hover:via-pink-500 hover:to-rose-500 rounded-2xl text-white font-bold text-lg transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 shadow-2xl hover:shadow-purple-500/25 active:scale-95 overflow-hidden"
             >
               {/* Animated background glow */}
-              <div className="absolute inset-0 bg-gradient-to-r from-purple-500 via-pink-500 to-rose-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-xl"></div>
+              <div className="absolute inset-0 bg-gradient-to-r from-purple-500 via-pink-500 to-rose-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-lg"></div>
               
               {/* Button content */}
               <div className="relative flex items-center justify-center space-x-3">
@@ -96,7 +96,7 @@ export default function NewHeroSection() {
               </div>
               
               {/* Shimmer effect */}
-              <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12"></div>
+              <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/20 to-transparent overflow-hidden"></div>
             </button>
           </SignedIn>
         </div>

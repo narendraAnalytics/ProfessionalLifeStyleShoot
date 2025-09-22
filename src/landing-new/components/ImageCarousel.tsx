@@ -59,9 +59,9 @@ export default function ImageCarousel() {
           <div className="relative w-full h-full">
             {/* Ken Burns Effect Container */}
             <div 
-              className={`absolute inset-0 w-full h-full transition-transform duration-[20000ms] ease-out ${
+              className={`absolute inset-0 w-full h-full transition-transform duration-[20000ms] ease-out overflow-hidden ${
                 index === currentImageIndex 
-                  ? 'transform scale-110 translate-x-2 translate-y-1' 
+                  ? 'transform scale-105 translate-y-1' 
                   : 'transform scale-100'
               }`}
             >
