@@ -21,6 +21,12 @@ const carouselImages = [
     alt: 'Professional lifestyle photoshoot - Image 3',
     objectPosition: 'center 15%', // Same headroom positioning with full width coverage
     objectFit: 'cover' as const
+  },
+  {
+    src: '/CarouselImages/carosuelimage.jpg',
+    alt: 'Professional lifestyle photoshoot - Image 4',
+    objectPosition: 'center 15%', // Professional headroom positioning with full width coverage
+    objectFit: 'cover' as const
   }
 ]
 
@@ -31,10 +37,15 @@ export default function ImageCarousel() {
   useEffect(() => {
     setIsLoaded(true)
     
+    // Debug: Log the carousel length
+    console.log('Carousel images length:', carouselImages.length)
+    
     const interval = setInterval(() => {
-      setCurrentImageIndex((prevIndex) => 
-        (prevIndex + 1) % carouselImages.length
-      )
+      setCurrentImageIndex((prevIndex) => {
+        const nextIndex = (prevIndex + 1) % carouselImages.length
+        console.log('Moving from image', prevIndex, 'to image', nextIndex)
+        return nextIndex
+      })
     }, 5000) // Change image every 5 seconds
 
     return () => clearInterval(interval)
@@ -51,7 +62,7 @@ export default function ImageCarousel() {
       {/* Carousel Images */}
       {carouselImages.map((image, index) => (
         <div
-          key={index}
+          key={`carousel-${index}-${image.src}`}
           className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
             index === currentImageIndex ? 'opacity-100' : 'opacity-0'
           }`}
