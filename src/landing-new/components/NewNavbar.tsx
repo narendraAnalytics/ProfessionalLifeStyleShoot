@@ -2,14 +2,26 @@
 
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { Menu, X, Play, Home, Sparkles, CreditCard, Image as ImageIcon, Mail } from 'lucide-react'
-import { SignedIn, SignedOut, SignInButton, UserButton } from '@clerk/nextjs'
+import { Menu, X, Play, Home, Sparkles, CreditCard, Image as ImageIcon, Mail, Crown, Gift, Zap } from 'lucide-react'
+import { SignedIn, SignedOut, SignInButton, UserButton, useAuth } from '@clerk/nextjs'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 
 export default function NewNavbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const router = useRouter()
+  const { has } = useAuth()
+
+  // Determine current plan
+  const getCurrentPlan = () => {
+    if (has && has({ plan: 'max_ultimate' })) {
+      return { name: 'Max', icon: Zap, color: 'from-orange-400 to-red-400', bgColor: 'bg-gradient-to-r from-orange-500/20 to-red-500/20' }
+    }
+    if (has && has({ plan: 'pro_plan' })) {
+      return { name: 'Pro', icon: Crown, color: 'from-purple-400 to-pink-400', bgColor: 'bg-gradient-to-r from-purple-500/20 to-pink-500/20' }
+    }
+    return { name: 'Free', icon: Gift, color: 'from-green-400 to-emerald-400', bgColor: 'bg-gradient-to-r from-green-500/20 to-emerald-500/20' }
+  }
 
   const navigationItems = [
     { name: 'Home', href: '#home', icon: Home },
@@ -35,25 +47,49 @@ export default function NewNavbar() {
       <div className="relative w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo section */}
-          <div className="flex items-center space-x-3 cursor-pointer group" onClick={() => handleNavigation('#home')}>
-            <div className="relative w-12 h-12 transition-all duration-300 group-hover:scale-110 group-hover:rotate-6 group-hover:drop-shadow-lg">
-              <Image
-                src="/images/iconWebsite.png"
-                alt="Professional LifeShoot Logo"
-                width={48}
-                height={48}
-                className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105"
-                priority
-              />
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-3 cursor-pointer group" onClick={() => handleNavigation('#home')}>
+              <div className="relative w-12 h-12 transition-all duration-300 group-hover:scale-110 group-hover:rotate-6 group-hover:drop-shadow-lg">
+                <Image
+                  src="/images/iconWebsite.png"
+                  alt="Professional LifeShoot Logo"
+                  width={48}
+                  height={48}
+                  className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105"
+                  priority
+                />
+              </div>
+              <div className="hidden sm:block">
+                <h1 className="text-xl font-bold bg-gradient-to-r from-cyan-500 via-emerald-500 to-lime-500 bg-clip-text text-transparent group-hover:from-cyan-600 group-hover:via-emerald-600 group-hover:to-lime-600 transition-all duration-300">
+                  Professional LifeShoot
+                </h1>
+                <p className="text-xs bg-gradient-to-r from-slate-600 to-emerald-500 bg-clip-text text-transparent group-hover:from-emerald-500 group-hover:to-cyan-500 transition-all duration-300">
+                  Creating Branded Images Using AI
+                </p>
+              </div>
             </div>
-            <div className="hidden sm:block">
-              <h1 className="text-xl font-bold bg-gradient-to-r from-cyan-500 via-emerald-500 to-lime-500 bg-clip-text text-transparent group-hover:from-cyan-600 group-hover:via-emerald-600 group-hover:to-lime-600 transition-all duration-300">
-                Professional LifeShoot
-              </h1>
-              <p className="text-xs bg-gradient-to-r from-slate-600 to-emerald-500 bg-clip-text text-transparent group-hover:from-emerald-500 group-hover:to-cyan-500 transition-all duration-300">
-                Creating Branded Images Using AI
-              </p>
-            </div>
+
+            {/* Plan Badge - Only show when signed in */}
+            <SignedIn>
+              {(() => {
+                const currentPlan = getCurrentPlan()
+                const PlanIcon = currentPlan.icon
+                return (
+                  <div className={`hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full ${currentPlan.bgColor} backdrop-blur-sm border border-white/20 transition-all duration-300 hover:scale-105 cursor-pointer group/badge`}
+                       onClick={() => currentPlan.name === 'Free' ? handleNavigation('#pricing') : undefined}>
+                    <PlanIcon className={`w-4 h-4 text-transparent bg-gradient-to-r ${currentPlan.color} bg-clip-text group-hover/badge:scale-110 transition-transform duration-300`} />
+                    <span className={`text-sm font-medium text-transparent bg-gradient-to-r ${currentPlan.color} bg-clip-text`}>
+                      {currentPlan.name}
+                    </span>
+                    {currentPlan.name === 'Free' && (
+                      <div className="text-xs text-white/60 group-hover/badge:text-white/80 transition-colors duration-300">
+                        (Upgrade)
+                      </div>
+                    )}
+                  </div>
+                )
+              })()}
+            </SignedIn>
           </div>
 
           {/* Desktop navigation */}

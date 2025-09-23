@@ -4,11 +4,80 @@ import { imageKitService } from '@/lib/imagekit';
 import { prisma } from '@/lib/prisma';
 import { GeminiService } from '@/lib/gemini';
 
+// Plan validation function for image merging
+async function validateMergePlanLimits(userId: string) {
+  const { has } = await auth();
+  
+  // Determine user plan
+  let plan = 'free';
+  if (has && has({ plan: 'max_ultimate' })) {
+    plan = 'max_ultimate';
+  } else if (has && has({ plan: 'pro_plan' })) {
+    plan = 'pro_plan';
+  }
+
+  // Plan definitions for merging
+  const planLimits = {
+    free: { maxMergesPerMonth: 1 },
+    pro_plan: { maxMergesPerMonth: 8 },
+    max_ultimate: { maxMergesPerMonth: -1 } // unlimited
+  };
+
+  const currentPlan = planLimits[plan as keyof typeof planLimits];
+
+  // Check monthly usage limit (skip for unlimited plans)
+  if (currentPlan.maxMergesPerMonth !== -1) {
+    const user = await prisma.user.findUnique({
+      where: { clerkId: userId },
+      select: { id: true }
+    });
+
+    if (!user) {
+      return { valid: false, error: 'User not found' };
+    }
+
+    // For now, we'll count compositions in the photoshoot table with a specific tag
+    // You might want to create a separate table for compositions later
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    monthEnd.setHours(23, 59, 59, 999);
+
+    const currentMergeUsage = await prisma.photoshoot.count({
+      where: {
+        userId: user.id,
+        style: 'composition', // We'll use this to identify merges
+        createdAt: {
+          gte: monthStart,
+          lte: monthEnd
+        }
+      }
+    });
+
+    if (currentMergeUsage >= currentPlan.maxMergesPerMonth) {
+      return {
+        valid: false,
+        error: `You've reached your monthly limit of ${currentPlan.maxMergesPerMonth} image merge${currentPlan.maxMergesPerMonth === 1 ? '' : 's'}. ${
+          plan === 'free' ? 'Upgrade to Pro for 8 merges/month!' : 'Upgrade to Max Ultimate for unlimited merges!'
+        }`
+      };
+    }
+  }
+
+  return { valid: true };
+}
+
 export async function POST(req: NextRequest) {
   try {
     const { userId } = await auth();
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Validate merge plan limits
+    const planValidation = await validateMergePlanLimits(userId);
+    if (!planValidation.valid) {
+      return NextResponse.json({ error: planValidation.error }, { status: 403 });
     }
 
     const formData = await req.formData();

@@ -77,7 +77,40 @@ export default function HowItWorksSection() {
   }, [])
 
   return (
-    <section id="features" className="relative py-16 lg:py-24 overflow-hidden">
+    <>
+      {/* Custom Animations */}
+      <style jsx>{`
+        @keyframes slideInUp {
+          0% {
+            opacity: 0;
+            transform: translateY(60px) scale(0.9);
+          }
+          100% {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+        }
+        
+        @keyframes floating {
+          0%, 100% {
+            transform: translateY(0px);
+          }
+          50% {
+            transform: translateY(-10px);
+          }
+        }
+        
+        @keyframes pulse-glow {
+          0%, 100% {
+            box-shadow: 0 0 20px rgba(6, 182, 212, 0.3);
+          }
+          50% {
+            box-shadow: 0 0 40px rgba(6, 182, 212, 0.6);
+          }
+        }
+      `}</style>
+      
+      <section id="features" className="relative py-16 lg:py-24 overflow-hidden">
       {/* Background Effects */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-1/4 -left-32 w-96 h-96 bg-gradient-to-r from-cyan-500/10 to-emerald-500/10 rounded-full blur-3xl animate-pulse" />
@@ -112,12 +145,17 @@ export default function HowItWorksSection() {
             <div
               key={step.id}
               data-step={index}
-              className={`relative transition-all duration-1000 transform ${
+              className={`relative transition-all duration-1200 transform ${
                 visibleSteps.includes(index)
-                  ? 'opacity-100 translate-y-0'
-                  : 'opacity-0 translate-y-12'
+                  ? 'opacity-100 translate-y-0 scale-100'
+                  : 'opacity-0 translate-y-16 scale-95'
               }`}
-              style={{ transitionDelay: `${step.delay}ms` }}
+              style={{ 
+                transitionDelay: `${step.delay + index * 150}ms`,
+                animation: visibleSteps.includes(index) 
+                  ? `slideInUp 1s ease-out ${step.delay + index * 150}ms both, floating 6s ease-in-out ${step.delay + index * 150 + 1000}ms infinite` 
+                  : 'none'
+              }}
             >
               {/* Desktop Layout */}
               <div className={`hidden lg:grid lg:grid-cols-12 gap-8 items-center ${
@@ -134,10 +172,17 @@ export default function HowItWorksSection() {
                     </div>
 
                     {/* Content Card */}
-                    <div className="group relative bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl p-8 hover:bg-white/10 hover:border-white/20 transition-all duration-500 hover:scale-105 shadow-2xl">
+                    <div className="group relative bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl p-8 hover:bg-white/10 hover:border-white/20 transition-all duration-700 hover:scale-110 hover:-translate-y-2 shadow-2xl hover:shadow-4xl hover:shadow-cyan-500/20 cursor-pointer overflow-hidden">
+                      {/* Animated Background Shimmer */}
+                      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-1000">
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1500"></div>
+                      </div>
+                      
                       {/* Icon */}
-                      <div className={`inline-flex p-4 rounded-2xl bg-gradient-to-r ${step.bgGradient} backdrop-blur-sm mb-6 group-hover:scale-110 transition-transform duration-300`}>
-                        <step.icon className={`w-8 h-8 text-transparent bg-gradient-to-r ${step.lightGradient} bg-clip-text`} />
+                      <div className={`inline-flex p-4 rounded-2xl bg-gradient-to-r ${step.bgGradient} backdrop-blur-sm mb-6 group-hover:scale-125 group-hover:rotate-6 transition-all duration-500 relative overflow-hidden`}>
+                        {/* Icon shimmer effect */}
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
+                        <step.icon className={`w-8 h-8 text-transparent bg-gradient-to-r ${step.lightGradient} bg-clip-text group-hover:scale-110 transition-transform duration-300 relative z-10`} />
                       </div>
                       
                       <h3 className="text-2xl lg:text-3xl font-bold text-white mb-4 drop-shadow-lg">
@@ -158,36 +203,83 @@ export default function HowItWorksSection() {
                         ))}
                       </div>
 
-                      {/* Hover Glow Effect */}
-                      <div className={`absolute inset-0 rounded-3xl bg-gradient-to-r ${step.gradient} opacity-0 group-hover:opacity-10 transition-opacity duration-500 -z-10 blur-xl`} />
+                      {/* Hover Glow Effect - Enhanced */}
+                      <div className={`absolute inset-0 rounded-3xl bg-gradient-to-r ${step.gradient} opacity-0 group-hover:opacity-20 transition-all duration-700 -z-10 blur-xl group-hover:blur-2xl group-hover:scale-110`} />
+                      
+                      {/* Floating Border Animation */}
+                      <div className="absolute inset-0 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700">
+                        <div className={`absolute inset-0 rounded-3xl border-2 border-gradient-to-r ${step.gradient} opacity-40 animate-pulse`}></div>
+                      </div>
+                      
+                      {/* Floating Particles on Hover */}
+                      <div className="absolute inset-0 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-700">
+                        {[...Array(6)].map((_, i) => (
+                          <div
+                            key={i}
+                            className={`absolute w-1 h-1 rounded-full bg-gradient-to-r ${step.lightGradient} animate-bounce`}
+                            style={{
+                              left: `${15 + i * 15}%`,
+                              top: `${20 + (i % 3) * 20}%`,
+                              animationDelay: `${i * 0.2}s`,
+                              animationDuration: '1.5s'
+                            }}
+                          />
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </div>
 
                 {/* Visual Side */}
                 <div className={`lg:col-span-6 ${index % 2 === 1 ? 'lg:col-start-1' : ''}`}>
-                  <div className="relative flex justify-center">
+                  <div className="relative flex justify-center group">
                     {/* Main Icon Circle */}
                     <div className="relative">
-                      {/* Animated Ring */}
-                      <div className={`absolute inset-0 w-32 h-32 rounded-full bg-gradient-to-r ${step.gradient} animate-spin opacity-20`} style={{ animationDuration: '10s' }} />
+                      {/* Outer Pulsing Ring */}
+                      <div className={`absolute inset-0 w-40 h-40 rounded-full bg-gradient-to-r ${step.gradient} animate-pulse opacity-10 group-hover:opacity-30 transition-opacity duration-500`} style={{ left: '-16px', top: '-16px' }} />
+                      
+                      {/* Animated Rotating Ring */}
+                      <div className={`absolute inset-0 w-32 h-32 rounded-full bg-gradient-to-r ${step.gradient} animate-spin opacity-20 group-hover:opacity-40 transition-opacity duration-500`} style={{ animationDuration: '8s' }} />
+                      
+                      {/* Counter-rotating Ring */}
+                      <div className={`absolute inset-0 w-36 h-36 rounded-full bg-gradient-to-l ${step.gradient} animate-spin opacity-10 group-hover:opacity-25 transition-opacity duration-500`} style={{ animationDuration: '12s', animationDirection: 'reverse', left: '-8px', top: '-8px' }} />
                       
                       {/* Icon Container */}
-                      <div className={`relative w-32 h-32 rounded-full bg-gradient-to-r ${step.gradient} flex items-center justify-center shadow-2xl hover:scale-110 transition-transform duration-300`}>
-                        <step.icon className="w-16 h-16 text-white drop-shadow-lg" />
+                      <div className={`relative w-32 h-32 rounded-full bg-gradient-to-r ${step.gradient} flex items-center justify-center shadow-2xl hover:scale-125 hover:rotate-12 transition-all duration-500 group-hover:shadow-4xl`}>
+                        <step.icon className="w-16 h-16 text-white drop-shadow-lg group-hover:scale-110 transition-transform duration-300" />
+                        
+                        {/* Icon Glow */}
+                        <div className={`absolute inset-0 rounded-full bg-gradient-to-r ${step.gradient} opacity-0 group-hover:opacity-50 transition-opacity duration-500 blur-md`} />
                       </div>
 
-                      {/* Floating Particles */}
+                      {/* Enhanced Floating Particles */}
                       <div className="absolute inset-0 pointer-events-none">
-                        {[...Array(4)].map((_, i) => (
+                        {[...Array(8)].map((_, i) => (
                           <div
                             key={i}
-                            className={`absolute w-3 h-3 rounded-full bg-gradient-to-r ${step.lightGradient} animate-ping`}
+                            className={`absolute w-2 h-2 rounded-full bg-gradient-to-r ${step.lightGradient} animate-ping group-hover:animate-bounce`}
                             style={{
-                              left: `${15 + i * 25}%`,
-                              top: `${20 + (i % 2) * 40}%`,
-                              animationDelay: `${i * 0.8}s`,
-                              animationDuration: '2s'
+                              left: `${10 + i * 15}%`,
+                              top: `${15 + (i % 3) * 25}%`,
+                              animationDelay: `${i * 0.3}s`,
+                              animationDuration: `${1.5 + (i % 3) * 0.5}s`
+                            }}
+                          />
+                        ))}
+                      </div>
+                      
+                      {/* Orbit Particles */}
+                      <div className="absolute inset-0 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-700">
+                        {[...Array(3)].map((_, i) => (
+                          <div
+                            key={`orbit-${i}`}
+                            className={`absolute w-3 h-3 rounded-full bg-gradient-to-r ${step.lightGradient} animate-spin`}
+                            style={{
+                              left: '50%',
+                              top: '50%',
+                              transformOrigin: `${40 + i * 10}px center`,
+                              animationDuration: `${3 + i}s`,
+                              animationDelay: `${i * 0.5}s`
                             }}
                           />
                         ))}
@@ -308,5 +400,6 @@ export default function HowItWorksSection() {
         </div>
       </div>
     </section>
+    </>
   )
 }

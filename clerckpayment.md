@@ -1,3 +1,4 @@
+// Light glassmorphism with proper shadows
 Billing is enabled!
 You are all set up. Next, add our <PricingTable /> component to your app, so your users can subscribe to your plans. Then use our SDKs to gate functionality in your app's codebase by using our has() method and <Protect /> component. Learn more by reading our guide.
 
