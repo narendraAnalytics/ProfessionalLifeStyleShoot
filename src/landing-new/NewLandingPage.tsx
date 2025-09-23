@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import NewNavbar from './components/NewNavbar'
 import NewHeroSection from './components/NewHeroSection'
+import HowItWorksSection from './components/HowItWorksSection'
 import ImageCarousel from './components/ImageCarousel'
 
 export default function NewLandingPage() {
@@ -31,6 +32,11 @@ export default function NewLandingPage() {
           {/* Hero Section */}
           <NewHeroSection />
         </div>
+      </div>
+
+      {/* How It Works Section */}
+      <div className="relative bg-gradient-to-br from-gray-900 via-slate-800 to-gray-900">
+        <HowItWorksSection />
       </div>
     </div>
   )

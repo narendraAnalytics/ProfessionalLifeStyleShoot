@@ -8,7 +8,7 @@ export default function NewHeroSection() {
   const router = useRouter()
 
   return (
-    <main className="w-full min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 pt-16">
+    <main id="home" className="w-full min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 pt-16">
       <div className="w-full max-w-4xl mx-auto text-center">
         <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 leading-tight text-white drop-shadow-2xl">
           Transform Your Vision into
