@@ -602,7 +602,7 @@ export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshoot
               <div className="flex gap-3">
                 <Button
                   onClick={handleEnhancePrompt}
-                  disabled={!currentPrompt.trim() || isEnhancing || isGenerating}
+                  disabled={!currentPrompt.trim() || isEnhancing || isGenerating || !planStatus?.canGenerateImage}
                   variant="outline"
                   className="border-emerald-200 text-emerald-600 hover:bg-emerald-50 hover:border-emerald-300 flex-1"
                 >
