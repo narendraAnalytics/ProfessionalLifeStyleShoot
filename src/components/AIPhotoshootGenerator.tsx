@@ -16,9 +16,19 @@ import {
   Image as ImageIcon,
   Edit3,
   Check,
-  X
+  X,
+  Crown,
+  Star
 } from 'lucide-react'
 import { toast } from 'sonner'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from './ui/dialog'
 
 interface GeneratedImage {
   id: string
@@ -84,6 +94,10 @@ export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshoot
   const [selectedFormat, setSelectedFormat] = useState<'jpg' | 'webp' | 'png'>('jpg')
   const [isEditingEnhanced, setIsEditingEnhanced] = useState(false)
   const [tempEnhancedPrompt, setTempEnhancedPrompt] = useState('')
+  
+  // Upgrade modal state
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false)
+  const [hasShownModalThisSession, setHasShownModalThisSession] = useState(false)
   useUser() // Keep for auth context
   
   // Plan limits and usage tracking
@@ -473,6 +487,29 @@ export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshoot
     setIsEditingEnhanced(false)
   }
 
+  const handlePromptChange = (value: string) => {
+    // Check if user has reached limit and is trying to type
+    if (!planStatus?.canGenerateImage && value.length > currentPrompt.length && !hasShownModalThisSession) {
+      setShowUpgradeModal(true)
+      setHasShownModalThisSession(true)
+      return // Don't update the prompt
+    }
+    
+    // If they can generate images or are deleting text, allow the change
+    if (planStatus?.canGenerateImage || value.length <= currentPrompt.length) {
+      setCurrentPrompt(value)
+    }
+  }
+
+  const handleCloseUpgradeModal = () => {
+    setShowUpgradeModal(false)
+  }
+
+  const handleUpgradeNow = () => {
+    window.open('/pricing', '_blank')
+    setShowUpgradeModal(false)
+  }
+
   const handleStartOver = () => {
     setCurrentPrompt('')
     setEnhancedPrompt('')
@@ -483,6 +520,9 @@ export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshoot
     setError(null)
     setSelectedFormat('jpg')
     setIsEditingEnhanced(false)
+    // Reset modal state for new session
+    setShowUpgradeModal(false)
+    setHasShownModalThisSession(false)
     // Reset to default aspect ratio
     setSelectedAspectRatio({
       label: '1:1',
@@ -561,7 +601,7 @@ export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshoot
               <div className="relative">
                 <Textarea
                   value={currentPrompt}
-                  onChange={(e) => setCurrentPrompt(e.target.value)}
+                  onChange={(e) => handlePromptChange(e.target.value)}
                   placeholder="Describe the photoshoot you'd like me to create... (e.g., Professional headshots with soft lighting)"
                   className="min-h-[120px] text-base border border-gray-200 shadow-sm resize-none bg-white rounded-xl p-4 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
                   disabled={isEnhancing || isGenerating}
@@ -1020,6 +1060,75 @@ export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshoot
           </div>
         )}
       </div>
+
+      {/* Upgrade Modal */}
+      <Dialog open={showUpgradeModal} onOpenChange={setShowUpgradeModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader className="text-center">
+            <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Crown className="w-8 h-8 text-white" />
+            </div>
+            <DialogTitle className="text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+              🎉 You've Used All Your Free Images!
+            </DialogTitle>
+            <DialogDescription className="text-gray-600 mt-2">
+              You've created <span className="font-semibold text-purple-600">2 amazing images</span> this month with your Free plan.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            {/* Benefits List */}
+            <div className="bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-xl p-4">
+              <h4 className="font-semibold text-purple-800 mb-2 flex items-center gap-2">
+                <Star className="w-4 h-4" />
+                Upgrade to Pro and get:
+              </h4>
+              <ul className="space-y-2 text-sm text-purple-700">
+                <li className="flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 bg-purple-500 rounded-full"></span>
+                  <span><strong>15 images per month</strong> (vs 2 free)</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 bg-purple-500 rounded-full"></span>
+                  <span><strong>All aspect ratios</strong> (Square, Portrait, Stories)</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 bg-purple-500 rounded-full"></span>
+                  <span><strong>Premium AI enhancements</strong></span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 bg-purple-500 rounded-full"></span>
+                  <span><strong>Priority generation</strong></span>
+                </li>
+              </ul>
+            </div>
+            
+            {/* Call to Action */}
+            <div className="text-center">
+              <p className="text-sm text-gray-600 mb-4">
+                Ready to create more stunning images?
+              </p>
+            </div>
+          </div>
+
+          <DialogFooter className="flex-col space-y-2">
+            <Button
+              onClick={handleUpgradeNow}
+              className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200"
+            >
+              <Crown className="w-4 h-4 mr-2" />
+              Upgrade to Pro Now
+            </Button>
+            <Button
+              onClick={handleCloseUpgradeModal}
+              variant="outline"
+              className="w-full text-gray-600 border-gray-300 hover:bg-gray-50 rounded-xl"
+            >
+              Maybe Later
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
