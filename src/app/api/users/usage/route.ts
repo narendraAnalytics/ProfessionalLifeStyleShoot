@@ -13,7 +13,9 @@ export async function GET(req: NextRequest) {
     // Get user from database
     const user = await prisma.user.findUnique({
       where: { clerkId: userId },
-      select: { id: true }
+      select: { 
+        id: true
+      }
     })
 
     if (!user) {
@@ -37,9 +39,7 @@ export async function GET(req: NextRequest) {
       }
     })
 
-    // Count image merges/compositions in current period
-    // Note: You might need to add a separate table for image compositions
-    // For now, we'll simulate this count
+    // Count image merges/compositions in current period (set to 0 for now)
     const mergeCount = 0 // TODO: Implement actual merge counting when you have the composition feature
 
     const usage = {
@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { type } = await req.json() // 'image' or 'merge'
+    const { type, amount = 1 } = await req.json() // 'image' or 'merge'
 
     // Get user from database
     const user = await prisma.user.findUnique({
@@ -80,11 +80,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
-    // This endpoint can be used to increment usage counters
+    // This endpoint can be used to track usage increments
     // For now, image generation is tracked automatically via photoshoot creation
     // Merge usage would need to be implemented when you add that feature
 
-    return NextResponse.json({ success: true })
+    if (type !== 'image' && type !== 'merge') {
+      return NextResponse.json({ error: 'Invalid usage type' }, { status: 400 })
+    }
+
+    return NextResponse.json({ 
+      success: true,
+      message: `${type} usage tracked`
+    })
 
   } catch (error) {
     console.error('Usage update error:', error)

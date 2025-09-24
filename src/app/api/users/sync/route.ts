@@ -4,6 +4,10 @@ import { NextResponse } from 'next/server'
 
 export async function POST() {
   console.log('🔧 API /users/sync called')
+  console.log('🌐 Environment check:', {
+    hasDatabaseUrl: !!process.env.DATABASE_URL,
+    nodeEnv: process.env.NODE_ENV
+  })
   
   try {
     const { userId } = await auth()
@@ -155,12 +159,8 @@ export async function POST() {
       type: error instanceof Error ? error.name : 'UnknownError'
     }, { status: 500 })
   } finally {
-    // Always disconnect from Prisma to prevent connection leaks
-    try {
-      await prisma.$disconnect()
-      console.log('🔌 Database connection closed')
-    } catch (disconnectError) {
-      console.error('⚠️ Error disconnecting from database:', disconnectError)
-    }
+    // Note: Not calling prisma.$disconnect() in serverless/pooled environments
+    // as recommended by Neon for better connection management
+    console.log('🔌 API route completed (connection managed by pool)')
   }
 }

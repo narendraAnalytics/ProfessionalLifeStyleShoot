@@ -49,7 +49,7 @@ const PLAN_DEFINITIONS: Record<string, PlanLimits> = {
     name: 'Pro Plan',
     maxImagesPerMonth: 15,
     maxMergesPerMonth: 8,
-    allowedAspectRatios: ['1:1', '16:9', '9:16', '4:3', '3:4', '21:9'],
+    allowedAspectRatios: ['1:1', '4:5', '9:16', '16:9', '4:3', '3:4', '21:9'],
     maxQuality: 'hd',
     supportLevel: 'email',
     hasCommercialLicense: false,
@@ -60,7 +60,7 @@ const PLAN_DEFINITIONS: Record<string, PlanLimits> = {
     name: 'Max Ultimate',
     maxImagesPerMonth: -1, // -1 means unlimited
     maxMergesPerMonth: -1,
-    allowedAspectRatios: ['1:1', '16:9', '9:16', '4:3', '3:4', '21:9', '2:3', '3:2'],
+    allowedAspectRatios: ['1:1', '4:5', '9:16', '16:9', '4:3', '3:4', '21:9', '2:3', '3:2'],
     maxQuality: '4k',
     supportLevel: '24/7',
     hasCommercialLicense: true,
@@ -75,10 +75,11 @@ export function usePlanLimits() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  // Determine current plan
+  // Determine current plan based on Clerk auth only (single source of truth)
   const getCurrentPlan = (): PlanLimits => {
     if (!isLoaded) return PLAN_DEFINITIONS.free // Default to free while loading
     
+    // Use only Clerk plan detection for real-time accuracy
     if (has && has({ plan: 'max_ultimate' })) {
       return PLAN_DEFINITIONS.max_ultimate
     }
@@ -206,6 +207,39 @@ export function usePlanLimits() {
     fetchUsage()
   }
 
+  // Increment usage counters
+  const incrementUsage = async (type: 'image' | 'merge', amount: number = 1): Promise<boolean> => {
+    try {
+      const response = await fetch('/api/users/usage', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ type, amount })
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to increment usage')
+      }
+
+      const data = await response.json()
+      
+      // Update local usage state
+      if (usage) {
+        setUsage({
+          ...usage,
+          currentPeriodImages: data.currentPeriodImages,
+          currentPeriodMerges: data.currentPeriodMerges
+        })
+      }
+
+      return true
+    } catch (err) {
+      console.error('Failed to increment usage:', err)
+      return false
+    }
+  }
+
   return {
     planStatus: getPlanStatus(),
     loading,
@@ -214,6 +248,7 @@ export function usePlanLimits() {
     canUseQuality,
     getUpgradeMessage,
     refreshUsage,
+    incrementUsage,
     isLoaded
   }
 }

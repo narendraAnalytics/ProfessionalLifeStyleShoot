@@ -78,7 +78,18 @@ export default function UserSyncProvider({ children }: { children: React.ReactNo
     setIsSyncing(true)
     setSyncError(null)
     
-    console.log('📡 Calling sync API in background... (Attempt:', retryCount + 1, ')')
+    console.log('📡 STARTING USER SYNC - Detailed Info:', {
+      attempt: retryCount + 1,
+      maxRetries: MAX_RETRIES,
+      user: {
+        id: user?.id,
+        email: user?.primaryEmailAddress?.emailAddress,
+        firstName: user?.firstName,
+        lastName: user?.lastName,
+        isLoaded
+      },
+      apiEndpoint: '/api/users/sync'
+    })
 
     try {
       // Clean up any existing controllers/timeouts
@@ -116,11 +127,29 @@ export default function UserSyncProvider({ children }: { children: React.ReactNo
           parsedError = { error: errorText }
         }
         
-        console.error('❌ Sync API Error:', {
+        // Enhanced error logging with more details
+        console.error('❌ SYNC API ERROR - DETAILED INFO:', {
           status: response.status,
           statusText: response.statusText,
-          error: parsedError
+          url: response.url,
+          headers: Object.fromEntries(response.headers.entries()),
+          errorResponse: parsedError,
+          userInfo: {
+            userId: user?.id,
+            email: user?.primaryEmailAddress?.emailAddress,
+            isLoaded,
+            hasUser: !!user
+          }
         })
+        
+        // Log common error scenarios
+        if (response.status === 401) {
+          console.error('🚫 AUTHENTICATION ERROR: User not properly authenticated with Clerk')
+        } else if (response.status === 404) {
+          console.error('🔍 API ENDPOINT ERROR: /api/users/sync not found - is dev server running?')
+        } else if (response.status >= 500) {
+          console.error('💥 SERVER ERROR: Database or internal server error')
+        }
         
         // Determine if error is retryable
         const isRetryableError = response.status >= 500 || response.status === 429

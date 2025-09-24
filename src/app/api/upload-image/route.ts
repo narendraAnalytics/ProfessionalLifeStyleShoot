@@ -3,6 +3,67 @@ import { auth } from '@clerk/nextjs/server';
 import { imageKitService } from '@/lib/imagekit';
 import { prisma } from '@/lib/prisma';
 
+// Plan validation function (same as generate-image API)
+async function validatePlanLimits(userId: string, imageCount: number = 1) {
+  const { has } = await auth();
+  
+  // Determine user plan
+  let plan = 'free';
+  if (has && has({ plan: 'max_ultimate' })) {
+    plan = 'max_ultimate';
+  } else if (has && has({ plan: 'pro_plan' })) {
+    plan = 'pro_plan';
+  }
+
+  // Plan definitions
+  const planLimits = {
+    free: { maxImagesPerMonth: 2 },
+    pro_plan: { maxImagesPerMonth: 15 },
+    max_ultimate: { maxImagesPerMonth: -1 } // unlimited
+  };
+
+  const currentPlan = planLimits[plan as keyof typeof planLimits];
+
+  // Check monthly usage limit (skip for unlimited plans)
+  if (currentPlan.maxImagesPerMonth !== -1) {
+    const user = await prisma.user.findUnique({
+      where: { clerkId: userId },
+      select: { id: true }
+    });
+
+    if (!user) {
+      return { valid: false, error: 'User not found' };
+    }
+
+    // Calculate current month usage
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    monthEnd.setHours(23, 59, 59, 999);
+
+    const currentUsage = await prisma.photoshoot.count({
+      where: {
+        userId: user.id,
+        createdAt: {
+          gte: monthStart,
+          lte: monthEnd
+        }
+      }
+    });
+
+    if (currentUsage + imageCount > currentPlan.maxImagesPerMonth) {
+      return {
+        valid: false,
+        error: `Adding ${imageCount} image(s) would exceed your monthly limit of ${currentPlan.maxImagesPerMonth}. Current usage: ${currentUsage}. ${
+          plan === 'free' ? 'Upgrade to Pro for 15 images/month!' : 'Upgrade to Max Ultimate for unlimited images!'
+        }`
+      };
+    }
+  }
+
+  return { valid: true };
+}
+
 export async function POST(req: NextRequest) {
   try {
     const { userId } = await auth();
@@ -37,21 +98,20 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Check user credits
+    // Validate plan limits and restrictions
+    const planValidation = await validatePlanLimits(userId, files.length);
+    if (!planValidation.valid) {
+      return NextResponse.json({ error: planValidation.error }, { status: 403 });
+    }
+
+    // Get user for database operations
     const user = await prisma.user.findUnique({
       where: { clerkId: userId },
-      select: { id: true, creditsRemaining: true }
+      select: { id: true }
     });
 
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
-    }
-
-    const creditsNeeded = files.length; // 1 credit per uploaded image
-    if (user.creditsRemaining < creditsNeeded) {
-      return NextResponse.json({ 
-        error: `Insufficient credits. Need ${creditsNeeded}, have ${user.creditsRemaining}` 
-      }, { status: 403 });
     }
 
     // Convert files to buffers for upload
@@ -88,7 +148,6 @@ export async function POST(req: NextRequest) {
             originalPrompt: description || `Uploaded image: ${result.fileName}`,
             enhancedPrompt: null,
             status: 'completed',
-            creditsUsed: 1,
             metadata: {
               originalFileName: result.fileName,
               fileSize: imageData[index].size,
@@ -100,15 +159,6 @@ export async function POST(req: NextRequest) {
       });
 
       const photoshoots = await Promise.all(photoshootPromises);
-
-      // Update user credits
-      await prisma.user.update({
-        where: { clerkId: userId },
-        data: {
-          creditsRemaining: { decrement: creditsNeeded },
-          creditsUsed: { increment: creditsNeeded },
-        },
-      });
 
       // Generate responsive URLs for each image
       const processedImages = uploadResults.map((result, index) => ({
@@ -125,9 +175,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({
         success: true,
         images: processedImages,
-        totalUploaded: files.length,
-        creditsUsed: creditsNeeded,
-        remainingCredits: user.creditsRemaining - creditsNeeded,
+        totalUploaded: files.length
       });
 
     } catch (uploadError) {

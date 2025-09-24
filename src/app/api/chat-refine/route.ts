@@ -4,6 +4,67 @@ import { GeminiService } from '@/lib/gemini';
 import { imageKitService } from '@/lib/imagekit';
 import { prisma } from '@/lib/prisma';
 
+// Plan validation function (same as generate-image API)
+async function validatePlanLimits(userId: string) {
+  const { has } = await auth();
+  
+  // Determine user plan
+  let plan = 'free';
+  if (has && has({ plan: 'max_ultimate' })) {
+    plan = 'max_ultimate';
+  } else if (has && has({ plan: 'pro_plan' })) {
+    plan = 'pro_plan';
+  }
+
+  // Plan definitions
+  const planLimits = {
+    free: { maxImagesPerMonth: 2 },
+    pro_plan: { maxImagesPerMonth: 15 },
+    max_ultimate: { maxImagesPerMonth: -1 } // unlimited
+  };
+
+  const currentPlan = planLimits[plan as keyof typeof planLimits];
+
+  // Check monthly usage limit (skip for unlimited plans)
+  if (currentPlan.maxImagesPerMonth !== -1) {
+    const user = await prisma.user.findUnique({
+      where: { clerkId: userId },
+      select: { id: true }
+    });
+
+    if (!user) {
+      return { valid: false, error: 'User not found' };
+    }
+
+    // Calculate current month usage
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    monthEnd.setHours(23, 59, 59, 999);
+
+    const currentUsage = await prisma.photoshoot.count({
+      where: {
+        userId: user.id,
+        createdAt: {
+          gte: monthStart,
+          lte: monthEnd
+        }
+      }
+    });
+
+    if (currentUsage >= currentPlan.maxImagesPerMonth) {
+      return {
+        valid: false,
+        error: `You've reached your monthly limit of ${currentPlan.maxImagesPerMonth} images. ${
+          plan === 'free' ? 'Upgrade to Pro for 15 images/month!' : 'Upgrade to Max Ultimate for unlimited images!'
+        }`
+      };
+    }
+  }
+
+  return { valid: true };
+}
+
 export async function POST(req: NextRequest) {
   try {
     const { userId } = await auth();
@@ -21,21 +82,20 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Either feedback or new prompt is required' }, { status: 400 });
     }
 
-    // Check user credits
+    // Validate plan limits and restrictions
+    const planValidation = await validatePlanLimits(userId);
+    if (!planValidation.valid) {
+      return NextResponse.json({ error: planValidation.error }, { status: 403 });
+    }
+
+    // Get user for database operations
     const user = await prisma.user.findUnique({
       where: { clerkId: userId },
-      select: { id: true, creditsRemaining: true }
+      select: { id: true }
     });
 
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
-    }
-
-    const creditsNeeded = 3; // Cost for refinement
-    if (user.creditsRemaining < creditsNeeded) {
-      return NextResponse.json({ 
-        error: `Insufficient credits. Need ${creditsNeeded}, have ${user.creditsRemaining}` 
-      }, { status: 403 });
     }
 
     // Get original photoshoot
@@ -101,7 +161,6 @@ export async function POST(req: NextRequest) {
           originalPrompt: newPrompt || `${originalPhotoshoot.originalPrompt} (refined)`,
           enhancedPrompt: refinementResult.prompt,
           status: 'completed',
-          creditsUsed: creditsNeeded,
           parentPhotoshootId: originalPhotoshoot.id, // Link to original
           metadata: {
             refinementType: newPrompt ? 'new_prompt' : 'feedback_based',
@@ -112,14 +171,7 @@ export async function POST(req: NextRequest) {
         },
       });
 
-      // Update user credits
-      await prisma.user.update({
-        where: { clerkId: userId },
-        data: {
-          creditsRemaining: { decrement: creditsNeeded },
-          creditsUsed: { increment: creditsNeeded },
-        },
-      });
+      // Credits are now handled by subscription system
 
       // Generate responsive URLs
       const responsiveUrls = imageKitService.getResponsiveUrls(uploadResult.url);
@@ -140,9 +192,7 @@ export async function POST(req: NextRequest) {
           createdAt: refinedPhotoshoot.createdAt,
           parentId: originalPhotoshoot.id,
           metadata: refinedPhotoshoot.metadata
-        },
-        creditsUsed: creditsNeeded,
-        remainingCredits: user.creditsRemaining - creditsNeeded,
+        }
       });
 
     } finally {

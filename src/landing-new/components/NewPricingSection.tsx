@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { SignedOut, SignedIn, SignInButton } from '@clerk/nextjs'
 import { Check, Star, Zap, Crown, Sparkles, ArrowRight, X, Gift, Infinity } from 'lucide-react'
 
 export default function NewPricingSection() {
@@ -129,6 +130,7 @@ export default function NewPricingSection() {
     const savings = ((plan.monthlyPrice - yearlyMonthly) / plan.monthlyPrice * 100).toFixed(0)
     return savings
   }
+
 
   return (
     <>
@@ -343,23 +345,52 @@ export default function NewPricingSection() {
                     </div>
 
                     {/* CTA Button */}
-                    <button className={`group/btn relative w-full py-4 rounded-2xl font-bold text-lg transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 shadow-2xl active:scale-95 overflow-hidden ${
-                      plan.popular
-                        ? 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white hover:shadow-purple-500/25'
-                        : `bg-gradient-to-r ${plan.color} hover:opacity-90 text-gray-900 shadow-xl`
-                    }`}>
-                      <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-white/20 opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300 blur-lg"></div>
-                      
-                      <div className="relative flex items-center justify-center space-x-3">
-                        <Sparkles className="w-5 h-5 group-hover/btn:rotate-12 transition-transform duration-300" />
-                        <span className="group-hover/btn:tracking-wide transition-all duration-300">
-                          {plan.name === 'Free' ? 'Start Free' : 'Get Started'}
-                        </span>
-                        <ArrowRight className="w-5 h-5 group-hover/btn:translate-x-1 transition-transform duration-300" />
-                      </div>
-                      
-                      <div className="absolute inset-0 -translate-x-full group-hover/btn:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
-                    </button>
+                    <SignedOut>
+                      <SignInButton mode="modal">
+                        <button className={`group/btn relative w-full py-4 rounded-2xl font-bold text-lg transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 shadow-2xl active:scale-95 overflow-hidden ${
+                          plan.popular
+                            ? 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white hover:shadow-purple-500/25'
+                            : `bg-gradient-to-r ${plan.color} hover:opacity-90 text-gray-900 shadow-xl`
+                        }`}>
+                          <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-white/20 opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300 blur-lg"></div>
+                          
+                          <div className="relative flex items-center justify-center space-x-3">
+                            <Sparkles className="w-5 h-5 group-hover/btn:rotate-12 transition-transform duration-300" />
+                            <span className="group-hover/btn:tracking-wide transition-all duration-300">
+                              {plan.name === 'Free' ? 'Start Free' : 'Get Started'}
+                            </span>
+                            <ArrowRight className="w-5 h-5 group-hover/btn:translate-x-1 transition-transform duration-300" />
+                          </div>
+                          
+                          <div className="absolute inset-0 -translate-x-full group-hover/btn:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
+                        </button>
+                      </SignInButton>
+                    </SignedOut>
+
+                    <SignedIn>
+                      <button 
+                        onClick={() => {
+                          // TODO: Handle plan selection/upgrade for logged-in users
+                          console.log(`User wants to select plan: ${plan.name}`)
+                        }}
+                        className={`group/btn relative w-full py-4 rounded-2xl font-bold text-lg transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 shadow-2xl active:scale-95 overflow-hidden ${
+                          plan.popular
+                            ? 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white hover:shadow-purple-500/25'
+                            : `bg-gradient-to-r ${plan.color} hover:opacity-90 text-gray-900 shadow-xl`
+                        }`}>
+                        <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-white/20 opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300 blur-lg"></div>
+                        
+                        <div className="relative flex items-center justify-center space-x-3">
+                          <Sparkles className="w-5 h-5 group-hover/btn:rotate-12 transition-transform duration-300" />
+                          <span className="group-hover/btn:tracking-wide transition-all duration-300">
+                            {plan.name === 'Free' ? 'Start Free' : 'Get Started'}
+                          </span>
+                          <ArrowRight className="w-5 h-5 group-hover/btn:translate-x-1 transition-transform duration-300" />
+                        </div>
+                        
+                        <div className="absolute inset-0 -translate-x-full group-hover/btn:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
+                      </button>
+                    </SignedIn>
                   </div>
 
                   {/* Background Glow */}

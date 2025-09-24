@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -14,48 +8,48 @@ datasource db {
 }
 
 model User {
-  id                String    @id @default(cuid())
-  clerkId           String    @unique
-  email             String    @unique
-  firstName         String?
-  lastName          String?
-  username          String?   @unique
-  profileImageUrl   String?
-  creditsRemaining  Int       @default(10)
-  creditsUsed       Int       @default(0)
-  totalCredits      Int       @default(10)
-  subscriptionTier  String    @default("free")
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
-
-  // Relations
-  photoshoots       Photoshoot[]
+  id                      String             @id @default(cuid())
+  clerkId                 String             @unique
+  email                   String             @unique
+  firstName               String?
+  lastName                String?
+  username                String?            @unique
+  profileImageUrl         String?
+  clerkCustomerId         String?
+  hasCommercialLicense    Boolean            @default(false)
+  hasApiAccess            Boolean            @default(false)
+  hasCustomBranding       Boolean            @default(false)
+  maxQuality              String             @default("standard")
+  lifetimeValue           Float              @default(0.0)
+  firstPaidDate           DateTime?
+  lastPaymentDate         DateTime?
+  createdAt               DateTime           @default(now())
+  updatedAt               DateTime           @updatedAt
+  imageCompositions       ImageComposition[]
+  photoshoots             Photoshoot[]
 
   @@map("users")
 }
 
 model Photoshoot {
-  id                    String    @id @default(cuid())
-  userId                String
-  originalImageUrl      String
-  generatedImageUrl     String
-  thumbnailUrl          String?
-  bwImageUrl            String?   // Black & white version URL
-  imageKitFileId        String?
-  style                 String    @default("professional")
-  originalPrompt        String
-  enhancedPrompt        String?
-  status                String    @default("pending") // pending, processing, completed, failed
-  creditsUsed           Int       @default(1)
-  parentPhotoshootId    String?   // For refinements/variations
-  metadata              Json?     // Store additional data like file info, feedback, etc.
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @updatedAt
-
-  // Relations
-  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  parentPhotoshoot      Photoshoot? @relation("PhotoshootRefinements", fields: [parentPhotoshootId], references: [id])
-  refinements           Photoshoot[] @relation("PhotoshootRefinements")
+  id                 String       @id @default(cuid())
+  userId             String
+  originalImageUrl   String
+  generatedImageUrl  String
+  thumbnailUrl       String?
+  bwImageUrl         String?
+  imageKitFileId     String?
+  style              String       @default("professional")
+  originalPrompt     String
+  enhancedPrompt     String?
+  status             String       @default("pending")
+  parentPhotoshootId String?
+  metadata           Json?
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+  parentPhotoshoot   Photoshoot?  @relation("PhotoshootRefinements", fields: [parentPhotoshootId], references: [id])
+  refinements        Photoshoot[] @relation("PhotoshootRefinements")
+  user               User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
   @@index([status])
@@ -63,18 +57,20 @@ model Photoshoot {
   @@map("photoshoots")
 }
 
-model PhotoshootSession {
-  id                String    @id @default(cuid())
-  userId            String
-  sessionName       String?
-  description       String?
-  totalPhotoshoots  Int       @default(0)
-  totalCreditsUsed  Int       @default(0)
-  status            String    @default("active") // active, completed, archived
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
 
-  // Relations (if you want to group photoshoots into sessions)
+model ImageComposition {
+  id              String   @id @default(cuid())
+  userId          String
+  outputImageUrl  String
+  sourceImageUrls Json
+  compositionType String
+  status          String   @default("processing")
+  metadata        Json?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@index([userId, createdAt])
-  @@map("photoshoot_sessions")
+  @@index([status])
+  @@map("image_compositions")
 }

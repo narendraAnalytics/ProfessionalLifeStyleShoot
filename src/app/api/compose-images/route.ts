@@ -196,7 +196,6 @@ export async function POST(req: NextRequest) {
           originalPrompt: prompt,
           enhancedPrompt: null,
           status: 'completed',
-          creditsUsed: 0, // No credits for now as per request
           metadata: {
             responsiveUrls,
             bwUrls,  // Store all B&W variations

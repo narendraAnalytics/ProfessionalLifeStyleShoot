@@ -229,7 +229,7 @@ export default function ImageCompositionGenerator({ onImageGenerated }: ImageCom
         formData.append(`image${index + 1}`, img.file)
       })
       formData.append('prompt', finalPrompt)
-      formData.append('aspectRatio', selectedAspectRatio.value)
+      formData.append('aspectRatio', selectedAspectRatio.ratio)  // Use .ratio ("1:1") instead of .value ("1-1")
 
       const response = await fetch('/api/compose-images', {
         method: 'POST',

@@ -24,11 +24,11 @@ async function validatePlanLimits(userId: string, aspectRatio: string) {
     },
     pro_plan: {
       maxImagesPerMonth: 15,
-      allowedAspectRatios: ['1:1', '16:9', '9:16', '4:3', '3:4', '21:9']
+      allowedAspectRatios: ['1:1', '4:5', '9:16', '16:9', '4:3', '3:4', '21:9']
     },
     max_ultimate: {
       maxImagesPerMonth: -1, // unlimited
-      allowedAspectRatios: ['1:1', '16:9', '9:16', '4:3', '3:4', '21:9', '2:3', '3:2']
+      allowedAspectRatios: ['1:1', '4:5', '9:16', '16:9', '4:3', '3:4', '21:9', '2:3', '3:2']
     }
   };
 

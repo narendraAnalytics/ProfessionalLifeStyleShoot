@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ClerkProvider } from '@clerk/nextjs';
-// Temporarily commented out to fix AbortError
-// import UserSyncProvider from '@/components/UserSyncProvider';
+import UserSyncProvider from '@/components/UserSyncProvider';
 import "./globals.css";
 
 const geistSans = Geist({
@@ -30,10 +29,14 @@ export default function RootLayout({
       appearance={{
         elements: {
           modalContent: "relative",
-          modalCloseButton: "block",
-          card: "shadow-lg",
-          headerTitle: "text-lg font-semibold",
-          headerSubtitle: "text-sm text-gray-600"
+          modalCloseButton: "absolute top-4 right-4 z-50 w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-600 hover:text-gray-800 transition-colors duration-200",
+          modalBackdrop: "backdrop-blur-sm bg-black/50",
+          card: "shadow-xl border-0 rounded-2xl",
+          headerTitle: "text-xl font-bold text-gray-900",
+          headerSubtitle: "text-sm text-gray-600",
+          formButtonPrimary: "bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 rounded-xl font-semibold py-3",
+          socialButtonsBlockButton: "border-2 border-gray-200 hover:border-gray-300 rounded-xl font-medium py-3",
+          formFieldInput: "rounded-xl border-2 border-gray-200 focus:border-purple-500 focus:ring-purple-500/20"
         },
         layout: {
           showOptionalFields: false,
@@ -45,10 +48,9 @@ export default function RootLayout({
         <body
           className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         >
-          {/* Temporarily commented out UserSyncProvider to fix AbortError */}
-          {/* <UserSyncProvider> */}
+          <UserSyncProvider>
             {children}
-          {/* </UserSyncProvider> */}
+          </UserSyncProvider>
         </body>
       </html>
     </ClerkProvider>

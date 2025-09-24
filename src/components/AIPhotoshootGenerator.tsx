@@ -2,6 +2,7 @@
 
 import React, { useState, useCallback, useEffect } from 'react'
 import { useUser } from '@clerk/nextjs'
+import { usePlanLimits } from '@/hooks/usePlanLimits'
 import { Button } from './ui/button'
 import { Textarea } from './ui/textarea'
 import { Progress } from './ui/progress'
@@ -84,6 +85,9 @@ export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshoot
   const [isEditingEnhanced, setIsEditingEnhanced] = useState(false)
   const [tempEnhancedPrompt, setTempEnhancedPrompt] = useState('')
   useUser() // Keep for auth context
+  
+  // Plan limits and usage tracking
+  const { planStatus, loading: planLoading, refreshUsage } = usePlanLimits()
 
   // Format options
   const formatOptions = [
@@ -181,6 +185,65 @@ export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshoot
       return
     }
 
+    // Safety check: Don't block if plan is still loading
+    if (planLoading) {
+      toast.error('Loading plan information... Please try again in a moment.')
+      return
+    }
+
+    // Check if user has reached their monthly image limit
+    if (!planStatus.canGenerateImage) {
+      const planName = planStatus.plan.name
+      const maxImages = planStatus.plan.maxImagesPerMonth === -1 ? 'unlimited' : planStatus.plan.maxImagesPerMonth
+      
+      toast.error(
+        `🎉 You've used all ${maxImages} images this month!`,
+        {
+          description: planName === 'Free' 
+            ? 'Upgrade to Pro for 15 images/month + all aspect ratios!' 
+            : 'You\'ve reached your monthly limit. Consider upgrading for more images.',
+          duration: 8000,
+          action: {
+            label: planName === 'Free' ? 'Upgrade to Pro' : 'View Plans',
+            onClick: () => {
+              window.open('/pricing', '_blank')
+            },
+          },
+        }
+      )
+      return
+    }
+
+    // Check if user can use selected aspect ratio BEFORE making API call
+    if (!planStatus.plan.allowedAspectRatios.includes(selectedAspectRatio.ratio)) {
+      const planName = planStatus.plan.name
+      const aspectLabel = selectedAspectRatio.label
+      
+      if (planName === 'Free') {
+        toast.error(
+          `${aspectLabel} aspect ratio is only available in Pro plan. Upgrade to access all aspect ratios!`,
+          {
+            duration: 6000,
+            action: {
+              label: 'Upgrade to Pro',
+              onClick: () => {
+                // Navigate to pricing or show upgrade modal
+                window.open('/pricing', '_blank')
+              },
+            },
+          }
+        )
+      } else {
+        toast.error(
+          `${aspectLabel} aspect ratio requires ${aspectLabel === '2:3' || aspectLabel === '3:2' ? 'Max Ultimate' : 'Pro'} plan. Please upgrade to access this feature.`,
+          {
+            duration: 6000,
+          }
+        )
+      }
+      return
+    }
+
     setError(null)
     setIsGenerating(true)
     setProgress(10)
@@ -196,7 +259,7 @@ export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshoot
           style: 'professional',
           skipEnhancement: true, // We already enhanced if we have enhancedPrompt
           enhancedPrompt: finalPrompt,
-          aspectRatio: selectedAspectRatio.value
+          aspectRatio: selectedAspectRatio.ratio  // Use .ratio ("1:1") instead of .value ("1-1")
         }),
       })
 
@@ -217,12 +280,61 @@ export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshoot
       }
 
       toast.success('Image generated successfully!')
+      
+      // Refresh usage count after successful generation
+      refreshUsage()
 
     } catch (error) {
       console.error('Generation error:', error)
       const errorMessage = error instanceof Error ? error.message : 'Failed to generate image'
+      
+      // Handle specific error types with better UX
+      if (errorMessage.includes('aspect ratio') && errorMessage.includes('plan')) {
+        // Aspect ratio limitation error
+        const aspectLabel = selectedAspectRatio.label
+        toast.error(
+          `⭐ ${aspectLabel} aspect ratio is a premium feature`,
+          {
+            description: 'Upgrade to Pro to unlock all aspect ratios and generate stunning images in any format!',
+            duration: 8000,
+            action: {
+              label: 'View Plans',
+              onClick: () => {
+                window.open('/pricing', '_blank')
+              },
+            },
+          }
+        )
+      } else if (errorMessage.includes('monthly limit') || errorMessage.includes('images this month') || errorMessage.includes('reached your limit')) {
+        // Monthly limit exceeded error
+        const planName = planStatus.plan.name || 'Free'
+        toast.error(
+          `📸 Monthly image limit reached!`,
+          {
+            description: planName === 'Free' 
+              ? 'You\'ve used all your free images this month. Upgrade to Pro for 15 images/month!' 
+              : 'You\'ve reached your monthly limit. Consider upgrading for more images.',
+            duration: 8000,
+            action: {
+              label: 'Upgrade Now',
+              onClick: () => {
+                window.open('/pricing', '_blank')
+              },
+            },
+          }
+        )
+      } else {
+        // Show other errors normally with better formatting
+        toast.error(
+          'Image generation failed',
+          {
+            description: errorMessage,
+            duration: 6000,
+          }
+        )
+      }
+      
       setError(errorMessage)
-      toast.error(errorMessage)
     } finally {
       setIsGenerating(false)
       setProgress(0)
@@ -456,6 +568,37 @@ export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshoot
                 />
               </div>
 
+              {/* Usage Display */}
+              {!planLoading && planStatus && (
+                <div className="bg-gray-50 border rounded-lg p-3 mb-4">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-600">Monthly Images</span>
+                    <span className="font-medium">
+                      {planStatus.usage.currentPeriodImages} of {planStatus.plan.maxImagesPerMonth === -1 ? '∞' : planStatus.plan.maxImagesPerMonth}
+                    </span>
+                  </div>
+                  {planStatus.plan.maxImagesPerMonth !== -1 && (
+                    <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                      <div 
+                        className={`h-2 rounded-full transition-all ${
+                          planStatus.usage.currentPeriodImages >= planStatus.plan.maxImagesPerMonth 
+                            ? 'bg-red-500' 
+                            : 'bg-gradient-to-r from-purple-500 to-pink-500'
+                        }`}
+                        style={{ 
+                          width: `${Math.min(100, (planStatus.usage.currentPeriodImages / planStatus.plan.maxImagesPerMonth) * 100)}%` 
+                        }}
+                      ></div>
+                    </div>
+                  )}
+                  {!planStatus.canGenerateImage && (
+                    <div className="mt-2 text-xs text-red-600">
+                      You've reached your monthly limit. Upgrade for more images!
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div className="flex gap-3">
                 <Button
                   onClick={handleEnhancePrompt}
@@ -472,7 +615,7 @@ export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshoot
                 </Button>
                 <Button
                   onClick={() => handleGenerateImage(currentPrompt)}
-                  disabled={!currentPrompt.trim() || isEnhancing || isGenerating}
+                  disabled={!currentPrompt.trim() || isEnhancing || isGenerating || !planStatus?.canGenerateImage}
                   className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white flex-1"
                 >
                   {isGenerating ? (
@@ -611,20 +754,53 @@ export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshoot
                 </div>
                 
                 <div className="grid grid-cols-3 gap-3">
-                  {aspectRatios.map((ratio) => (
+                  {aspectRatios.map((ratio) => {
+                    const isLocked = !planStatus.plan.allowedAspectRatios.includes(ratio.ratio)
+                    const isPremium = ratio.ratio !== '1:1'
+                    
+                    
+                    return (
                     <button
                       key={ratio.value}
-                      onClick={() => setSelectedAspectRatio(ratio)}
+                      onClick={() => {
+                        if (isLocked) {
+                          // Show upgrade prompt instead of selecting locked ratio
+                          toast.error(
+                            `🔒 ${ratio.label} is a ${planStatus.plan.name === 'Free' ? 'Pro' : 'Premium'} feature`,
+                            {
+                              description: `Upgrade to unlock ${ratio.description.toLowerCase()} format and all aspect ratios!`,
+                              duration: 6000,
+                              action: {
+                                label: 'Upgrade Now',
+                                onClick: () => {
+                                  window.open('/pricing', '_blank')
+                                },
+                              },
+                            }
+                          )
+                        } else {
+                          setSelectedAspectRatio(ratio)
+                        }
+                      }}
                       className={`p-3 rounded-xl border-2 transition-all duration-200 flex flex-col items-center gap-2 relative ${
                         selectedAspectRatio.value === ratio.value
                           ? 'border-purple-500 bg-purple-50 text-purple-700'
-                          : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                          : isLocked 
+                            ? 'border-gray-200 bg-gray-50 text-gray-400 cursor-not-allowed opacity-75 hover:opacity-90' 
+                            : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                       }`}
+                      disabled={isLocked}
                     >
-                      {/* Success rate badge */}
-                      <div className="absolute -top-1 -right-1 bg-green-500 text-white text-xs px-1.5 py-0.5 rounded-full font-medium">
-                        {ratio.successRate}
-                      </div>
+                      {/* Success rate badge or Pro badge */}
+                      {isLocked ? (
+                        <div className="absolute -top-1 -right-1 bg-gradient-to-r from-yellow-400 to-orange-500 text-white text-xs px-2 py-0.5 rounded-full font-bold shadow-md">
+                          PRO
+                        </div>
+                      ) : (
+                        <div className="absolute -top-1 -right-1 bg-green-500 text-white text-xs px-1.5 py-0.5 rounded-full font-medium">
+                          {ratio.successRate}
+                        </div>
+                      )}
                       
                       <div className="text-xl">{ratio.icon}</div>
                       <div className="font-bold text-sm">{ratio.label}</div>
@@ -637,7 +813,8 @@ export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshoot
                       
                       <div className="text-xs text-gray-500 font-medium">{ratio.ratio}</div>
                     </button>
-                  ))}
+                    )
+                  })}
                 </div>
               </div>
 
@@ -703,7 +880,7 @@ export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshoot
                 </Button>
                 <Button
                   onClick={() => handleGenerateImage(enhancedPrompt)}
-                  disabled={isGenerating}
+                  disabled={isGenerating || !planStatus?.canGenerateImage}
                   className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white flex-1"
                 >
                   {isGenerating ? (
