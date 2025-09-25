@@ -10,6 +10,7 @@ import {
   X, 
   ChevronLeft, 
   ChevronRight,
+  ChevronDown,
   Camera,
   Palette,
   Wand2,
@@ -74,12 +75,39 @@ const showcaseImages: ShowcaseImage[] = [
     category: 'Fashion Photography',
     description: 'Traditional and contemporary saree brand photography',
     alt: 'Saree designer photoshoot collection'
+  },
+  {
+    id: '7',
+    src: '/images/slipperybrand.png',
+    title: 'Branded Sliperry For Women',
+    category: 'Fashion Photography',
+    description: 'Branded Photo shoot for the slippers Brand',
+    alt: 'Brand designer photoshoot collection'
+  },
+  {
+    id: '8',
+    src: '/images/brandeddress.png',
+    title: 'Brande fashion Dress',
+    category: 'Fashion Photography',
+    description: 'Traditional and contemporary Fashion brand photography',
+    alt: 'Saree designer photoshoot collection'
   }
 ]
 
 export default function PublicGallery() {
   const [selectedImage, setSelectedImage] = useState<ShowcaseImage | null>(null)
   const [currentIndex, setCurrentIndex] = useState(0)
+
+  const scrollToGallery = () => {
+    const gallerySection = document.getElementById('gallery')
+    if (gallerySection) {
+      gallerySection.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+        inline: 'nearest'
+      })
+    }
+  }
 
   const openLightbox = (image: ShowcaseImage, index: number) => {
     setSelectedImage(image)
@@ -197,11 +225,30 @@ export default function PublicGallery() {
               </div>
             ))}
           </div>
+
+          {/* Animated Scroll Arrow */}
+          <div className="flex justify-center">
+            <button
+              onClick={scrollToGallery}
+              className="group relative p-4 bg-white/90 hover:bg-white backdrop-blur-sm border border-purple-200 rounded-full shadow-lg hover:shadow-purple-200/50 transform hover:scale-110 transition-all duration-300 animate-bounce"
+              aria-label="Scroll to gallery"
+            >
+              {/* Glowing background effect */}
+              <div className="absolute inset-0 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full opacity-0 group-hover:opacity-20 blur-xl transition-opacity duration-500" />
+              <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full opacity-0 group-hover:opacity-30 blur-lg transition-opacity duration-500" />
+              
+              {/* Icon */}
+              <ChevronDown className="w-8 h-8 text-purple-600 group-hover:text-purple-700 relative z-10 transition-colors duration-300" />
+              
+              {/* Animated ring */}
+              <div className="absolute inset-0 border-2 border-purple-300 rounded-full animate-ping opacity-20" />
+            </button>
+          </div>
         </div>
       </div>
 
       {/* Gallery Section */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
+      <div id="gallery" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
         <div className="text-center mb-12">
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
             Our AI-Generated
