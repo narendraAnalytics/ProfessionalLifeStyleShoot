@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { SignedOut, SignedIn, SignInButton } from '@clerk/nextjs'
+import { SignedOut, SignedIn, SignInButton, useUser } from '@clerk/nextjs'
 import { Check, Star, Zap, Crown, Sparkles, ArrowRight, X, Gift, Infinity } from 'lucide-react'
 
 export default function NewPricingSection() {
@@ -370,8 +370,21 @@ export default function NewPricingSection() {
                     <SignedIn>
                       <button 
                         onClick={() => {
-                          // TODO: Handle plan selection/upgrade for logged-in users
-                          console.log(`User wants to select plan: ${plan.name}`)
+                          if (plan.clerkPlanId === 'free') {
+                            // For free plan, redirect to dashboard
+                            window.location.href = '/dashboard'
+                          } else {
+                            // For paid plans, open Clerk user account management
+                            // This simulates clicking on the user profile to open account management
+                            const userButton = document.querySelector('[data-clerk-user-button]')
+                            if (userButton) {
+                              (userButton as HTMLElement).click()
+                            } else {
+                              // Fallback: redirect to dashboard and show a message
+                              alert('Please click on your profile icon and go to "Manage account" → "Billing" to upgrade your plan.')
+                              window.location.href = '/dashboard'
+                            }
+                          }
                         }}
                         className={`group/btn relative w-full py-4 rounded-2xl font-bold text-lg transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 shadow-2xl active:scale-95 overflow-hidden ${
                           plan.popular
