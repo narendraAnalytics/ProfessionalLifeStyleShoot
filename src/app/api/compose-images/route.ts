@@ -36,17 +36,15 @@ async function validateMergePlanLimits(userId: string) {
       return { valid: false, error: 'User not found' };
     }
 
-    // For now, we'll count compositions in the photoshoot table with a specific tag
-    // You might want to create a separate table for compositions later
+    // Count compositions from imageCompositions table (matches frontend tracking)
     const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
     const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
     monthEnd.setHours(23, 59, 59, 999);
 
-    const currentMergeUsage = await prisma.photoshoot.count({
+    const currentMergeUsage = await prisma.imageComposition.count({
       where: {
         userId: user.id,
-        style: 'composition', // We'll use this to identify merges
         createdAt: {
           gte: monthStart,
           lte: monthEnd
@@ -184,34 +182,32 @@ export async function POST(req: NextRequest) {
         aspectRatio: aspectRatio
       });
 
-      const photoshoot = await prisma.photoshoot.create({
+      const imageComposition = await prisma.imageComposition.create({
         data: {
           userId: user.id,
-          originalImageUrl: uploadResult.url,
-          generatedImageUrl: uploadResult.url,
-          thumbnailUrl: uploadResult.thumbnailUrl,
-          bwImageUrl: bwUrls.original, // Store the B&W original for quick access
-          imageKitFileId: uploadResult.fileId,
-          style: 'composition',
-          originalPrompt: prompt,
-          enhancedPrompt: null,
+          outputImageUrl: uploadResult.url,
+          sourceImageUrls: images.map(img => img.name), // Store source image names
+          compositionType: 'multi-image',
           status: 'completed',
           metadata: {
             responsiveUrls,
             bwUrls,  // Store all B&W variations
             aspectRatio,
-            compositionType: 'multi-image',
             inputImages: images.length,
             generatedAt: new Date().toISOString(),
-            originalFileNames: images.map(img => img.name)
+            originalFileNames: images.map(img => img.name),
+            prompt,
+            thumbnailUrl: uploadResult.thumbnailUrl,
+            bwImageUrl: bwUrls.original,
+            imageKitFileId: uploadResult.fileId
           }
         },
       });
 
       console.log('💾 Database save successful:', {
-        photoshootId: photoshoot.id,
-        storedBwImageUrl: photoshoot.bwImageUrl,
-        metadataKeys: Object.keys(photoshoot.metadata || {})
+        imageCompositionId: imageComposition.id,
+        storedBwImageUrl: (imageComposition.metadata as any)?.bwImageUrl,
+        metadataKeys: Object.keys(imageComposition.metadata || {})
       });
 
       console.log('📊 Image URLs generated:', {
@@ -226,16 +222,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({
         success: true,
         photoshoot: {
-          id: photoshoot.id,
+          id: imageComposition.id,
           imageUrl: uploadResult.url,
           thumbnailUrl: uploadResult.thumbnailUrl,
-          bwImageUrl: photoshoot.bwImageUrl,
+          bwImageUrl: (imageComposition.metadata as any)?.bwImageUrl,
           responsiveUrls,
           bwUrls, // Include B&W responsive URLs
-          style: photoshoot.style,
-          originalPrompt: photoshoot.originalPrompt,
+          style: 'composition',
+          originalPrompt: prompt,
           enhancedPrompt: null,
-          createdAt: photoshoot.createdAt,
+          createdAt: imageComposition.createdAt,
         },
       });
 

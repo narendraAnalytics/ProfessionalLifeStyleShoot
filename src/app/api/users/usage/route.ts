@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
     const periodEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0) // Last day of current month
     periodEnd.setHours(23, 59, 59, 999) // End of day
 
-    // Count images generated in current period
+    // Count AI-generated images in current period (photoshoots table)
     const imageCount = await prisma.photoshoot.count({
       where: {
         userId: user.id,
@@ -39,8 +39,16 @@ export async function GET(req: NextRequest) {
       }
     })
 
-    // Count image merges/compositions in current period (set to 0 for now)
-    const mergeCount = 0 // TODO: Implement actual merge counting when you have the composition feature
+    // Count Upload & Combine images in current period (imageCompositions table)
+    const mergeCount = await prisma.imageComposition.count({
+      where: {
+        userId: user.id,
+        createdAt: {
+          gte: periodStart,
+          lte: periodEnd
+        }
+      }
+    })
 
     const usage = {
       currentPeriodImages: imageCount,
@@ -80,17 +88,48 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
-    // This endpoint can be used to track usage increments
-    // For now, image generation is tracked automatically via photoshoot creation
-    // Merge usage would need to be implemented when you add that feature
-
     if (type !== 'image' && type !== 'merge') {
       return NextResponse.json({ error: 'Invalid usage type' }, { status: 400 })
     }
 
+    // Calculate current billing period (monthly)
+    const now = new Date()
+    const periodStart = new Date(now.getFullYear(), now.getMonth(), 1) // First day of current month
+    const periodEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0) // Last day of current month
+    periodEnd.setHours(23, 59, 59, 999) // End of day
+
+    // Get updated usage counts
+    const imageCount = await prisma.photoshoot.count({
+      where: {
+        userId: user.id,
+        createdAt: {
+          gte: periodStart,
+          lte: periodEnd
+        }
+      }
+    })
+
+    const mergeCount = await prisma.imageComposition.count({
+      where: {
+        userId: user.id,
+        createdAt: {
+          gte: periodStart,
+          lte: periodEnd
+        }
+      }
+    })
+
+    const usage = {
+      currentPeriodImages: imageCount,
+      currentPeriodMerges: mergeCount,
+      periodStartDate: periodStart.toISOString(),
+      periodEndDate: periodEnd.toISOString()
+    }
+
     return NextResponse.json({ 
       success: true,
-      message: `${type} usage tracked`
+      message: `${type} usage tracked`,
+      ...usage
     })
 
   } catch (error) {

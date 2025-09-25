@@ -8,6 +8,7 @@ import DashboardSidebar from './DashboardSidebar'
 import AIPhotoshootGenerator from './AIPhotoshootGenerator'
 import ImageCompositionGenerator from './ImageCompositionGenerator'
 import { useUserSync } from './UserSyncProvider'
+import { usePlanLimits } from '@/hooks/usePlanLimits'
 import { 
   Sparkles, 
   Image as ImageIcon, 
@@ -15,9 +16,19 @@ import {
   History,
   Loader2,
   AlertCircle,
-  Plus
+  Plus,
+  Crown
 } from 'lucide-react'
 import { toast } from 'sonner'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from './ui/dialog'
+import { Button } from './ui/button'
 
 interface GeneratedImage {
   id: string
@@ -53,8 +64,14 @@ export default function Dashboard() {
   const [dashboardReady, setDashboardReady] = useState(false)
   const [newlyGeneratedImages, setNewlyGeneratedImages] = useState<Set<string>>(new Set())
   const [showImageComposer, setShowImageComposer] = useState(false)
+  
+  // Upgrade modal state for Upload & Combine
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false)
+  const [hasShownModalThisSession, setHasShownModalThisSession] = useState(false)
+  
   const { user } = useUser()
   const { isSyncing, syncError, syncSuccess, retrySync } = useUserSync()
+  const { planStatus, loading: planLoading } = usePlanLimits()
 
   // Format options
   const formatOptions = [
@@ -448,9 +465,42 @@ export default function Dashboard() {
                 {/* Quick Action Button - Only show in create section */}
                 <div className="flex justify-center mb-8">
                   <button
-                    onClick={() => setShowImageComposer(!showImageComposer)}
-                    className="group relative overflow-hidden bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500 hover:from-purple-600 hover:via-pink-600 hover:to-orange-600 text-white font-bold py-4 px-8 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 animate-pulse"
-                    title="Upload and combine images"
+                    onClick={() => {
+                      // If switching back to AI Generator, allow it
+                      if (showImageComposer) {
+                        setShowImageComposer(false)
+                        return
+                      }
+                      
+                      // Check if user can merge images before switching to Upload & Combine
+                      if (!planStatus?.canMergeImages && !hasShownModalThisSession) {
+                        setShowUpgradeModal(true)
+                        setHasShownModalThisSession(true)
+                        toast.error(
+                          `🎉 You've used your free Upload & Combine for this month!`,
+                          {
+                            description: `Free plan: 1 merge/month. Upgrade to Pro for 8 merges/month!`,
+                            duration: 5000,
+                            action: {
+                              label: 'Upgrade to Pro',
+                              onClick: () => {
+                                window.open('/pricing', '_blank')
+                              },
+                            },
+                          }
+                        )
+                        return // Block switching to Upload & Combine
+                      }
+                      
+                      // Allow switching to Upload & Combine
+                      setShowImageComposer(true)
+                    }}
+                    className={`group relative overflow-hidden text-white font-bold py-4 px-8 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 ${
+                      !planStatus?.canMergeImages && !showImageComposer
+                        ? 'bg-gradient-to-r from-gray-400 to-gray-500 hover:from-gray-500 hover:to-gray-600 cursor-not-allowed'
+                        : 'bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500 hover:from-purple-600 hover:via-pink-600 hover:to-orange-600 animate-pulse'
+                    }`}
+                    title={!planStatus?.canMergeImages && !showImageComposer ? 'Upgrade to Pro for more merges' : 'Upload and combine images'}
                   >
                     <div className="absolute inset-0 bg-gradient-to-r from-purple-400 via-pink-400 to-orange-400 animate-gradient-x opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                     <div className="relative flex items-center gap-3">
@@ -686,6 +736,73 @@ export default function Dashboard() {
           </div>
         </main>
       </div>
+
+      {/* Upload & Combine Upgrade Modal */}
+      <Dialog open={showUpgradeModal} onOpenChange={setShowUpgradeModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader className="text-center">
+            <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Crown className="w-8 h-8 text-white" />
+            </div>
+            <DialogTitle className="text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+              🎉 You&rsquo;ve Used Your Free Upload & Combine!
+            </DialogTitle>
+            <DialogDescription className="text-gray-600 mt-2">
+              You&rsquo;ve created <span className="font-semibold text-purple-600">1 amazing merged image</span> this month with your Free plan.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            {/* Benefits List */}
+            <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-4 space-y-3">
+              <div className="text-sm font-semibold text-gray-700 mb-2">✨ Upgrade to Pro and get:</div>
+              
+              <div className="space-y-2 text-sm">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                  <span><strong className="text-purple-600">8 Upload & Combine</strong> images per month</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                  <span><strong className="text-purple-600">15 AI Generated</strong> images per month</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                  <span><strong className="text-purple-600">All aspect ratios</strong> (Portrait, Stories, etc.)</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                  <span><strong className="text-purple-600">HD Quality</strong> images</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                  <span><strong className="text-purple-600">Email Support</strong></span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter className="flex-col space-y-2">
+            <Button
+              onClick={() => {
+                window.open('/pricing', '_blank')
+                setShowUpgradeModal(false)
+              }}
+              className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200"
+            >
+              <Crown className="w-4 h-4 mr-2" />
+              Upgrade to Pro Plan
+            </Button>
+            <Button
+              onClick={() => setShowUpgradeModal(false)}
+              variant="ghost"
+              className="w-full text-gray-500 hover:text-gray-700"
+            >
+              Maybe Later
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

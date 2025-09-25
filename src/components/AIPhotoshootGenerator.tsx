@@ -101,7 +101,7 @@ export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshoot
   useUser() // Keep for auth context
   
   // Plan limits and usage tracking
-  const { planStatus, loading: planLoading, refreshUsage } = usePlanLimits()
+  const { planStatus, loading: planLoading, refreshUsage, incrementUsage } = usePlanLimits()
 
   // Format options
   const formatOptions = [
@@ -295,8 +295,14 @@ export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshoot
 
       toast.success('Image generated successfully!')
       
-      // Refresh usage count after successful generation
-      refreshUsage()
+      // Increment image usage counter after successful generation
+      try {
+        await incrementUsage('image', 1)
+        console.log('✅ Image usage incremented successfully')
+      } catch (error) {
+        console.error('⚠️ Failed to increment image usage:', error)
+        // Don't fail the entire operation if usage tracking fails
+      }
 
     } catch (error) {
       console.error('Generation error:', error)
@@ -614,7 +620,7 @@ export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshoot
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-gray-600">Monthly Images</span>
                     <span className="font-medium">
-                      {planStatus.usage.currentPeriodImages} of {planStatus.plan.maxImagesPerMonth === -1 ? '∞' : planStatus.plan.maxImagesPerMonth}
+                      {Math.min(planStatus.usage.currentPeriodImages, planStatus.plan.maxImagesPerMonth === -1 ? planStatus.usage.currentPeriodImages : planStatus.plan.maxImagesPerMonth)} of {planStatus.plan.maxImagesPerMonth === -1 ? '∞' : planStatus.plan.maxImagesPerMonth}
                     </span>
                   </div>
                   {planStatus.plan.maxImagesPerMonth !== -1 && (
