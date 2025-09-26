@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Mail, Phone, MapPin, Send, MessageCircle, Clock, Shield } from 'lucide-react'
+import { Mail, Phone, MapPin, Send, MessageCircle, Clock, Shield, Linkedin } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface ContactInfo {
@@ -69,6 +69,13 @@ export default function ContactSection() {
       detail: 'Amaravati',
       description: 'By appointment only',
       gradient: 'from-purple-500 to-pink-500'
+    },
+    {
+      icon: Linkedin,
+      title: 'LinkedIn',
+      detail: 'Connect with us',
+      description: 'Professional network',
+      gradient: 'from-blue-600 to-blue-800'
     }
   ]
 
@@ -204,7 +211,8 @@ export default function ContactSection() {
             {contactInfo.map((info, index) => (
               <div 
                 key={index}
-                className="group bg-white/80 backdrop-blur-sm border border-gray-200/50 rounded-3xl p-6 shadow-lg hover:shadow-xl hover:border-gray-300/60 transition-all duration-300 hover:scale-105"
+                className={`group bg-white/80 backdrop-blur-sm border border-gray-200/50 rounded-3xl p-6 shadow-lg hover:shadow-xl hover:border-gray-300/60 transition-all duration-300 hover:scale-105 ${info.title === 'LinkedIn' ? 'cursor-pointer' : ''}`}
+                onClick={info.title === 'LinkedIn' ? () => window.open('https://www.linkedin.com/in/nk-analytics', '_blank') : undefined}
               >
                 <div className="flex items-start space-x-4">
                   <div className="flex-shrink-0">
