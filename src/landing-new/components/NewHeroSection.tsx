@@ -36,9 +36,15 @@ export default function NewHeroSection() {
   const [currentWordIndex, setCurrentWordIndex] = useState(0)
   const [isAnimating, setIsAnimating] = useState(false)
   const [isGalleryLoading, setIsGalleryLoading] = useState(false)
+  const [isMyGalleryLoading, setIsMyGalleryLoading] = useState(false)
   
   const handleGalleryClick = () => {
     setIsGalleryLoading(true)
+    router.push('/gallery')
+  }
+
+  const handleMyGalleryClick = () => {
+    setIsMyGalleryLoading(true)
     router.push('/gallery')
   }
 
@@ -169,22 +175,44 @@ export default function NewHeroSection() {
           </SignedOut>
 
           <SignedIn>
-            <button 
-              onClick={() => router.push('/gallery')}
-              className="group relative w-full sm:w-auto px-10 py-5 bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 hover:from-purple-500 hover:via-pink-500 hover:to-rose-500 rounded-2xl text-white font-bold text-lg transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 shadow-2xl hover:shadow-purple-500/25 active:scale-95 overflow-hidden"
-            >
-              {/* Animated background glow */}
-              <div className="absolute inset-0 bg-gradient-to-r from-purple-500 via-pink-500 to-rose-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-lg"></div>
+            <div className="relative group">
+              <button 
+                onClick={handleMyGalleryClick}
+                className="group relative w-full sm:w-auto px-10 py-5 bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 hover:from-purple-500 hover:via-pink-500 hover:to-rose-500 rounded-2xl text-white font-bold text-lg transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 shadow-2xl hover:shadow-purple-500/25 active:scale-95 overflow-hidden"
+              >
+                {/* Animated background glow */}
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-500 via-pink-500 to-rose-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-lg"></div>
+                
+                {/* Button content */}
+                <div className="relative flex items-center justify-center space-x-3">
+                  <Camera className={`w-6 h-6 transition-transform duration-300 ${
+                    isMyGalleryLoading 
+                      ? 'animate-spin' 
+                      : 'group-hover:rotate-12'
+                  }`} />
+                  <span className="group-hover:tracking-wide transition-all duration-300">My Gallery</span>
+                </div>
+                
+                {/* Shimmer effect */}
+                <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/20 to-transparent overflow-hidden"></div>
+              </button>
               
-              {/* Button content */}
-              <div className="relative flex items-center justify-center space-x-3">
-                <Camera className="w-6 h-6 group-hover:rotate-12 transition-transform duration-300" />
-                <span className="group-hover:tracking-wide transition-all duration-300">My Gallery</span>
+              {/* Tooltip */}
+              <div className="absolute -top-20 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-all duration-300 ease-in-out pointer-events-none z-[99999]">
+                <div className="bg-gradient-to-r from-purple-600 via-pink-500 to-rose-500 text-white px-5 py-3 rounded-xl text-sm font-bold whitespace-nowrap shadow-2xl border border-white/30 backdrop-blur-lg relative overflow-hidden">
+                  {/* Glowing background effect */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-purple-400 via-pink-400 to-rose-400 opacity-20 blur-sm"></div>
+                  
+                  {/* Text content */}
+                  <span className="relative z-10 bg-gradient-to-r from-white via-cyan-100 to-purple-100 bg-clip-text text-transparent font-extrabold tracking-wide">
+                    ACCESS YOUR PERSONAL GALLERY
+                  </span>
+                  
+                  {/* Arrow */}
+                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-[6px] border-transparent border-t-purple-600"></div>
+                </div>
               </div>
-              
-              {/* Shimmer effect */}
-              <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/20 to-transparent overflow-hidden"></div>
-            </button>
+            </div>
           </SignedIn>
         </div>
 
