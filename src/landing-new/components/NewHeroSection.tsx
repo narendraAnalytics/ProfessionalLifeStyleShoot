@@ -32,10 +32,16 @@ export default function NewHeroSection() {
   `
   const router = useRouter()
   
-  const rotatingWords = ["Model", "Brand", "Designer", "Creator", "Influencer"]
+  const rotatingWords = ["Model", "Brand", "Designer", "Creator", "Content"]
   const [currentWordIndex, setCurrentWordIndex] = useState(0)
   const [isAnimating, setIsAnimating] = useState(false)
+  const [isGalleryLoading, setIsGalleryLoading] = useState(false)
   
+  const handleGalleryClick = () => {
+    setIsGalleryLoading(true)
+    router.push('/gallery')
+  }
+
   useEffect(() => {
     const interval = setInterval(() => {
       setIsAnimating(true)
@@ -57,11 +63,11 @@ export default function NewHeroSection() {
       <style jsx>{customStyles}</style>
       <main id="home" className="w-full min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 pt-16">
         <div className="w-full max-w-4xl mx-auto text-center">
-        <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 leading-tight text-white drop-shadow-2xl">
+        <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 leading-tight text-slate-200 drop-shadow-2xl">
           Transform Your{' '}
           <span className="inline-block min-w-[140px] text-left relative overflow-hidden">
             <span 
-              className={`inline-block transition-all duration-300 ease-in-out transform ${
+              className={`inline-block transition-all duration-300 ease-in-out transform bg-gradient-to-r from-emerald-400 via-cyan-400 to-blue-400 bg-clip-text text-transparent ${
                 isAnimating 
                   ? 'opacity-0 -translate-y-4 scale-95' 
                   : 'opacity-100 translate-y-0 scale-100'
@@ -81,7 +87,7 @@ export default function NewHeroSection() {
           Elegant design with perfect user experience.
         </p>
 
-        <div className="flex flex-col sm:flex-row gap-6 justify-center items-center overflow-hidden">
+        <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
           {/* Create Your Shoot Button - Conditional based on auth */}
           <SignedOut>
             <SignInButton mode="modal">
@@ -122,22 +128,44 @@ export default function NewHeroSection() {
 
           {/* View Gallery Button - Conditional based on auth */}
           <SignedOut>
-            <button 
-              onClick={() => router.push('/gallery')}
-              className="group relative w-full sm:w-auto px-10 py-5 bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 hover:from-purple-500 hover:via-pink-500 hover:to-rose-500 rounded-2xl text-white font-bold text-lg transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 shadow-2xl hover:shadow-purple-500/25 active:scale-95 overflow-hidden"
-            >
-              {/* Animated background glow */}
-              <div className="absolute inset-0 bg-gradient-to-r from-purple-500 via-pink-500 to-rose-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-lg"></div>
+            <div className="relative group">
+              <button 
+                onClick={handleGalleryClick}
+                className="group relative w-full sm:w-auto px-10 py-5 bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 hover:from-purple-500 hover:via-pink-500 hover:to-rose-500 rounded-2xl text-white font-bold text-lg transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 shadow-2xl hover:shadow-purple-500/25 active:scale-95 overflow-hidden"
+              >
+                {/* Animated background glow */}
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-500 via-pink-500 to-rose-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-lg"></div>
+                
+                {/* Button content */}
+                <div className="relative flex items-center justify-center space-x-3">
+                  <Camera className={`w-6 h-6 transition-transform duration-300 ${
+                    isGalleryLoading 
+                      ? 'animate-spin' 
+                      : 'group-hover:rotate-12'
+                  }`} />
+                  <span className="group-hover:tracking-wide transition-all duration-300">View Gallery</span>
+                </div>
+                
+                {/* Shimmer effect */}
+                <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/20 to-transparent overflow-hidden"></div>
+              </button>
               
-              {/* Button content */}
-              <div className="relative flex items-center justify-center space-x-3">
-                <Camera className="w-6 h-6 group-hover:rotate-12 transition-transform duration-300" />
-                <span className="group-hover:tracking-wide transition-all duration-300">View Gallery</span>
+              {/* Tooltip */}
+              <div className="absolute -top-20 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-all duration-300 ease-in-out pointer-events-none z-[99999]">
+                <div className="bg-gradient-to-r from-purple-600 via-pink-500 to-rose-500 text-white px-5 py-3 rounded-xl text-sm font-bold whitespace-nowrap shadow-2xl border border-white/30 backdrop-blur-lg relative overflow-hidden">
+                  {/* Glowing background effect */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-purple-400 via-pink-400 to-rose-400 opacity-20 blur-sm"></div>
+                  
+                  {/* Text content */}
+                  <span className="relative z-10 bg-gradient-to-r from-white via-cyan-100 to-purple-100 bg-clip-text text-transparent font-extrabold tracking-wide">
+                    AI GENERATED IMAGES VIEW HERE
+                  </span>
+                  
+                  {/* Arrow */}
+                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-[6px] border-transparent border-t-purple-600"></div>
+                </div>
               </div>
-              
-              {/* Shimmer effect */}
-              <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/20 to-transparent overflow-hidden"></div>
-            </button>
+            </div>
           </SignedOut>
 
           <SignedIn>
