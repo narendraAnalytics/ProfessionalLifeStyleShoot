@@ -23,7 +23,7 @@ export default function Navbar() {
   const navItems = [
     { name: 'Home', href: '#home', isRoute: false },
     { name: 'How It Works', href: '#how-it-works', isRoute: false },
-    { name: 'Gallery', href: '/gallery', isRoute: true },
+    { name: 'Portfolio', href: '/gallery', isRoute: true },
     { name: 'Pricing', href: '#pricing', isRoute: false },
     { name: 'About', href: '#about', isRoute: false },
     { name: 'Contact', href: '#contact', isRoute: false }

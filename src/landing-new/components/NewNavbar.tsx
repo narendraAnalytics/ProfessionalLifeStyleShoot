@@ -27,7 +27,7 @@ export default function NewNavbar() {
     { name: 'Home', href: '#home', icon: Home },
     { name: 'Features', href: '#features', icon: Sparkles },
     { name: 'Pricing', href: '#pricing', icon: CreditCard },
-    { name: 'Gallery', href: '#gallery', icon: ImageIcon },
+    { name: 'Portfolio', href: '#portfolio', icon: ImageIcon },
     { name: 'Contact', href: '#contact', icon: Mail }
   ]
 

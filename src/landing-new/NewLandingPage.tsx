@@ -5,6 +5,9 @@ import NewNavbar from './components/NewNavbar'
 import NewHeroSection from './components/NewHeroSection'
 import HowItWorksSection from './components/HowItWorksSection'
 import NewPricingSection from './components/NewPricingSection'
+import PortfolioSection from './components/PortfolioSection'
+import ContactSection from './components/ContactSection'
+import Footer from './components/Footer'
 import ImageCarousel from './components/ImageCarousel'
 
 export default function NewLandingPage() {
@@ -40,10 +43,21 @@ export default function NewLandingPage() {
         <HowItWorksSection />
       </div>
 
+    
       {/* Pricing Section */}
       <div className="relative bg-gradient-to-br from-blue-50/80 via-white/90 to-purple-50/80 backdrop-blur-sm">
         <NewPricingSection />
       </div>
+
+      {/* Portfolio Section */}
+      <PortfolioSection />
+      
+      {/* Contact Section */}
+      <ContactSection />
+      
+      {/* Footer */}
+      <Footer />
+      
     </div>
   )
 }
