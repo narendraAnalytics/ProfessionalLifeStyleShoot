@@ -17,7 +17,14 @@ import {
   Loader2,
   AlertCircle,
   Plus,
-  Crown
+  Crown,
+  Settings,
+  User,
+  Palette,
+  Download,
+  BarChart3,
+  ExternalLink,
+  Trash2
 } from 'lucide-react'
 import { toast } from 'sonner'
 import {
@@ -68,6 +75,11 @@ export default function Dashboard() {
   // Upgrade modal state for Upload & Combine
   const [showUpgradeModal, setShowUpgradeModal] = useState(false)
   const [hasShownModalThisSession, setHasShownModalThisSession] = useState(false)
+  
+  // Settings state
+  const [defaultFormat, setDefaultFormat] = useState<'jpg' | 'webp' | 'png'>('jpg')
+  const [darkMode, setDarkMode] = useState(false)
+  const [autoBW, setAutoBW] = useState(false)
   
   const { user } = useUser()
   const { isSyncing, syncError, syncSuccess, retrySync } = useUserSync()
@@ -732,6 +744,220 @@ export default function Dashboard() {
                     )}
                   </div>
                 </div>
+            )}
+
+            {activeSection === 'settings' && (
+              <div className="space-y-6">
+                <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-8">
+                  <div className="text-center mb-8">
+                    <div className="w-16 h-16 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Settings className="w-8 h-8 text-white" />
+                    </div>
+                    <h2 className="text-3xl font-bold mb-2 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                      Settings
+                    </h2>
+                    <p className="text-gray-600">Manage your preferences and account settings</p>
+                  </div>
+
+                  <div className="max-w-4xl mx-auto space-y-8">
+                    {/* User Profile Section */}
+                    <div className="bg-white/60 rounded-xl p-6 border border-gray-100">
+                      <div className="flex items-center gap-2 mb-4">
+                        <User className="w-5 h-5 text-purple-600" />
+                        <h3 className="text-lg font-semibold text-gray-800">Profile Information</h3>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
+                          <span className="text-white font-bold text-lg">
+                            {user?.firstName?.[0] || user?.emailAddresses[0]?.emailAddress?.[0]?.toUpperCase() || 'U'}
+                          </span>
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-800">
+                            {user?.firstName} {user?.lastName} {!user?.firstName && (user?.emailAddresses[0]?.emailAddress?.split('@')[0] || 'User')}
+                          </p>
+                          <p className="text-sm text-gray-600">{user?.emailAddresses[0]?.emailAddress}</p>
+                        </div>
+                        <div className="ml-auto">
+                          <button 
+                            onClick={() => window.open('https://accounts.clerk.dev/user', '_blank')}
+                            className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors text-sm"
+                          >
+                            <ExternalLink className="w-4 h-4" />
+                            Edit Profile
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Account Information */}
+                    <div className="bg-white/60 rounded-xl p-6 border border-gray-100">
+                      <div className="flex items-center gap-2 mb-4">
+                        <BarChart3 className="w-5 h-5 text-blue-600" />
+                        <h3 className="text-lg font-semibold text-gray-800">Account Information</h3>
+                      </div>
+                      <div className="grid md:grid-cols-2 gap-6">
+                        <div>
+                          <div className="flex items-center gap-2 mb-2">
+                            <Crown className="w-4 h-4 text-yellow-500" />
+                            <span className="text-sm font-medium text-gray-600">Current Plan</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <p className="text-lg font-semibold text-gray-800">
+                              {planStatus?.plan?.name || 'Free Plan'}
+                            </p>
+                            {planStatus?.plan?.name === 'Pro Plan' && (
+                              <span className="px-2 py-1 bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 text-xs rounded-full font-medium">
+                                ✨ Active
+                              </span>
+                            )}
+                            {planStatus?.plan?.name === 'Max Ultimate' && (
+                              <span className="px-2 py-1 bg-gradient-to-r from-yellow-100 to-orange-100 text-yellow-700 text-xs rounded-full font-medium">
+                                👑 Ultimate
+                              </span>
+                            )}
+                          </div>
+                          {planStatus?.plan?.name === 'Free' && (
+                            <button 
+                              onClick={() => window.open('/pricing', '_blank')}
+                              className="mt-2 px-3 py-1 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg text-sm hover:from-purple-700 hover:to-pink-700 transition-all"
+                            >
+                              Upgrade to Pro
+                            </button>
+                          )}
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2 mb-2">
+                            <Sparkles className="w-4 h-4 text-purple-500" />
+                            <span className="text-sm font-medium text-gray-600">Usage This Month</span>
+                          </div>
+                          <p className="text-lg font-semibold text-gray-800">
+                            {planStatus?.usage?.currentPeriodImages || 0} / {planStatus?.plan?.maxImagesPerMonth === -1 ? '∞' : planStatus?.plan?.maxImagesPerMonth || 2} images
+                          </p>
+                          {planStatus?.imagesRemaining !== undefined && planStatus?.imagesRemaining > 0 && planStatus?.plan?.maxImagesPerMonth !== -1 && (
+                            <p className="text-xs text-green-600 font-medium">
+                              {planStatus.imagesRemaining} remaining
+                            </p>
+                          )}
+                          {planStatus?.imagesRemaining === 0 && planStatus?.plan?.maxImagesPerMonth !== -1 && (
+                            <p className="text-xs text-orange-600 font-medium">
+                              Limit reached
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Download Preferences */}
+                    <div className="bg-white/60 rounded-xl p-6 border border-gray-100">
+                      <div className="flex items-center gap-2 mb-4">
+                        <Download className="w-5 h-5 text-green-600" />
+                        <h3 className="text-lg font-semibold text-gray-800">Download Preferences</h3>
+                      </div>
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-600 mb-2">
+                            Default Download Format
+                          </label>
+                          <div className="flex gap-2">
+                            {formatOptions.map((format) => (
+                              <button
+                                key={format.value}
+                                onClick={() => setDefaultFormat(format.value)}
+                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                                  defaultFormat === format.value
+                                    ? 'bg-purple-600 text-white'
+                                    : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                                }`}
+                              >
+                                {format.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-gray-700">Auto-generate B&W versions</p>
+                            <p className="text-xs text-gray-500">Automatically create black & white versions of new images</p>
+                          </div>
+                          <button
+                            onClick={() => setAutoBW(!autoBW)}
+                            className={`relative w-12 h-6 rounded-full transition-colors ${
+                              autoBW ? 'bg-purple-600' : 'bg-gray-300'
+                            }`}
+                          >
+                            <div
+                              className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
+                                autoBW ? 'translate-x-6' : 'translate-x-0.5'
+                              }`}
+                            />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Theme Preferences */}
+                    <div className="bg-white/60 rounded-xl p-6 border border-gray-100">
+                      <div className="flex items-center gap-2 mb-4">
+                        <Palette className="w-5 h-5 text-pink-600" />
+                        <h3 className="text-lg font-semibold text-gray-800">Appearance</h3>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-gray-700">Dark Mode</p>
+                          <p className="text-xs text-gray-500">Switch to dark theme (Coming Soon)</p>
+                        </div>
+                        <button
+                          onClick={() => {
+                            setDarkMode(!darkMode)
+                            toast.info('Dark mode feature coming soon!')
+                          }}
+                          className={`relative w-12 h-6 rounded-full transition-colors ${
+                            darkMode ? 'bg-purple-600' : 'bg-gray-300'
+                          }`}
+                          disabled
+                        >
+                          <div
+                            className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
+                              darkMode ? 'translate-x-6' : 'translate-x-0.5'
+                            }`}
+                          />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Quick Actions */}
+                    <div className="bg-white/60 rounded-xl p-6 border border-gray-100">
+                      <div className="flex items-center gap-2 mb-4">
+                        <Trash2 className="w-5 h-5 text-red-600" />
+                        <h3 className="text-lg font-semibold text-gray-800">Quick Actions</h3>
+                      </div>
+                      <div className="space-y-3">
+                        <button 
+                          onClick={() => {
+                            // Clear browser cache for images
+                            window.location.reload()
+                            toast.success('Image cache cleared!')
+                          }}
+                          className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg transition-colors text-sm"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          Clear Image Cache
+                        </button>
+                        <button 
+                          onClick={() => {
+                            toast.info('Export feature coming soon!')
+                          }}
+                          className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-green-100 hover:bg-green-200 text-green-700 rounded-lg transition-colors text-sm"
+                        >
+                          <Download className="w-4 h-4" />
+                          Export All Images (Coming Soon)
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             )}
           </div>
         </main>

@@ -37,6 +37,7 @@ export default function NewHeroSection() {
   const [isAnimating, setIsAnimating] = useState(false)
   const [isGalleryLoading, setIsGalleryLoading] = useState(false)
   const [isMyGalleryLoading, setIsMyGalleryLoading] = useState(false)
+  const [isCreateShootLoading, setIsCreateShootLoading] = useState(false)
   
   const handleGalleryClick = () => {
     setIsGalleryLoading(true)
@@ -46,6 +47,11 @@ export default function NewHeroSection() {
   const handleMyGalleryClick = () => {
     setIsMyGalleryLoading(true)
     router.push('/gallery')
+  }
+
+  const handleCreateShootClick = () => {
+    setIsCreateShootLoading(true)
+    router.push('/dashboard')
   }
 
   useEffect(() => {
@@ -115,7 +121,7 @@ export default function NewHeroSection() {
 
           <SignedIn>
             <button 
-              onClick={() => router.push('/dashboard')}
+              onClick={handleCreateShootClick}
               className="group relative w-full sm:w-auto px-10 py-5 bg-gradient-to-r from-cyan-500 via-emerald-500 to-lime-500 hover:from-cyan-400 hover:via-emerald-400 hover:to-lime-400 rounded-2xl text-white font-bold text-lg transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 shadow-2xl hover:shadow-cyan-500/25 active:scale-95 overflow-hidden"
             >
               {/* Animated background glow */}
@@ -123,7 +129,11 @@ export default function NewHeroSection() {
               
               {/* Button content */}
               <div className="relative flex items-center justify-center space-x-3">
-                <Sparkles className="w-6 h-6 group-hover:rotate-12 transition-transform duration-300" />
+                <Sparkles className={`w-6 h-6 transition-transform duration-300 ${
+                  isCreateShootLoading 
+                    ? 'animate-spin' 
+                    : 'group-hover:rotate-12'
+                }`} />
                 <span className="group-hover:tracking-wide transition-all duration-300">Create Your Shoot</span>
               </div>
               
