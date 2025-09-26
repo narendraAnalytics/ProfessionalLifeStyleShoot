@@ -52,21 +52,21 @@ export default function ContactSection() {
     {
       icon: Mail,
       title: 'Email Us',
-      detail: 'hello@lifeshotstudios.com',
+      detail: 'narendra.insights@gmail.com',
       description: 'Drop us a line anytime',
       gradient: 'from-blue-500 to-cyan-500'
     },
     {
       icon: Phone,
       title: 'Call Us',
-      detail: '+1 (555) 123-4567',
-      description: 'Mon-Fri 9AM-6PM EST',
+      detail: '+91 9135568511',
+      description: 'Mon-Fri 9AM-6PM IST',
       gradient: 'from-emerald-500 to-teal-500'
     },
     {
       icon: MapPin,
       title: 'Visit Studio',
-      detail: 'New York, NY',
+      detail: 'Amaravati',
       description: 'By appointment only',
       gradient: 'from-purple-500 to-pink-500'
     }
