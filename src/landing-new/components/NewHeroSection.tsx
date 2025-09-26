@@ -1,17 +1,76 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { Sparkles, Camera } from 'lucide-react'
 import { SignedIn, SignedOut, SignInButton } from '@clerk/nextjs'
 import { useRouter } from 'next/navigation'
 
 export default function NewHeroSection() {
+  // Add custom styles for enhanced animations
+  const customStyles = `
+    @keyframes wordSlideIn {
+      0% {
+        opacity: 0;
+        transform: translateY(20px) scale(0.8);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+    
+    @keyframes wordSlideOut {
+      0% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+      100% {
+        opacity: 0;
+        transform: translateY(-20px) scale(0.8);
+      }
+    }
+  `
   const router = useRouter()
+  
+  const rotatingWords = ["Model", "Brand", "Designer", "Creator", "Influencer"]
+  const [currentWordIndex, setCurrentWordIndex] = useState(0)
+  const [isAnimating, setIsAnimating] = useState(false)
+  
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setIsAnimating(true)
+      
+      setTimeout(() => {
+        setCurrentWordIndex((prev) => (prev + 1) % rotatingWords.length)
+        
+        setTimeout(() => {
+          setIsAnimating(false)
+        }, 50) // Brief pause before entrance
+      }, 350) // Exit animation duration
+    }, 3000)
+    
+    return () => clearInterval(interval)
+  }, [])
 
   return (
-    <main id="home" className="w-full min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 pt-16">
-      <div className="w-full max-w-4xl mx-auto text-center">
+    <>
+      <style jsx>{customStyles}</style>
+      <main id="home" className="w-full min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 pt-16">
+        <div className="w-full max-w-4xl mx-auto text-center">
         <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 leading-tight text-white drop-shadow-2xl">
-          Transform Your Vision into
+          Transform Your{' '}
+          <span className="inline-block min-w-[140px] text-left relative overflow-hidden">
+            <span 
+              className={`inline-block transition-all duration-300 ease-in-out transform ${
+                isAnimating 
+                  ? 'opacity-0 -translate-y-4 scale-95' 
+                  : 'opacity-100 translate-y-0 scale-100'
+              }`}
+            >
+              {rotatingWords[currentWordIndex]}
+            </span>
+          </span>{' '}
+          Vision into
           <span className="block bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 bg-clip-text text-transparent drop-shadow-lg">
             Professional Reality
           </span>
@@ -109,5 +168,6 @@ export default function NewHeroSection() {
         </div>
       </div>
     </main>
+    </>
   )
 }
