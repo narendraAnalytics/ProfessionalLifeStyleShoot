@@ -79,7 +79,7 @@ const showcaseImages: ShowcaseImage[] = [
   {
     id: '7',
     src: '/images/slipperybrand.png',
-    title: 'Branded Sliperry For Women',
+    title: 'Branded Slippers for Womenn',
     category: 'Fashion Photography',
     description: 'Branded Photo shoot for the slippers Brand',
     alt: 'Brand designer photoshoot collection'

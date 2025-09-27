@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ClerkProvider } from '@clerk/nextjs';
 import UserSyncProvider from '@/components/UserSyncProvider';
+import { Toaster } from 'sonner';
 import "./globals.css";
 
 const geistSans = Geist({
@@ -51,6 +52,22 @@ export default function RootLayout({
           <UserSyncProvider>
             {children}
           </UserSyncProvider>
+          <Toaster 
+            position="top-right"
+            closeButton
+            richColors
+            expand={true}
+            duration={4000}
+            toastOptions={{
+              style: {
+                borderRadius: '12px',
+                fontSize: '14px',
+                fontWeight: '500',
+                padding: '16px',
+                maxWidth: '400px',
+              }
+            }}
+          />
         </body>
       </html>
     </ClerkProvider>

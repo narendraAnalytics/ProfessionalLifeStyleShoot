@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Mail, Phone, MapPin, Send, MessageCircle, Clock, Shield, Linkedin } from 'lucide-react'
 import { toast } from 'sonner'
+import emailjs from '@emailjs/browser'
 
 interface ContactInfo {
   icon: React.ElementType
@@ -33,12 +34,74 @@ export default function ContactSection() {
     e.preventDefault()
     setIsSubmitting(true)
     
-    // Simulate form submission
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    
-    toast.success('Thank you! We\'ll get back to you within 24 hours.')
-    setFormData({ name: '', email: '', company: '', message: '' })
-    setIsSubmitting(false)
+    try {
+      // EmailJS configuration
+      const serviceId = process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID!
+      const templateId = process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID!
+      const publicKey = process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY!
+      
+      // Template parameters that match your EmailJS template
+      const templateParams = {
+        name: formData.name,
+        email: formData.email,
+        company: formData.company,
+        message: formData.message,
+      }
+      
+      // Send email using EmailJS
+      await emailjs.send(serviceId, templateId, templateParams, publicKey)
+      
+      // Enhanced success notification with personalization
+      toast.success(
+        `Thank you, ${formData.name}! 🎉 Your message has been sent successfully. We'll respond within 24 hours. For urgent matters, call us at +91 9135568511.`,
+        {
+          duration: 6000,
+          style: {
+            background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+            color: 'white',
+            border: 'none',
+            borderRadius: '12px',
+            fontSize: '14px',
+            fontWeight: '500',
+          }
+        }
+      )
+      
+      // Reset form only on successful submission
+      setFormData({ name: '', email: '', company: '', message: '' })
+      
+    } catch (error: any) {
+      console.error('EmailJS error:', error)
+      
+      // Enhanced error handling with specific messages
+      let errorMessage = ''
+      
+      if (error?.status === 400) {
+        errorMessage = '❌ Please check your information and try again. Some fields may be invalid.'
+      } else if (error?.status === 429) {
+        errorMessage = '⏳ Too many requests. Please wait a moment and try again.'
+      } else if (error?.text?.includes('network') || error?.name === 'NetworkError') {
+        errorMessage = '🌐 Network error. Please check your connection and try again.'
+      } else if (error?.status === 401 || error?.status === 403) {
+        errorMessage = '🔐 Service temporarily unavailable. Please email us directly at narendra.insights@gmail.com'
+      } else {
+        errorMessage = '⚠️ Message failed to send. Please try again or email us directly at narendra.insights@gmail.com'
+      }
+      
+      toast.error(errorMessage, {
+        duration: 8000,
+        style: {
+          background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+          color: 'white',
+          border: 'none',
+          borderRadius: '12px',
+          fontSize: '14px',
+          fontWeight: '500',
+        }
+      })
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
