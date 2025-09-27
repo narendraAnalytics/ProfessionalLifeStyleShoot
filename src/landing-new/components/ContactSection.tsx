@@ -46,6 +46,11 @@ export default function ContactSection() {
         email: formData.email,
         company: formData.company,
         message: formData.message,
+        time: new Date().toLocaleString('en-IN', { 
+          timeZone: 'Asia/Kolkata',
+          dateStyle: 'full',
+          timeStyle: 'medium'
+        })
       }
       
       // Send email using EmailJS
