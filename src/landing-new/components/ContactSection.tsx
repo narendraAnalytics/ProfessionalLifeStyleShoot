@@ -44,7 +44,7 @@ export default function ContactSection() {
       const templateParams = {
         name: formData.name,
         email: formData.email,
-        company: formData.company,
+        your_company: formData.company,
         message: formData.message,
         time: new Date().toLocaleString('en-IN', { 
           timeZone: 'Asia/Kolkata',
