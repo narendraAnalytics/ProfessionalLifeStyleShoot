@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Mail, Phone, MapPin, Send, MessageCircle, Clock, Shield, Linkedin } from 'lucide-react'
 import { toast } from 'sonner'
 import emailjs from '@emailjs/browser'
+import { SignedIn, SignedOut, SignInButton } from '@clerk/nextjs'
 
 interface ContactInfo {
   icon: React.ElementType
@@ -255,22 +256,49 @@ export default function ContactSection() {
                 />
               </div>
 
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="group relative w-full px-8 py-4 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 hover:from-blue-400 hover:via-purple-400 hover:to-pink-400 rounded-2xl text-white font-bold text-lg transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 shadow-2xl hover:shadow-blue-500/25 active:scale-95 overflow-hidden disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-lg"></div>
-                
-                <div className="relative flex items-center justify-center space-x-3">
-                  <Send className={`w-5 h-5 transition-transform duration-300 ${isSubmitting ? 'animate-pulse' : 'group-hover:rotate-12'}`} />
-                  <span className="group-hover:tracking-wide transition-all duration-300">
-                    {isSubmitting ? 'Sending...' : 'Send Message'}
-                  </span>
-                </div>
-                
-                <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/30 to-transparent"></div>
-              </button>
+              {/* Authentication-protected submit button */}
+              <SignedOut>
+                <SignInButton 
+                  mode="modal"
+                  forceRedirectUrl="/"
+                  signUpForceRedirectUrl="/"
+                >
+                  <button
+                    type="button"
+                    className="group relative w-full px-8 py-4 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 hover:from-blue-400 hover:via-purple-400 hover:to-pink-400 rounded-2xl text-white font-bold text-lg transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 shadow-2xl hover:shadow-blue-500/25 active:scale-95 overflow-hidden"
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-lg"></div>
+                    
+                    <div className="relative flex items-center justify-center space-x-3">
+                      <Send className="w-5 h-5 transition-transform duration-300 group-hover:rotate-12" />
+                      <span className="group-hover:tracking-wide transition-all duration-300">
+                        Send Message (Login Required)
+                      </span>
+                    </div>
+                    
+                    <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/30 to-transparent"></div>
+                  </button>
+                </SignInButton>
+              </SignedOut>
+
+              <SignedIn>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="group relative w-full px-8 py-4 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 hover:from-blue-400 hover:via-purple-400 hover:to-pink-400 rounded-2xl text-white font-bold text-lg transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 shadow-2xl hover:shadow-blue-500/25 active:scale-95 overflow-hidden disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-lg"></div>
+                  
+                  <div className="relative flex items-center justify-center space-x-3">
+                    <Send className={`w-5 h-5 transition-transform duration-300 ${isSubmitting ? 'animate-pulse' : 'group-hover:rotate-12'}`} />
+                    <span className="group-hover:tracking-wide transition-all duration-300">
+                      {isSubmitting ? 'Sending...' : 'Send Message'}
+                    </span>
+                  </div>
+                  
+                  <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/30 to-transparent"></div>
+                </button>
+              </SignedIn>
             </form>
           </div>
 
