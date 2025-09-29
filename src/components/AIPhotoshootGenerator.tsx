@@ -248,7 +248,7 @@ export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshoot
       const maxImages = planStatus.plan.maxImagesPerMonth === -1 ? 'unlimited' : planStatus.plan.maxImagesPerMonth
       
       toast.error(
-        `🎉 You've used all ${maxImages} images this month!`,
+        `📸 Monthly image limit reached (${maxImages}/${maxImages})`,
         {
           description: planName === 'Free' 
             ? 'Upgrade to Pro for 15 images/month + all aspect ratios!' 
@@ -580,17 +580,8 @@ export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshoot
   }
 
   const handlePromptChange = (value: string) => {
-    // Check if user has reached limit and is trying to type
-    if (!planStatus?.canGenerateImage && value.length > currentPrompt.length && !hasShownModalThisSession) {
-      setShowUpgradeModal(true)
-      setHasShownModalThisSession(true)
-      return // Don't update the prompt
-    }
-    
-    // If they can generate images or are deleting text, allow the change
-    if (planStatus?.canGenerateImage || value.length <= currentPrompt.length) {
-      setCurrentPrompt(value)
-    }
+    // Always allow typing in the prompt field
+    setCurrentPrompt(value)
   }
 
   const handleCloseUpgradeModal = () => {
@@ -1240,10 +1231,10 @@ export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshoot
               <Crown className="w-8 h-8 text-white" />
             </div>
             <DialogTitle className="text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-              🎉 You've Used All Your Free Images!
+              🚀 Ready to Generate More Images?
             </DialogTitle>
             <DialogDescription className="text-gray-600 mt-2">
-              You've created <span className="font-semibold text-purple-600">2 amazing images</span> this month with your Free plan.
+              You've reached your monthly limit. Upgrade to continue creating amazing images!
             </DialogDescription>
           </DialogHeader>
           

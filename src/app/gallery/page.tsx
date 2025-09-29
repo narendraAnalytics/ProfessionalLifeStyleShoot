@@ -34,6 +34,7 @@ interface GeneratedImage {
   enhancedPrompt: string
   style: string
   createdAt: string
+  type?: 'ai-generated' | 'upload-combine' // New field to distinguish image types
 }
 
 function UserGallerySection() {
@@ -59,7 +60,7 @@ function UserGallerySection() {
     setImagesError(null)
 
     try {
-      const response = await fetch('/api/photoshoots?limit=20')
+      const response = await fetch('/api/gallery?limit=20')
       
       if (!response.ok) {
         throw new Error('Failed to fetch images')
@@ -422,11 +423,11 @@ function UserGallerySection() {
                       <div className="p-4">
                         <div className="flex items-center gap-2 mb-2">
                           <span className={`px-2 py-1 text-xs rounded-full ${
-                            image.style === 'upload' 
+                            image.type === 'upload-combine' || image.style === 'composition'
                               ? 'bg-blue-100 text-blue-700' 
                               : 'bg-purple-100 text-purple-700'
                           }`}>
-                            {image.style === 'upload' ? 'Upload' : 'AI Generated'}
+                            {image.type === 'upload-combine' || image.style === 'composition' ? 'Upload & Combine' : 'AI Generated'}
                           </span>
                           {isNewlyGenerated && (
                             <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-700 animate-pulse">
