@@ -1,17 +1,29 @@
+/*
+ * OLD LANDING PAGE COMPONENT - COMMENTED OUT
+ * 
+ * This file contains the original landing page implementation.
+ * It has been commented out because we are now working on a new landing page
+ * located at: src/app/new-landing/page.tsx
+ * 
+ * Do not delete this file - it's preserved for reference and potential future use.
+ * To reactivate, uncomment the code below.
+ */
+
+/*
 'use client'
 
 import { useState, useEffect } from 'react'
 import Navbar from './Navbar'
-import HeroSection from './HeroSection'
-import HowItWorksSection from './HowItWorksSection'
-import AIFeaturesSection from './AIFeaturesSection'
-import PricingSection from './PricingSection'
-import TestimonialsSection from './TestimonialsSection'
-import FAQSection from './FAQSection'
-import CTASection from './CTASection'
-import Footer from './Footer'
-import ScrollProgress from './ScrollProgress'
-import CursorFollower from './CursorFollower'
+//import HeroSection from './HeroSection'
+//import HowItWorksSection from './HowItWorksSection'
+//import AIFeaturesSection from './AIFeaturesSection'
+//import PricingSection from './PricingSection'
+//import TestimonialsSection from './TestimonialsSection'
+//import FAQSection from './FAQSection'
+//import CTASection from './CTASection'
+//import Footer from './Footer'
+//import ScrollProgress from './ScrollProgress'
+// import CursorFollower from './CursorFollower'
 
 export default function LandingPage() {
   const [mounted, setMounted] = useState(false)
@@ -42,8 +54,8 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 text-gray-900 overflow-x-hidden">
       {/* Custom cursor and scroll progress */}
-      <CursorFollower />
-      <ScrollProgress />
+      {/* <CursorFollower /> */}
+      {/* <ScrollProgress /> */}
       
       {/* Enhanced animated background elements */}
       <div className="fixed inset-0 z-0">
@@ -55,7 +67,7 @@ export default function LandingPage() {
           style={{
             top: '25%',
             left: '25%',
-            transform: `translate(${mousePosition.x * 0.02}px, ${mousePosition.y * 0.02}px)`
+            // transform: `translate(${mousePosition.x * 0.02}px, ${mousePosition.y * 0.02}px)`
           }}
         />
         <div 
@@ -63,7 +75,7 @@ export default function LandingPage() {
           style={{
             top: '75%',
             right: '25%',
-            transform: `translate(${mousePosition.x * -0.015}px, ${mousePosition.y * 0.015}px)`
+            // transform: `translate(${mousePosition.x * -0.015}px, ${mousePosition.y * 0.015}px)`
           }}
         />
         <div 
@@ -71,7 +83,7 @@ export default function LandingPage() {
           style={{
             bottom: '25%',
             left: '50%',
-            transform: `translate(${mousePosition.x * 0.01}px, ${mousePosition.y * -0.01}px)`
+            // transform: `translate(${mousePosition.x * 0.01}px, ${mousePosition.y * -0.01}px)`
           }}
         />
         
@@ -96,36 +108,43 @@ export default function LandingPage() {
         
         <main className="space-y-0">
           <section id="home" className="pt-8">
-            <HeroSection />
+            {/* <HeroSection /> */}
           </section>
           
           <section id="how-it-works">
-            <HowItWorksSection />
+            {/* <HowItWorksSection /> */}
           </section>
           
           <section id="ai-features">
-            <AIFeaturesSection />
+            {/* <AIFeaturesSection /> */}
           </section>
           
           <section id="pricing">
-            <PricingSection />
+            {/* <PricingSection /> */}
           </section>
           
           <section id="testimonials">
-            <TestimonialsSection />
+            {/* <TestimonialsSection /> */}
           </section>
           
           <section id="faq">
-            <FAQSection />
+            {/* <FAQSection /> */}
           </section>
           
           <section id="cta">
-            <CTASection />
+            {/* <CTASection /> */}
           </section>
         </main>
         
-        <Footer />
+        {/* <Footer /> */}
       </div>
     </div>
   )
+}
+*/
+
+// Temporary placeholder to prevent import errors
+// Remove this when you're ready to delete the file completely
+export default function LandingPage() {
+  return null
 }

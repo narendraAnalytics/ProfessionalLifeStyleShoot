@@ -83,7 +83,7 @@ export default function Dashboard() {
   
   const { user } = useUser()
   const { isSyncing, syncError, syncSuccess, retrySync } = useUserSync()
-  const { planStatus, loading: planLoading } = usePlanLimits()
+  const { planStatus, loading: planLoading, refreshUsage } = usePlanLimits()
 
   // Format options
   const formatOptions = [
@@ -184,6 +184,27 @@ export default function Dashboard() {
     const timer = setTimeout(() => setDashboardReady(true), 100)
     return () => clearTimeout(timer)
   }, [])
+
+  // Refresh usage data when switching to settings section
+  useEffect(() => {
+    if (activeSection === 'settings' && refreshUsage) {
+      console.log('🔄 Refreshing usage data for settings page')
+      refreshUsage()
+    }
+  }, [activeSection, refreshUsage])
+
+  // Refresh usage data when window regains focus (to catch updates from other tabs)
+  useEffect(() => {
+    const handleWindowFocus = () => {
+      if (refreshUsage) {
+        console.log('🔄 Window focused, refreshing usage data')
+        refreshUsage()
+      }
+    }
+
+    window.addEventListener('focus', handleWindowFocus)
+    return () => window.removeEventListener('focus', handleWindowFocus)
+  }, [refreshUsage])
 
   // Fetch existing images when user is available - async, non-blocking
   useEffect(() => {
@@ -826,24 +847,48 @@ export default function Dashboard() {
                             </button>
                           )}
                         </div>
-                        <div>
-                          <div className="flex items-center gap-2 mb-2">
-                            <Sparkles className="w-4 h-4 text-purple-500" />
-                            <span className="text-sm font-medium text-gray-600">Usage This Month</span>
+                        <div className="space-y-4">
+                          {/* AI Image Generation Usage */}
+                          <div>
+                            <div className="flex items-center gap-2 mb-2">
+                              <Sparkles className="w-4 h-4 text-purple-500" />
+                              <span className="text-sm font-medium text-gray-600">AI Image Generation</span>
+                            </div>
+                            <p className="text-lg font-semibold text-gray-800">
+                              {planStatus?.usage?.currentPeriodImages || 0} / {planStatus?.plan?.maxImagesPerMonth === -1 ? '∞' : planStatus?.plan?.maxImagesPerMonth || 2} images
+                            </p>
+                            {planStatus?.imagesRemaining !== undefined && planStatus?.imagesRemaining > 0 && planStatus?.plan?.maxImagesPerMonth !== -1 && (
+                              <p className="text-xs text-green-600 font-medium">
+                                {planStatus.imagesRemaining} remaining
+                              </p>
+                            )}
+                            {planStatus?.imagesRemaining === 0 && planStatus?.plan?.maxImagesPerMonth !== -1 && (
+                              <p className="text-xs text-orange-600 font-medium">
+                                Limit reached
+                              </p>
+                            )}
                           </div>
-                          <p className="text-lg font-semibold text-gray-800">
-                            {planStatus?.usage?.currentPeriodImages || 0} / {planStatus?.plan?.maxImagesPerMonth === -1 ? '∞' : planStatus?.plan?.maxImagesPerMonth || 2} images
-                          </p>
-                          {planStatus?.imagesRemaining !== undefined && planStatus?.imagesRemaining > 0 && planStatus?.plan?.maxImagesPerMonth !== -1 && (
-                            <p className="text-xs text-green-600 font-medium">
-                              {planStatus.imagesRemaining} remaining
+                          
+                          {/* Upload & Combine Usage */}
+                          <div>
+                            <div className="flex items-center gap-2 mb-2">
+                              <Plus className="w-4 h-4 text-blue-500" />
+                              <span className="text-sm font-medium text-gray-600">Upload & Combine</span>
+                            </div>
+                            <p className="text-lg font-semibold text-gray-800">
+                              {planStatus?.usage?.currentPeriodMerges || 0} / {planStatus?.plan?.maxMergesPerMonth === -1 ? '∞' : planStatus?.plan?.maxMergesPerMonth || 1} merges
                             </p>
-                          )}
-                          {planStatus?.imagesRemaining === 0 && planStatus?.plan?.maxImagesPerMonth !== -1 && (
-                            <p className="text-xs text-orange-600 font-medium">
-                              Limit reached
-                            </p>
-                          )}
+                            {planStatus?.mergesRemaining !== undefined && planStatus?.mergesRemaining > 0 && planStatus?.plan?.maxMergesPerMonth !== -1 && (
+                              <p className="text-xs text-green-600 font-medium">
+                                {planStatus.mergesRemaining} remaining
+                              </p>
+                            )}
+                            {planStatus?.mergesRemaining === 0 && planStatus?.plan?.maxMergesPerMonth !== -1 && (
+                              <p className="text-xs text-orange-600 font-medium">
+                                Limit reached
+                              </p>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>

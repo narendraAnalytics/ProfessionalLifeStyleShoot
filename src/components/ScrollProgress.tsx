@@ -1,3 +1,23 @@
+/*
+ * OLD SCROLL PROGRESS COMPONENT - COMMENTED OUT
+ * 
+ * This file contains the original scroll progress bar implementation.
+ * It has been commented out because we are now working on a new landing page
+ * and this component is not being used in the current implementation.
+ * 
+ * Features preserved:
+ * - Scroll position tracking with real-time updates
+ * - Gradient progress bar with smooth transitions
+ * - Glowing animated dot at the progress end
+ * - Fixed positioning at top of viewport
+ * - Backdrop blur effect for visual depth
+ * - Responsive scroll calculation
+ * - Purple-blue-pink gradient styling
+ * 
+ * To reactivate, uncomment the code below.
+ */
+
+/*
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -36,4 +56,11 @@ export default function ScrollProgress() {
       )}
     </div>
   )
+}
+*/
+
+// Temporary placeholder to prevent import errors
+// Remove this when you're ready to delete the file completely
+export default function ScrollProgress() {
+  return null
 }

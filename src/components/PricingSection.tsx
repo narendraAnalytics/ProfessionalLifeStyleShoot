@@ -1,3 +1,26 @@
+/*
+ * OLD PRICING SECTION COMPONENT - COMMENTED OUT
+ * 
+ * This file contains the original pricing section implementation.
+ * It has been commented out because we are now working on a new landing page
+ * with NewPricingSection component located at: src/landing-new/components/NewPricingSection.tsx
+ * 
+ * Features preserved:
+ * - Three-tier pricing (Starter, Professional, Studio)
+ * - Monthly/yearly billing toggle with savings calculation
+ * - Intersection Observer animations for card reveal
+ * - Glassmorphic design with hover effects
+ * - Popular plan highlighting and badges
+ * - Detailed feature lists with check/X icons
+ * - Responsive grid layout
+ * - Glow effects and gradient styling
+ * - Enterprise contact section
+ * - Interactive card hover states
+ * 
+ * To reactivate, uncomment the code below.
+ */
+
+/*
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
@@ -346,4 +369,11 @@ export default function PricingSection() {
       </div>
     </section>
   )
+}
+*/
+
+// Temporary placeholder to prevent import errors
+// Remove this when you're ready to delete the file completely
+export default function PricingSection() {
+  return null
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, useEffect } from 'react'
 import { useUser } from '@clerk/nextjs'
 import { usePlanLimits } from '@/hooks/usePlanLimits'
 import { Button } from './ui/button'
@@ -15,7 +15,8 @@ import {
   Image as ImageIcon,
   Upload,
   Trash2,
-  Crown
+  Crown,
+  Lock
 } from 'lucide-react'
 import { toast } from 'sonner'
 import {
@@ -100,8 +101,11 @@ export default function ImageCompositionGenerator({ onImageGenerated }: ImageCom
   const [showUpgradeModal, setShowUpgradeModal] = useState(false)
   const [hasShownModalThisSession, setHasShownModalThisSession] = useState(false)
   
+  // Plan info toast state
+  const [hasShownPlanInfoThisSession, setHasShownPlanInfoThisSession] = useState(false)
+  
   useUser() // Keep for auth context
-  const { planStatus, incrementUsage } = usePlanLimits()
+  const { planStatus, incrementUsage, isLoaded } = usePlanLimits()
 
   // Format options
   const formatOptions = [
@@ -147,23 +151,41 @@ export default function ImageCompositionGenerator({ onImageGenerated }: ImageCom
   // Handle file selection
   const handleFileSelect = useCallback((files: FileList) => {
     // Check if user has reached their merge limit before allowing file upload
-    if (!planStatus?.canMergeImages && !hasShownModalThisSession) {
-      setShowUpgradeModal(true)
-      setHasShownModalThisSession(true)
-      toast.error(
-        `🎉 You've used your free Upload & Combine for this month!`,
-        {
-          description: `Free plan: 1 merge/month. Upgrade to Pro for 8 merges/month!`,
-          duration: 5000,
-          action: {
-            label: 'Upgrade to Pro',
-            onClick: () => {
-              window.open('/pricing', '_blank')
+    if (isLoaded && !planStatus?.canMergeImages) {
+      // Show modal and toast only on first attempt
+      if (!hasShownModalThisSession) {
+        setShowUpgradeModal(true)
+        setHasShownModalThisSession(true)
+        toast.error(
+          `🎉 You've used your free Upload & Combine for this month!`,
+          {
+            description: `Free plan: 1 merge/month. Upgrade to Pro for 8 merges/month!`,
+            duration: 5000,
+            action: {
+              label: 'Upgrade to Pro',
+              onClick: () => {
+                window.open('/pricing', '_blank')
+              },
             },
-          },
-        }
-      )
-      return // Block file selection
+          }
+        )
+      } else {
+        // Show simpler toast on subsequent attempts
+        toast.error(
+          `Upload limit reached`,
+          {
+            description: `You've used your free merge. Upgrade to Pro for 8 merges/month!`,
+            duration: 3000,
+            action: {
+              label: 'Upgrade Now',
+              onClick: () => {
+                window.open('/pricing', '_blank')
+              },
+            },
+          }
+        )
+      }
+      return // Always block file selection when limit reached
     }
     
     const validFiles = Array.from(files).filter(file => {
@@ -200,7 +222,7 @@ export default function ImageCompositionGenerator({ onImageGenerated }: ImageCom
       }
       reader.readAsDataURL(file)
     })
-  }, [uploadedImages.length, planStatus?.canMergeImages, hasShownModalThisSession])
+  }, [uploadedImages.length, planStatus?.canMergeImages, hasShownModalThisSession, isLoaded])
 
   // Handle drag and drop
   const handleDrop = useCallback((e: React.DragEvent) => {
@@ -208,7 +230,7 @@ export default function ImageCompositionGenerator({ onImageGenerated }: ImageCom
     setIsDragOver(false)
     
     // Block drag & drop if merge limit reached
-    if (!planStatus?.canMergeImages) {
+    if (isLoaded && !planStatus?.canMergeImages) {
       if (!hasShownModalThisSession) {
         setShowUpgradeModal(true)
         setHasShownModalThisSession(true)
@@ -230,12 +252,15 @@ export default function ImageCompositionGenerator({ onImageGenerated }: ImageCom
     }
     
     handleFileSelect(e.dataTransfer.files)
-  }, [handleFileSelect, planStatus?.canMergeImages, hasShownModalThisSession])
+  }, [handleFileSelect, planStatus?.canMergeImages, hasShownModalThisSession, isLoaded])
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault()
-    setIsDragOver(true)
-  }, [])
+    // Only allow drag over if user can merge images
+    if (planStatus?.canMergeImages) {
+      setIsDragOver(true)
+    }
+  }, [planStatus?.canMergeImages, isLoaded])
 
   const handleDragLeave = useCallback((e: React.DragEvent) => {
     e.preventDefault()
@@ -246,6 +271,67 @@ export default function ImageCompositionGenerator({ onImageGenerated }: ImageCom
   const removeImage = (index: number) => {
     setUploadedImages(prev => prev.filter((_, i) => i !== index))
   }
+
+  // Show friendly plan info on first interaction
+  const showPlanInfoToast = useCallback(() => {
+    if (hasShownPlanInfoThisSession || !isLoaded || !planStatus) return
+    
+    setHasShownPlanInfoThisSession(true)
+    
+    const planName = planStatus.plan.name
+    const currentMerges = planStatus.usage.currentPeriodMerges
+    const maxMerges = planStatus.plan.maxMergesPerMonth
+    const mergesUsed = currentMerges
+    const mergesRemaining = planStatus.mergesRemaining
+
+    if (planName === 'Free') {
+      toast.info(
+        `🎨 Welcome to Upload & Combine! Free plan: ${maxMerges} merge per month (${mergesUsed} used, ${mergesRemaining} remaining)`,
+        {
+          description: 'Upload 2 images and combine them with AI. Upgrade to Pro for 8 merges/month with all aspect ratios!',
+          duration: 7000,
+          action: {
+            label: 'View Plans',
+            onClick: () => {
+              window.open('/pricing', '_blank')
+            },
+          },
+        }
+      )
+    } else if (planName === 'Pro Plan') {
+      toast.info(
+        `🔥 Welcome to Upload & Combine! Pro plan: ${maxMerges} merges per month (${mergesUsed} used, ${mergesRemaining} remaining)`,
+        {
+          description: 'Upload 2 images and create stunning compositions with unlimited aspect ratios and HD quality!',
+          duration: 5000,
+        }
+      )
+    } else if (planName === 'Max Ultimate') {
+      toast.info(
+        `👑 Welcome to Upload & Combine! Max Ultimate: Unlimited merges`,
+        {
+          description: 'Upload and combine as many images as you want with all premium features and aspect ratios!',
+          duration: 5000,
+        }
+      )
+    }
+  }, [hasShownPlanInfoThisSession, isLoaded, planStatus])
+
+  const handlePromptFocus = () => {
+    showPlanInfoToast()
+  }
+
+  // Show welcome info message when component first mounts
+  useEffect(() => {
+    if (isLoaded && planStatus && !hasShownPlanInfoThisSession) {
+      // Small delay to ensure the component is fully rendered
+      const timer = setTimeout(() => {
+        showPlanInfoToast()
+      }, 500)
+      
+      return () => clearTimeout(timer)
+    }
+  }, [isLoaded, planStatus, hasShownPlanInfoThisSession, showPlanInfoToast])
 
   // Handle proceed to size selection
   const handleProceedToSizeSelection = () => {
@@ -529,6 +615,36 @@ export default function ImageCompositionGenerator({ onImageGenerated }: ImageCom
         <p className="text-gray-600">
           Upload 2 images and combine them with AI-powered composition
         </p>
+        
+        {/* Merge Quota Display */}
+        {planStatus && (
+          <div className="bg-gray-50 border rounded-lg p-3 mt-4 max-w-md mx-auto">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-gray-600">Monthly Merges</span>
+              <span className="font-medium">
+                {Math.min(planStatus.usage.currentPeriodMerges, planStatus.plan.maxMergesPerMonth === -1 ? planStatus.usage.currentPeriodMerges : planStatus.plan.maxMergesPerMonth)} of {planStatus.plan.maxMergesPerMonth === -1 ? '∞' : planStatus.plan.maxMergesPerMonth}
+              </span>
+            </div>
+            <div className="mt-2">
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div 
+                  className={`h-2 rounded-full transition-all duration-300 ${
+                    planStatus.plan.maxMergesPerMonth === -1 
+                      ? 'bg-gradient-to-r from-green-500 to-blue-500'
+                      : planStatus.usage.currentPeriodMerges >= planStatus.plan.maxMergesPerMonth
+                        ? 'bg-gradient-to-r from-red-500 to-pink-500'
+                        : 'bg-gradient-to-r from-purple-500 to-pink-500'
+                  }`}
+                  style={{
+                    width: planStatus.plan.maxMergesPerMonth === -1 
+                      ? '100%' 
+                      : `${Math.min((planStatus.usage.currentPeriodMerges / planStatus.plan.maxMergesPerMonth) * 100, 100)}%`
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Main Content */}
@@ -580,17 +696,52 @@ export default function ImageCompositionGenerator({ onImageGenerated }: ImageCom
                   !planStatus?.canMergeImages ? 'text-gray-400' : 'text-gray-600'
                 }`}>Upload exactly 2 images (.jpeg, .webp, .png) to combine</p>
                 
-                {!planStatus?.canMergeImages && (
-                  <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
-                    <p className="text-sm text-red-600 font-medium">
-                      🎉 You&rsquo;ve used your free Upload & Combine for this month!
-                    </p>
-                    <p className="text-xs text-red-500 mt-1">
-                      {planStatus?.plan.name === 'Free' 
-                        ? `Free plan: ${planStatus.usage.currentPeriodMerges}/${planStatus.plan.maxMergesPerMonth} merges used this month`
-                        : 'Upgrade to continue combining images'
-                      }
-                    </p>
+                {/* Loading state while auth loads */}
+                {!isLoaded && (
+                  <div className="mt-4 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <Loader2 className="w-4 h-4 animate-spin text-gray-500" />
+                      <p className="text-sm text-gray-600">Loading your plan details...</p>
+                    </div>
+                  </div>
+                )}
+                
+                {isLoaded && !planStatus?.canMergeImages && (
+                  <div className="mt-4 p-4 bg-gradient-to-r from-red-50 to-orange-50 border-2 border-red-200 rounded-xl shadow-md">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-10 h-10 bg-red-500 rounded-full flex items-center justify-center flex-shrink-0">
+                        <Lock className="w-5 h-5 text-white" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-red-700">
+                          🎉 Upload Limit Reached!
+                        </p>
+                        <p className="text-xs text-red-600">
+                          {planStatus?.plan.name === 'Free' 
+                            ? `Free plan: ${planStatus.usage.currentPeriodMerges}/${planStatus.plan.maxMergesPerMonth} merge used this month`
+                            : 'Upgrade to continue combining images'
+                          }
+                        </p>
+                      </div>
+                    </div>
+                    <div className="bg-white/80 rounded-lg p-3 border border-red-100">
+                      <p className="text-xs text-gray-700 mb-2 font-medium">
+                        ✨ Upgrade to Pro and unlock:
+                      </p>
+                      <ul className="text-xs text-gray-600 space-y-1 mb-3">
+                        <li>• <strong>8 Upload & Combine</strong> merges per month</li>
+                        <li>• <strong>15 AI Generation</strong> images per month</li>
+                        <li>• <strong>All aspect ratios</strong> (Portrait, Stories, etc.)</li>
+                      </ul>
+                      <Button
+                        size="sm"
+                        className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white text-xs"
+                        onClick={() => window.open('/pricing', '_blank')}
+                      >
+                        <Crown className="w-3 h-3 mr-1" />
+                        Upgrade to Pro Plan
+                      </Button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -598,63 +749,116 @@ export default function ImageCompositionGenerator({ onImageGenerated }: ImageCom
               {/* Image Upload Area */}
               <div
                 className={`relative border-2 border-dashed rounded-xl p-8 text-center transition-all ${
-                  !planStatus?.canMergeImages
-                    ? 'border-gray-200 bg-gray-50 cursor-not-allowed opacity-60'
-                    : isDragOver
-                      ? 'border-purple-500 bg-purple-50'
-                      : 'border-gray-300 hover:border-gray-400'
+                  !isLoaded
+                    ? 'border-gray-200 bg-gray-50'
+                    : !planStatus?.canMergeImages
+                      ? 'border-gray-200 bg-gray-100 cursor-not-allowed opacity-75'
+                      : isDragOver
+                        ? 'border-purple-500 bg-purple-50'
+                        : 'border-gray-300 hover:border-gray-400'
                 }`}
-                onDrop={handleDrop}
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
+                onDrop={!isLoaded || !planStatus?.canMergeImages ? undefined : handleDrop}
+                onDragOver={!isLoaded || !planStatus?.canMergeImages ? undefined : handleDragOver}
+                onDragLeave={!isLoaded || !planStatus?.canMergeImages ? undefined : handleDragLeave}
+                style={{
+                  pointerEvents: !isLoaded || !planStatus?.canMergeImages ? 'none' : 'auto'
+                }}
               >
+                {/* Lock Overlay for Blocked State */}
+                {isLoaded && !planStatus?.canMergeImages && (
+                  <div className="absolute inset-0 bg-gray-100/90 backdrop-blur-[1px] rounded-xl flex items-center justify-center z-10">
+                    <div className="text-center">
+                      <div className="w-12 h-12 bg-red-500 rounded-full flex items-center justify-center mx-auto mb-3 shadow-lg">
+                        <Lock className="w-6 h-6 text-white" />
+                      </div>
+                      <div className="bg-white/90 rounded-lg p-3 shadow-md max-w-[200px]">
+                        <p className="text-sm font-semibold text-red-600 mb-1">
+                          Upload Limit Reached
+                        </p>
+                        <p className="text-xs text-gray-600">
+                          Free plan: 1 merge used
+                        </p>
+                        <Button
+                          size="sm"
+                          className="mt-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white text-xs"
+                          onClick={() => window.open('/pricing', '_blank')}
+                        >
+                          <Crown className="w-3 h-3 mr-1" />
+                          Upgrade to Pro
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
                 <input
                   type="file"
                   multiple
                   accept=".jpg,.jpeg,.png,.webp"
                   onChange={(e) => e.target.files && handleFileSelect(e.target.files)}
                   className={`absolute inset-0 w-full h-full opacity-0 ${
-                    !planStatus?.canMergeImages ? 'cursor-not-allowed' : 'cursor-pointer'
+                    !isLoaded || !planStatus?.canMergeImages ? 'cursor-not-allowed' : 'cursor-pointer'
                   }`}
-                  disabled={uploadedImages.length >= 2 || !planStatus?.canMergeImages}
+                  disabled={uploadedImages.length >= 2 || !isLoaded || !planStatus?.canMergeImages}
+                  style={{
+                    pointerEvents: !isLoaded || !planStatus?.canMergeImages ? 'none' : 'auto'
+                  }}
                 />
                 
                 <div className="space-y-3">
                   <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto ${
-                    !planStatus?.canMergeImages 
-                      ? 'bg-gray-300' 
-                      : 'bg-gradient-to-r from-blue-500 to-purple-500'
+                    !isLoaded
+                      ? 'bg-gray-200'
+                      : !planStatus?.canMergeImages 
+                        ? 'bg-gray-300' 
+                        : 'bg-gradient-to-r from-blue-500 to-purple-500'
                   }`}>
-                    <Upload className={`w-8 h-8 ${
-                      !planStatus?.canMergeImages ? 'text-gray-500' : 'text-white'
-                    }`} />
+                    {!isLoaded ? (
+                      <Loader2 className="w-8 h-8 text-gray-500 animate-spin" />
+                    ) : (
+                      <Upload className={`w-8 h-8 ${
+                        !planStatus?.canMergeImages ? 'text-gray-500' : 'text-white'
+                      }`} />
+                    )}
                   </div>
                   <div>
                     <p className={`text-lg font-medium mb-1 ${
-                      !planStatus?.canMergeImages ? 'text-gray-400' : 'text-gray-700'
+                      !isLoaded
+                        ? 'text-gray-500'
+                        : !planStatus?.canMergeImages 
+                          ? 'text-gray-400' 
+                          : 'text-gray-700'
                     }`}>
-                      {!planStatus?.canMergeImages 
-                        ? 'Upload limit reached'
-                        : uploadedImages.length < 2 
-                          ? 'Drop your images here' 
-                          : 'Maximum 2 images reached'
+                      {!isLoaded
+                        ? 'Loading...'
+                        : !planStatus?.canMergeImages 
+                          ? 'Upload limit reached'
+                          : uploadedImages.length < 2 
+                            ? 'Drop your images here' 
+                            : 'Maximum 2 images reached'
                       }
                     </p>
                     <p className={`text-sm ${
-                      !planStatus?.canMergeImages ? 'text-gray-400' : 'text-gray-500'
+                      !isLoaded
+                        ? 'text-gray-400'
+                        : !planStatus?.canMergeImages 
+                          ? 'text-gray-400' 
+                          : 'text-gray-500'
                     }`}>
-                      {!planStatus?.canMergeImages
-                        ? 'Upgrade to Pro for more merges'
-                        : uploadedImages.length < 2 
-                          ? 'or click to browse' 
-                          : 'Remove an image to add another'
+                      {!isLoaded
+                        ? 'Checking your plan permissions...'
+                        : !planStatus?.canMergeImages
+                          ? 'Upgrade to Pro for more merges'
+                          : uploadedImages.length < 2 
+                            ? 'or click to browse' 
+                            : 'Remove an image to add another'
                       }
                     </p>
                   </div>
                   <p className={`text-xs ${
-                    !planStatus?.canMergeImages ? 'text-gray-400' : 'text-gray-400'
+                    !isLoaded || !planStatus?.canMergeImages ? 'text-gray-400' : 'text-gray-400'
                   }`}>
-                    Supports JPEG, PNG, WebP (max 10MB each)
+                    {!isLoaded ? 'Please wait...' : 'Supports JPEG, PNG, WebP (max 10MB each)'}
                   </p>
                 </div>
               </div>
@@ -693,6 +897,7 @@ export default function ImageCompositionGenerator({ onImageGenerated }: ImageCom
                     <Textarea
                       value={currentPrompt}
                       onChange={(e) => setCurrentPrompt(e.target.value)}
+                      onFocus={handlePromptFocus}
                       placeholder="e.g., Create a professional e-commerce fashion photo. Take the blue floral dress from the first image and let the woman from the second image wear it..."
                       className="min-h-[120px] text-base border border-gray-200 shadow-sm resize-none bg-white rounded-xl p-4 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
                       disabled={isGenerating}

@@ -1,3 +1,19 @@
+/*
+ * CURSOR FOLLOWER COMPONENT - COMMENTED OUT
+ * 
+ * This component creates a custom cursor with animated effects.
+ * It has been commented out because it's currently not being used.
+ * 
+ * Features:
+ * - Custom cursor dot that follows mouse movement
+ * - Hover effects for interactive elements
+ * - Click animations
+ * - Trailing circle effect
+ * 
+ * To reactivate, uncomment the code below.
+ */
+
+/*
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -73,4 +89,11 @@ export default function CursorFollower() {
       </div>
     </>
   )
+}
+*/
+
+// Temporary placeholder to prevent import errors
+// Remove this when you're ready to delete the file completely
+export default function CursorFollower() {
+  return null
 }

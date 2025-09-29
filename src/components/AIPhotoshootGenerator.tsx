@@ -18,7 +18,8 @@ import {
   Check,
   X,
   Crown,
-  Star
+  Star,
+  Lock
 } from 'lucide-react'
 import { toast } from 'sonner'
 import {
@@ -98,6 +99,10 @@ export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshoot
   // Upgrade modal state
   const [showUpgradeModal, setShowUpgradeModal] = useState(false)
   const [hasShownModalThisSession, setHasShownModalThisSession] = useState(false)
+  
+  // Plan info toast state
+  const [hasShownPlanInfoThisSession, setHasShownPlanInfoThisSession] = useState(false)
+  
   useUser() // Keep for auth context
   
   // Plan limits and usage tracking
@@ -166,10 +171,31 @@ export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshoot
       })
 
       setProgress(80)
-      const data = await response.json()
+      
+      // Check if response is JSON before parsing
+      const contentType = response.headers.get('content-type')
+      let data
+      
+      if (contentType && contentType.includes('application/json')) {
+        try {
+          data = await response.json()
+        } catch (jsonError) {
+          console.error('JSON parse error:', jsonError)
+          throw new Error('Server returned invalid response format')
+        }
+      } else {
+        // Handle non-JSON responses (likely HTML error pages)
+        const textResponse = await response.text()
+        console.error('Non-JSON response received:', textResponse.substring(0, 200))
+        throw new Error('Server error: Please try again or contact support if the problem persists')
+      }
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to enhance prompt')
+        throw new Error(data?.error || `Server error (${response.status}): Failed to enhance prompt`)
+      }
+
+      if (!data?.enhancedPrompt) {
+        throw new Error('Invalid response: Missing enhanced prompt data')
       }
 
       setOriginalPrompt(data.originalPrompt)
@@ -182,7 +208,18 @@ export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshoot
 
     } catch (error) {
       console.error('Enhancement error:', error)
-      const errorMessage = error instanceof Error ? error.message : 'Failed to enhance prompt'
+      let errorMessage = 'Failed to enhance prompt'
+      
+      if (error instanceof Error) {
+        if (error.message.includes('JSON') || error.message.includes('parse')) {
+          errorMessage = 'Server communication error. Please try again.'
+        } else if (error.message.includes('Server error')) {
+          errorMessage = error.message
+        } else {
+          errorMessage = error.message
+        }
+      }
+      
       setError(errorMessage)
       toast.error(errorMessage)
     } finally {
@@ -493,6 +530,55 @@ export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshoot
     setIsEditingEnhanced(false)
   }
 
+  // Show friendly plan info on first interaction
+  const showPlanInfoToast = () => {
+    if (hasShownPlanInfoThisSession || planLoading || !planStatus) return
+    
+    setHasShownPlanInfoThisSession(true)
+    
+    const planName = planStatus.plan.name
+    const currentImages = planStatus.usage.currentPeriodImages
+    const maxImages = planStatus.plan.maxImagesPerMonth
+    const imagesUsed = currentImages
+    const imagesRemaining = planStatus.imagesRemaining
+
+    if (planName === 'Free') {
+      toast.info(
+        `✨ Free plan: ${maxImages} AI images per month (${imagesUsed} used, ${imagesRemaining} remaining)`,
+        {
+          description: 'Upgrade to Pro for 15 images/month with all aspect ratios!',
+          duration: 6000,
+          action: {
+            label: 'View Plans',
+            onClick: () => {
+              window.open('/pricing', '_blank')
+            },
+          },
+        }
+      )
+    } else if (planName === 'Pro Plan') {
+      toast.info(
+        `🔥 Pro plan: ${maxImages} AI images per month (${imagesUsed} used, ${imagesRemaining} remaining)`,
+        {
+          description: 'Enjoy unlimited aspect ratios and HD quality!',
+          duration: 4000,
+        }
+      )
+    } else if (planName === 'Max Ultimate') {
+      toast.info(
+        `👑 Max Ultimate: Unlimited AI images`,
+        {
+          description: 'Create as many images as you want with premium features!',
+          duration: 4000,
+        }
+      )
+    }
+  }
+
+  const handlePromptFocus = () => {
+    showPlanInfoToast()
+  }
+
   const handlePromptChange = (value: string) => {
     // Check if user has reached limit and is trying to type
     if (!planStatus?.canGenerateImage && value.length > currentPrompt.length && !hasShownModalThisSession) {
@@ -608,27 +694,44 @@ export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshoot
                 <Textarea
                   value={currentPrompt}
                   onChange={(e) => handlePromptChange(e.target.value)}
+                  onFocus={handlePromptFocus}
                   placeholder="Describe the photoshoot you'd like me to create... (e.g., Professional headshots with soft lighting)"
                   className="min-h-[120px] text-base border border-gray-200 shadow-sm resize-none bg-white rounded-xl p-4 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
                   disabled={isEnhancing || isGenerating}
                 />
               </div>
 
-              {/* Usage Display */}
+              {/* Enhanced Usage Display */}
               {!planLoading && planStatus && (
-                <div className="bg-gray-50 border rounded-lg p-3 mb-4">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-600">Monthly Images</span>
-                    <span className="font-medium">
+                <div className={`border rounded-lg p-3 mb-4 transition-all ${
+                  planStatus.usage.currentPeriodImages >= planStatus.plan.maxImagesPerMonth 
+                    ? 'bg-red-50 border-red-200' 
+                    : 'bg-gray-50 border-gray-200'
+                }`}>
+                  <div className="flex items-center justify-between text-sm mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-gray-600">Monthly Images</span>
+                      {planStatus.usage.currentPeriodImages >= planStatus.plan.maxImagesPerMonth && (
+                        <span className="px-2 py-0.5 bg-red-100 text-red-700 text-xs rounded-full font-medium">
+                          LIMIT REACHED
+                        </span>
+                      )}
+                    </div>
+                    <span className={`font-medium ${
+                      planStatus.usage.currentPeriodImages >= planStatus.plan.maxImagesPerMonth 
+                        ? 'text-red-700' 
+                        : 'text-gray-800'
+                    }`}>
                       {Math.min(planStatus.usage.currentPeriodImages, planStatus.plan.maxImagesPerMonth === -1 ? planStatus.usage.currentPeriodImages : planStatus.plan.maxImagesPerMonth)} of {planStatus.plan.maxImagesPerMonth === -1 ? '∞' : planStatus.plan.maxImagesPerMonth}
                     </span>
                   </div>
+                  
                   {planStatus.plan.maxImagesPerMonth !== -1 && (
-                    <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                    <div className="w-full bg-gray-200 rounded-full h-3">
                       <div 
-                        className={`h-2 rounded-full transition-all ${
+                        className={`h-3 rounded-full transition-all duration-300 ${
                           planStatus.usage.currentPeriodImages >= planStatus.plan.maxImagesPerMonth 
-                            ? 'bg-red-500' 
+                            ? 'bg-gradient-to-r from-red-500 to-red-600' 
                             : 'bg-gradient-to-r from-purple-500 to-pink-500'
                         }`}
                         style={{ 
@@ -637,11 +740,53 @@ export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshoot
                       ></div>
                     </div>
                   )}
-                  {!planStatus.canGenerateImage && (
-                    <div className="mt-2 text-xs text-red-600">
-                      You've reached your monthly limit. Upgrade for more images!
+                  
+                  {planStatus.imagesRemaining > 0 && planStatus.plan.maxImagesPerMonth !== -1 && (
+                    <div className="mt-2 text-xs text-green-600 font-medium">
+                      {planStatus.imagesRemaining} image{planStatus.imagesRemaining !== 1 ? 's' : ''} remaining this month
                     </div>
                   )}
+                </div>
+              )}
+
+              {/* Limit Reached Warning Banner */}
+              {!planLoading && planStatus && !planStatus.canGenerateImage && (
+                <div className="bg-gradient-to-r from-red-50 to-orange-50 border-2 border-red-200 rounded-xl p-4 mb-4 shadow-md">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-10 h-10 bg-red-500 rounded-full flex items-center justify-center flex-shrink-0">
+                      <Lock className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-red-700">
+                        🎉 Monthly Image Limit Reached!
+                      </p>
+                      <p className="text-xs text-red-600">
+                        {planStatus.plan.name === 'Free' 
+                          ? `Free plan: ${planStatus.usage.currentPeriodImages}/${planStatus.plan.maxImagesPerMonth} images used this month`
+                          : 'You\'ve reached your monthly generation limit'
+                        }
+                      </p>
+                    </div>
+                  </div>
+                  <div className="bg-white/80 rounded-lg p-3 border border-red-100">
+                    <p className="text-xs text-gray-700 mb-2 font-medium">
+                      ✨ Upgrade to Pro and unlock:
+                    </p>
+                    <ul className="text-xs text-gray-600 space-y-1 mb-3">
+                      <li>• <strong>15 AI Generated</strong> images per month</li>
+                      <li>• <strong>8 Upload & Combine</strong> merges per month</li>
+                      <li>• <strong>All aspect ratios</strong> (Portrait, Stories, etc.)</li>
+                      <li>• <strong>HD Quality</strong> images</li>
+                    </ul>
+                    <Button
+                      size="sm"
+                      className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white text-xs"
+                      onClick={() => window.open('/pricing', '_blank')}
+                    >
+                      <Crown className="w-3 h-3 mr-1" />
+                      Upgrade to Pro Plan
+                    </Button>
+                  </div>
                 </div>
               )}
 
@@ -651,6 +796,13 @@ export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshoot
                   disabled={!currentPrompt.trim() || isEnhancing || isGenerating || !planStatus?.canGenerateImage}
                   variant="outline"
                   className="border-emerald-200 text-emerald-600 hover:bg-emerald-50 hover:border-emerald-300 flex-1"
+                  title={
+                    !planStatus?.canGenerateImage 
+                      ? "Monthly image limit reached. Upgrade to Pro for more images!" 
+                      : !currentPrompt.trim() 
+                        ? "Please enter a prompt first" 
+                        : "Enhance your prompt with AI improvements"
+                  }
                 >
                   {isEnhancing ? (
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -663,6 +815,13 @@ export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshoot
                   onClick={() => handleGenerateImage(currentPrompt)}
                   disabled={!currentPrompt.trim() || isEnhancing || isGenerating || !planStatus?.canGenerateImage}
                   className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white flex-1"
+                  title={
+                    !planStatus?.canGenerateImage 
+                      ? "Monthly image limit reached. Upgrade to Pro for more images!" 
+                      : !currentPrompt.trim() 
+                        ? "Please enter a prompt first" 
+                        : "Generate an AI image from your prompt"
+                  }
                 >
                   {isGenerating ? (
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -869,13 +1028,19 @@ export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshoot
                   onClick={handleStartOver}
                   variant="outline"
                   className="border-gray-200 text-gray-600 hover:bg-gray-50"
+                  title="Start over with a new prompt"
                 >
                   Start Over
                 </Button>
                 <Button
                   onClick={() => handleGenerateImage(tempEnhancedPrompt || enhancedPrompt)}
-                  disabled={isGenerating}
+                  disabled={isGenerating || !planStatus?.canGenerateImage}
                   className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white flex-1"
+                  title={
+                    !planStatus?.canGenerateImage 
+                      ? "Monthly image limit reached. Upgrade to Pro for more images!" 
+                      : `Generate your AI image in ${selectedAspectRatio.label} format`
+                  }
                 >
                   {isGenerating ? (
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />

@@ -1,11 +1,29 @@
+/*
+ * OLD NAVBAR COMPONENT - COMMENTED OUT
+ * 
+ * This file contains the original navbar implementation.
+ * It has been commented out because we are now working on a new landing page
+ * with NewNavbar component located at: src/landing-new/components/NewNavbar.tsx
+ * 
+ * Features preserved:
+ * - Responsive navigation with mobile menu
+ * - Smooth scrolling to sections
+ * - User authentication integration (Clerk)
+ * - Animated logo with glow effects
+ * - CTA buttons and user profile menu
+ * 
+ * To reactivate, uncomment the code below.
+ */
+
+/*
 'use client'
 
-import { useState, useEffect } from 'react'
+//import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { Menu, X } from 'lucide-react'
 import { Button } from './ui/button'
 import { SignedIn, SignedOut, SignInButton, UserButton } from '@clerk/nextjs'
-import { useRouter } from 'next/navigation'
+//import { useRouter } from 'next/navigation'
 
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false)
@@ -205,4 +223,11 @@ export default function Navbar() {
       </div>
     </nav>
   )
+}
+*/
+
+// Temporary placeholder to prevent import errors
+// Remove this when you're ready to delete the file completely
+export default function Navbar() {
+  return null
 }

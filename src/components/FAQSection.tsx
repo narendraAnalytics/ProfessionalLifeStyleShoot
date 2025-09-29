@@ -1,3 +1,26 @@
+/*
+ * OLD FAQ SECTION COMPONENT - COMMENTED OUT
+ * 
+ * This file contains the original FAQ section implementation.
+ * It has been commented out because we are now working on a new landing page
+ * and this component is not being used in the current implementation.
+ * 
+ * Features preserved:
+ * - Interactive FAQ accordion with expand/collapse
+ * - Search functionality to filter questions
+ * - Category filtering (General, Technical, Pricing, Support)
+ * - 12 comprehensive FAQ items with detailed answers
+ * - Intersection Observer animations
+ * - Glassmorphic design with gradient effects
+ * - Contact support CTA section
+ * - Responsive layout for all screen sizes
+ * - Smooth transitions and hover effects
+ * - Auto-opening first FAQ item by default
+ * 
+ * To reactivate, uncomment the code below.
+ */
+
+/*
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
@@ -290,4 +313,11 @@ export default function FAQSection() {
       </div>
     </section>
   )
+}
+*/
+
+// Temporary placeholder to prevent import errors
+// Remove this when you're ready to delete the file completely
+export default function FAQSection() {
+  return null
 }

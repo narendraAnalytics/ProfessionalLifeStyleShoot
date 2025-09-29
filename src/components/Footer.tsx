@@ -1,3 +1,25 @@
+/*
+ * OLD FOOTER COMPONENT - COMMENTED OUT
+ * 
+ * This file contains the original footer implementation.
+ * It has been commented out because we are now working on a new landing page
+ * with Footer component located at: src/landing-new/components/Footer.tsx
+ * 
+ * Features preserved:
+ * - Newsletter subscription with email validation
+ * - Social media links with hover animations
+ * - Multi-column footer links organization
+ * - Brand section with gradient text
+ * - Bottom bar with copyright and trust badges
+ * - Glassmorphic design with backdrop blur
+ * - Status indicator and system operational badge
+ * - Responsive grid layout
+ * - Interactive hover effects and animations
+ * 
+ * To reactivate, uncomment the code below.
+ */
+
+/*
 'use client'
 
 import { useState } from 'react'
@@ -213,4 +235,11 @@ export default function Footer() {
       <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-purple-500/50 to-transparent" />
     </footer>
   )
+}
+*/
+
+// Temporary placeholder to prevent import errors
+// Remove this when you're ready to delete the file completely
+export default function Footer() {
+  return null
 }

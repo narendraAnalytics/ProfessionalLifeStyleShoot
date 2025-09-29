@@ -1,3 +1,22 @@
+/*
+ * OLD HERO SECTION COMPONENT - COMMENTED OUT
+ * 
+ * This file contains the original hero section implementation.
+ * It has been commented out because we are now working on a new landing page
+ * with NewHeroSection component located at: src/landing-new/components/NewHeroSection.tsx
+ * 
+ * Features preserved:
+ * - Animated text with rotating words
+ * - Professional image carousel
+ * - Interactive CTA buttons with Clerk authentication
+ * - Trust badges and floating info cards
+ * - Responsive design and smooth animations
+ * - Glass morphism effects and gradient backgrounds
+ * 
+ * To reactivate, uncomment the code below.
+ */
+
+/*
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -338,4 +357,11 @@ export default function HeroSection() {
       </div>
     </section>
   )
+}
+*/
+
+// Temporary placeholder to prevent import errors
+// Remove this when you're ready to delete the file completely
+export default function HeroSection() {
+  return null
 }

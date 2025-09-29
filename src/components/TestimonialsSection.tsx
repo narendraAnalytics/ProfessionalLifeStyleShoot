@@ -1,3 +1,26 @@
+/*
+ * OLD TESTIMONIALS SECTION COMPONENT - COMMENTED OUT
+ * 
+ * This file contains the original testimonials section implementation.
+ * It has been commented out because we are now working on a new landing page
+ * and this component is not being used in the current implementation.
+ * 
+ * Features preserved:
+ * - Interactive testimonials carousel with auto-play
+ * - Customer testimonials with photos and ratings
+ * - Navigation controls (prev/next buttons, indicators)
+ * - Auto-play toggle functionality
+ * - Company logos showcase grid
+ * - Intersection Observer animations
+ * - Glassmorphic design with gradient effects
+ * - Responsive layout for all screen sizes
+ * - Star ratings and quote icons
+ * - Professional customer profiles
+ * 
+ * To reactivate, uncomment the code below.
+ */
+
+/*
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
@@ -280,4 +303,11 @@ export default function TestimonialsSection() {
       </div>
     </section>
   )
+}
+*/
+
+// Temporary placeholder to prevent import errors
+// Remove this when you're ready to delete the file completely
+export default function TestimonialsSection() {
+  return null
 }

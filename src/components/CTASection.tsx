@@ -1,3 +1,26 @@
+/*
+ * OLD CTA SECTION COMPONENT - COMMENTED OUT
+ * 
+ * This file contains the original CTA (Call-to-Action) section implementation.
+ * It has been commented out because we are now working on a new landing page
+ * and this component is not being used in the current implementation.
+ * 
+ * Features preserved:
+ * - Email capture form with validation
+ * - Success state with confirmation message
+ * - Floating sample images as background decoration
+ * - Multiple CTA buttons (Try AI Photography, View Gallery)
+ * - Trust indicators with star ratings and statistics
+ * - Intersection Observer animations
+ * - Glassmorphic design with gradient effects
+ * - Responsive layout for all screen sizes
+ * - Animated background elements and decorative dots
+ * - Professional styling with hover effects
+ * 
+ * To reactivate, uncomment the code below.
+ */
+
+/*
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
@@ -219,4 +242,11 @@ export default function CTASection() {
       </div>
     </section>
   )
+}
+*/
+
+// Temporary placeholder to prevent import errors
+// Remove this when you're ready to delete the file completely
+export default function CTASection() {
+  return null
 }

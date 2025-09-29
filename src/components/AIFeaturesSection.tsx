@@ -1,3 +1,26 @@
+/*
+ * OLD AI FEATURES SECTION COMPONENT - COMMENTED OUT
+ * 
+ * This file contains the original AI features section implementation.
+ * It has been commented out because we are now working on a new landing page
+ * and this component is not being used in the current implementation.
+ * 
+ * Features preserved:
+ * - Bento Grid layout with different sized cards (large, medium, small)
+ * - 9 comprehensive AI features with detailed descriptions
+ * - Interactive hover effects with glow animations
+ * - Intersection Observer animations for card reveals
+ * - Glassmorphic design with gradient effects
+ * - Floating particle animations for large cards
+ * - Dynamic grid layout with responsive columns
+ * - Professional styling with hover state management
+ * - Feature categories: Smart Prompts, Styles, Backgrounds, Outfits, etc.
+ * - Animated icons and gradient text effects
+ * 
+ * To reactivate, uncomment the code below.
+ */
+
+/*
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
@@ -277,4 +300,11 @@ export default function AIFeaturesSection() {
       </div>
     </section>
   )
+}
+*/
+
+// Temporary placeholder to prevent import errors
+// Remove this when you're ready to delete the file completely
+export default function AIFeaturesSection() {
+  return null
 }

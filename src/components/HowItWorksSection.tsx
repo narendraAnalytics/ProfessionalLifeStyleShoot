@@ -1,3 +1,24 @@
+/*
+ * OLD HOW IT WORKS SECTION COMPONENT - COMMENTED OUT
+ * 
+ * This file contains the original how it works section implementation.
+ * It has been commented out because we are now working on a new landing page
+ * with HowItWorksSection component located at: src/landing-new/components/HowItWorksSection.tsx
+ * 
+ * Features preserved:
+ * - 4-step process visualization with timeline
+ * - Intersection Observer animations
+ * - Desktop zigzag layout and mobile vertical layout
+ * - Glassmorphic design with gradient effects
+ * - Interactive hover animations
+ * - Responsive design with different layouts
+ * - Step-by-step feature details
+ * - Professional styling and animations
+ * 
+ * To reactivate, uncomment the code below.
+ */
+
+/*
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
@@ -255,4 +276,11 @@ export default function HowItWorksSection() {
       </div>
     </section>
   )
+}
+*/
+
+// Temporary placeholder to prevent import errors
+// Remove this when you're ready to delete the file completely
+export default function HowItWorksSection() {
+  return null
 }
