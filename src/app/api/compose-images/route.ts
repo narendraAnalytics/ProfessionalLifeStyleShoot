@@ -172,8 +172,10 @@ export async function POST(req: NextRequest) {
 
       // Generate B&W versions immediately for instant access
       console.log('⚫ Generating B&W URLs for aspect ratio:', aspectRatio);
-      const bwUrls = imageKitService.generateBWUrls(uploadResult.url, aspectRatio);
-      console.log('⚫ B&W URLs generated:', bwUrls);
+      // Create a temporary ID for stable cache keys since we don't have the DB ID yet
+      const tempImageId = `comp_${Date.now()}_${user.id.slice(-4)}`;
+      const bwUrls = imageKitService.generateBWUrls(uploadResult.url, aspectRatio, tempImageId);
+      console.log('⚫ B&W URLs generated with stable cache keys:', bwUrls);
 
       // Save to database with B&W URL
       console.log('💾 Saving to database with B&W data:', {
@@ -182,27 +184,42 @@ export async function POST(req: NextRequest) {
         aspectRatio: aspectRatio
       });
 
-      const imageComposition = await prisma.imageComposition.create({
-        data: {
-          userId: user.id,
-          outputImageUrl: uploadResult.url,
-          sourceImageUrls: images.map(img => img.name), // Store source image names
-          compositionType: 'multi-image',
-          status: 'completed',
-          metadata: {
-            responsiveUrls,
-            bwUrls,  // Store all B&W variations
-            aspectRatio,
-            inputImages: images.length,
-            generatedAt: new Date().toISOString(),
-            originalFileNames: images.map(img => img.name),
-            prompt,
-            thumbnailUrl: uploadResult.thumbnailUrl,
-            bwImageUrl: bwUrls.original,
-            imageKitFileId: uploadResult.fileId
-          }
-        },
-      });
+      let imageComposition
+      try {
+        imageComposition = await prisma.imageComposition.create({
+          data: {
+            userId: user.id,
+            outputImageUrl: uploadResult.url,
+            sourceImageUrls: images.map(img => img.name), // Store source image names
+            compositionType: 'multi-image',
+            status: 'completed', // Explicitly mark as completed for gallery display
+            metadata: {
+              responsiveUrls,
+              bwUrls,  // Store all B&W variations
+              aspectRatio,
+              inputImages: images.length,
+              generatedAt: new Date().toISOString(),
+              originalFileNames: images.map(img => img.name),
+              prompt,
+              thumbnailUrl: uploadResult.thumbnailUrl,
+              bwImageUrl: bwUrls.original,
+              imageKitFileId: uploadResult.fileId
+            }
+          },
+        })
+        
+        console.log('✅ Database save successful with status:', imageComposition.status)
+      } catch (dbError) {
+        console.error('❌ Database save failed:', dbError)
+        // If database save fails, we should still try to clean up the uploaded image
+        try {
+          console.log('🧹 Should clean up ImageKit file:', uploadResult.fileId)
+          // Note: ImageKit cleanup would go here if needed
+        } catch (cleanupError) {
+          console.error('❌ Cleanup also failed:', cleanupError)
+        }
+        throw new Error('Database save failed after successful image generation')
+      }
 
       console.log('💾 Database save successful:', {
         imageCompositionId: imageComposition.id,

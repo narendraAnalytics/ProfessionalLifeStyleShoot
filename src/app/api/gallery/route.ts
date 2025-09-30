@@ -8,8 +8,11 @@ export async function GET(req: NextRequest) {
     const { userId } = await auth()
 
     if (!userId) {
+      console.log('❌ Gallery API: No user ID provided')
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+
+    console.log('✅ Gallery API: Authenticated user:', userId)
 
     // Get URL search params for pagination
     const { searchParams } = new URL(req.url)
@@ -22,11 +25,20 @@ export async function GET(req: NextRequest) {
     })
 
     if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+      console.log('❌ Gallery API: User not found in database for clerkId:', userId)
+      // Try to handle this gracefully - the user might need to be synced
+      return NextResponse.json({ 
+        error: 'User profile not found. Please try refreshing the page.',
+        needsSync: true 
+      }, { status: 404 })
     }
 
+    console.log('✅ Gallery API: Found user in database:', user.id)
+
     // Fetch both AI generated images AND Upload & Combine compositions
-    const [photoshoots, imageCompositions] = await Promise.all([
+    console.log('🔍 Gallery API: Fetching data for user:', user.id)
+    
+    const [photoshoots, imageCompositions, allImageCompositions] = await Promise.all([
       // AI Generated images from photoshoots table
       prisma.photoshoot.findMany({
         where: {
@@ -38,7 +50,7 @@ export async function GET(req: NextRequest) {
         }
       }),
       
-      // Upload & Combine images from imageCompositions table
+      // Upload & Combine images from imageCompositions table (completed only)
       prisma.imageComposition.findMany({
         where: {
           userId: user.id,
@@ -47,8 +59,31 @@ export async function GET(req: NextRequest) {
         orderBy: {
           createdAt: 'desc'
         }
+      }),
+      
+      // Debug: Fetch ALL imageCompositions for this user to check status issues
+      prisma.imageComposition.findMany({
+        where: {
+          userId: user.id
+        },
+        orderBy: {
+          createdAt: 'desc'
+        }
       })
     ])
+    
+    console.log('📊 Gallery API Debug Data:', {
+      userId: user.id,
+      completedPhotoshoots: photoshoots.length,
+      completedImageCompositions: imageCompositions.length,
+      allImageCompositions: allImageCompositions.length,
+      imageCompositionStatuses: allImageCompositions.map(ic => ({ 
+        id: ic.id, 
+        status: ic.status, 
+        createdAt: ic.createdAt,
+        hasOutputUrl: !!ic.outputImageUrl
+      }))
+    })
 
     // Transform photoshoots to match GeneratedImage interface
     const formattedPhotoshoots = photoshoots.map(photoshoot => {

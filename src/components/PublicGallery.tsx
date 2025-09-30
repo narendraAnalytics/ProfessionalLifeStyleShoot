@@ -28,14 +28,18 @@ interface ShowcaseImage {
 }
 
 const showcaseImages: ShowcaseImage[] = [
+
   {
-    id: '1',
-    src: '/images/BrandedWalkigshoes.png',
+    id: '9',
+    src: '/images/BrandShoes.png',
     title: 'Branded Walking Shoes',
     category: 'Product Photography',
     description: 'Professional lifestyle photography for athletic footwear brands',
     alt: 'Branded walking shoes professional photoshoot'
   },
+
+  
+
   {
     id: '2', 
     src: '/images/Brandjewelrysaree-photoshoot.png',
@@ -91,7 +95,16 @@ const showcaseImages: ShowcaseImage[] = [
     category: 'Fashion Photography',
     description: 'Traditional and contemporary Fashion brand photography',
     alt: 'Saree designer photoshoot collection'
-  }
+  },
+  {
+    id: '1',
+    src: '/images/BrandedWalkigshoes.png',
+    title: 'Branded Walking Shoes',
+    category: 'Product Photography',
+    description: 'Professional lifestyle photography for athletic footwear brands',
+    alt: 'Branded walking shoes professional photoshoot'
+  },
+  
 ]
 
 export default function PublicGallery() {

@@ -312,7 +312,7 @@ export class ImageKitService {
   }
 
   // Generate B&W version URLs for immediate access using manual URL construction
-  generateBWUrls(originalUrl: string, aspectRatio?: string): {
+  generateBWUrls(originalUrl: string, aspectRatio?: string, imageId?: string): {
     small: string;
     medium: string;
     large: string;
@@ -323,18 +323,25 @@ export class ImageKitService {
       // Filter out empty transformations
       const validTransforms = transformations.filter(t => t && t.trim())
       const transformString = validTransforms.join(',')
-      const timestamp = Date.now() + Math.random() * 1000
+      
+      // Use stable cache key instead of random timestamp
+      // This prevents URLs from changing on every render, which causes images to disappear
+      const stableCacheKey = imageId ? 
+        `bw_${imageId.slice(-8)}` : // Use last 8 chars of image ID for stable cache key
+        `bw_${Buffer.from(url).toString('base64').slice(-8)}` // Fallback to URL-based key
+      
       const separator = url.includes('?') ? '&' : '?'
       
-      console.log('🔗 Creating B&W URL:', {
+      console.log('🔗 Creating stable B&W URL:', {
         url,
         transformations,
         validTransforms,
         transformString,
-        finalUrl: `${url}${separator}tr=${transformString}&v=${Math.floor(timestamp)}`
+        stableCacheKey,
+        finalUrl: `${url}${separator}tr=${transformString}&cache=${stableCacheKey}`
       })
       
-      return `${url}${separator}tr=${transformString}&v=${Math.floor(timestamp)}`
+      return `${url}${separator}tr=${transformString}&cache=${stableCacheKey}`
     }
 
     // Use smart crop mode for face preservation

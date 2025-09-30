@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useUser, SignedIn, SignedOut } from '@clerk/nextjs'
 import PublicGallery from '@/components/PublicGallery'
 import { 
@@ -9,7 +9,9 @@ import {
   History,
   Loader2,
   ArrowLeft,
-  Home
+  Home,
+  RefreshCw,
+  Wrench
 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -44,6 +46,7 @@ function UserGallerySection() {
   const [grayscaleStates, setGrayscaleStates] = useState<Record<string, boolean>>({})
   const [formatStates, setFormatStates] = useState<Record<string, 'jpg' | 'webp' | 'png'>>({})
   const [newlyGeneratedImages, setNewlyGeneratedImages] = useState<Set<string>>(new Set())
+  const [isFixingGallery, setIsFixingGallery] = useState(false)
   const { user } = useUser()
 
   // Format options
@@ -63,7 +66,32 @@ function UserGallerySection() {
       const response = await fetch('/api/gallery?limit=20')
       
       if (!response.ok) {
-        throw new Error('Failed to fetch images')
+        const errorData = await response.json().catch(() => ({}))
+        
+        // Handle user sync issues specifically
+        if (response.status === 404 && errorData.needsSync) {
+          console.log('⚠️ User needs sync, attempting to trigger sync...')
+          try {
+            // Attempt to sync user
+            await fetch('/api/users/sync', { method: 'POST' })
+            console.log('✅ User sync triggered, retrying gallery fetch...')
+            
+            // Retry gallery fetch after sync
+            const retryResponse = await fetch('/api/gallery?limit=20')
+            if (retryResponse.ok) {
+              const retryData = await retryResponse.json()
+              if (retryData.success && retryData.images) {
+                console.log('✅ Gallery fetch successful after sync')
+                setRecentImages(retryData.images)
+                return
+              }
+            }
+          } catch (syncError) {
+            console.error('❌ User sync failed:', syncError)
+          }
+        }
+        
+        throw new Error(errorData.error || 'Failed to fetch images')
       }
 
       const data = await response.json()
@@ -87,17 +115,18 @@ function UserGallerySection() {
     }
   }
 
-  // Fetch existing images when user is available
+  // Fetch existing images when user is available (prevent unnecessary re-renders)
   useEffect(() => {
-    if (user) {
+    if (user?.id && !isLoadingImages && recentImages.length === 0) {
+      console.log('🔄 Initial gallery load for user:', user.id)
       setTimeout(() => fetchExistingImages(), 0)
     }
-  }, [user])
+  }, [user?.id]) // Only depend on user ID to prevent unnecessary re-renders
 
-  const generateImageUrl = (originalUrl: string, isGrayscale = false, format = 'jpg') => {
+  const generateImageUrl = useCallback((originalUrl: string, isGrayscale = false, format = 'jpg', imageId?: string) => {
     const transformations = []
     
-    console.log('🛠️ generateImageUrl called with:', { originalUrl, isGrayscale, format })
+    console.log('🛠️ generateImageUrl called with:', { originalUrl, isGrayscale, format, imageId })
     
     // Validate input URL
     if (!originalUrl || typeof originalUrl !== 'string') {
@@ -123,8 +152,12 @@ function UserGallerySection() {
     const transformString = transformations.join(',')
     console.log('🔧 Transform string created:', transformString)
     
-    // Generate URL with proper cache-busting via timestamp - always fresh
-    const timestamp = Date.now() + Math.random() * 1000
+    // Use stable cache key instead of random timestamp to prevent image disappearing
+    const stableCacheKey = imageId ? 
+      `img_${imageId.slice(-8)}_${isGrayscale ? 'bw' : 'orig'}_${format}` : 
+      `fallback_${Buffer.from(originalUrl).toString('base64').slice(-8)}_${isGrayscale ? 'bw' : 'orig'}_${format}`
+    
+    console.log('🔑 Using stable cache key:', stableCacheKey)
     
     // Handle existing transformations in URL
     let finalUrl: string
@@ -138,21 +171,24 @@ function UserGallerySection() {
         finalUrl = originalUrl
       }
       
-      // Add cache busting
-      const separator = finalUrl.includes('?') ? '&' : '?'
-      finalUrl = `${finalUrl}${separator}v=${Math.floor(timestamp)}`
+      // Add stable cache parameter
+      const separator = finalUrl.includes('cache=') ? '' : (finalUrl.includes('?') ? '&' : '?')
+      if (!finalUrl.includes('cache=')) {
+        finalUrl = `${finalUrl}${separator}cache=${stableCacheKey}`
+      }
     } else {
       // URL doesn't have transformations - add them fresh
       const separator = originalUrl.includes('?') ? '&' : '?'
       if (transformString) {
-        finalUrl = `${originalUrl}${separator}tr=${transformString}&v=${Math.floor(timestamp)}`
+        finalUrl = `${originalUrl}${separator}tr=${transformString}&cache=${stableCacheKey}`
       } else {
-        finalUrl = `${originalUrl}${separator}v=${Math.floor(timestamp)}`
+        finalUrl = `${originalUrl}${separator}cache=${stableCacheKey}`
       }
     }
     
+    console.log('✅ Final stable URL generated:', finalUrl)
     return finalUrl
-  }
+  }, []) // No dependencies needed since we don't use external state
 
   const handleDownloadImage = async (image: GeneratedImage, isGrayscale = false, format: 'jpg' | 'webp' | 'png' = 'jpg') => {
     try {
@@ -219,7 +255,8 @@ function UserGallerySection() {
           imageUrl = generateImageUrl(
             baseUrl, 
             true, // Force grayscale
-            format
+            format,
+            image.id // Pass image ID for stable cache key
           )
           console.log('🔄 Final B&W URL (transformation fallback):', imageUrl);
         }
@@ -231,7 +268,8 @@ function UserGallerySection() {
         imageUrl = generateImageUrl(
           baseUrl, 
           false, 
-          format
+          format,
+          image.id // Pass image ID for stable cache key
         )
         console.log('📷 Final original URL:', imageUrl);
       }
@@ -271,12 +309,53 @@ function UserGallerySection() {
     }
   }
 
+  const handleFixGallery = async () => {
+    if (!user) return
+
+    setIsFixingGallery(true)
+    console.log('🔧 Starting gallery database fix...')
+    toast.info('Fixing gallery database...')
+
+    try {
+      const response = await fetch('/api/fix-gallery', {
+        method: 'POST'
+      })
+      
+      if (!response.ok) {
+        throw new Error('Failed to fix gallery database')
+      }
+
+      const data = await response.json()
+      
+      if (data.success) {
+        console.log('✅ Gallery fix completed:', data.results)
+        const fixedCount = data.results.fixed.length
+        const deletedCount = data.results.deleted.length
+        
+        if (fixedCount > 0 || deletedCount > 0) {
+          toast.success(`Gallery fixed! ${fixedCount} images recovered, ${deletedCount} broken records cleaned up.`)
+          // Auto-refresh gallery after fix
+          setTimeout(() => fetchExistingImages(), 1000)
+        } else {
+          toast.info('Gallery database is already clean - no issues found!')
+        }
+      } else {
+        toast.error('Failed to fix gallery database')
+      }
+    } catch (error) {
+      console.error('❌ Gallery fix error:', error)
+      toast.error('Failed to fix gallery database. Please try again.')
+    } finally {
+      setIsFixingGallery(false)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-purple-50 p-6">
       <div className="max-w-6xl mx-auto">
         <div className="space-y-6">
           <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-8">
-            {/* Back to Home Button */}
+            {/* Back to Home and Action Buttons */}
             <div className="flex items-center justify-between mb-8">
               <a 
                 href="/"
@@ -286,7 +365,33 @@ function UserGallerySection() {
                 <Home className="w-5 h-5" />
                 <span>Back to Home</span>
               </a>
-              <div className="flex-1" />
+              
+              <div className="flex items-center gap-3">
+                {/* Fix Gallery Button */}
+                <button
+                  onClick={handleFixGallery}
+                  disabled={isFixingGallery || isLoadingImages}
+                  className="group flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 disabled:from-gray-400 disabled:to-gray-500 text-white rounded-xl font-medium transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-orange-500/25 disabled:hover:scale-100"
+                  title="Fix missing Upload & Combine images"
+                >
+                  <Wrench className={`w-5 h-5 transition-transform duration-300 ${isFixingGallery ? 'animate-spin' : 'group-hover:rotate-12'}`} />
+                  <span>{isFixingGallery ? 'Fixing...' : 'Fix Gallery'}</span>
+                </button>
+                
+                {/* Refresh Gallery Button */}
+                <button
+                  onClick={() => {
+                    console.log('🔄 Manual gallery refresh triggered')
+                    toast.info('Refreshing gallery...')
+                    fetchExistingImages()
+                  }}
+                  disabled={isLoadingImages || isFixingGallery}
+                  className="group flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 disabled:from-gray-400 disabled:to-gray-500 text-white rounded-xl font-medium transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-green-500/25 disabled:hover:scale-100"
+                >
+                  <RefreshCw className={`w-5 h-5 transition-transform duration-300 ${isLoadingImages ? 'animate-spin' : 'group-hover:rotate-180'}`} />
+                  <span>{isLoadingImages ? 'Refreshing...' : 'Refresh'}</span>
+                </button>
+              </div>
             </div>
 
             <div className="text-center mb-8">
@@ -391,7 +496,7 @@ function UserGallerySection() {
                         <img
                           key={`gallery-image-${image.id}-${isGrayscale ? 'bw' : 'original'}`}
                           src={isGrayscale 
-                            ? (image.bwUrls?.medium || generateImageUrl(image.responsiveUrls.medium, isGrayscale))
+                            ? (image.bwUrls?.medium || generateImageUrl(image.responsiveUrls.medium, isGrayscale, 'webp', image.id))
                             : image.responsiveUrls.medium
                           }
                           alt={image.originalPrompt}
@@ -400,23 +505,47 @@ function UserGallerySection() {
                           loading="lazy"
                           onError={(e) => {
                             console.error('❌ Gallery image failed to load:', e.currentTarget.src)
+                            const imgElement = e.currentTarget as HTMLImageElement
+                            const currentSrc = imgElement.src
                             
-                            // Try fallback based on type
-                            if (isGrayscale) {
-                              // For B&W images, try the fallback B&W URL or transformation
-                              const fallbackUrl = image.bwImageUrl || generateImageUrl(image.responsiveUrls.medium, true)
-                              if (e.currentTarget.src !== fallbackUrl) {
-                                console.log('🔄 Trying B&W fallback URL for image:', image.id)
-                                e.currentTarget.src = fallbackUrl
-                              }
-                            } else {
-                              // For original images, try different sizes
-                              const fallbackUrl = image.responsiveUrls.original || image.imageUrl
-                              if (e.currentTarget.src !== fallbackUrl) {
-                                console.log('🔄 Trying fallback URL for image:', image.id)
-                                e.currentTarget.src = fallbackUrl
+                            // Implement retry logic with multiple fallbacks
+                            const retryImageLoad = () => {
+                              if (isGrayscale) {
+                                // For B&W images, try multiple fallbacks
+                                if (image.bwUrls?.medium && !currentSrc.includes('bwUrls')) {
+                                  console.log('🔄 Retry 1: Trying pre-generated B&W URL for image:', image.id)
+                                  imgElement.src = image.bwUrls.medium
+                                } else if (image.bwImageUrl && !currentSrc.includes('bwImageUrl')) {
+                                  console.log('🔄 Retry 2: Trying B&W image URL for image:', image.id)
+                                  imgElement.src = image.bwImageUrl
+                                } else if (!currentSrc.includes('generateImageUrl')) {
+                                  console.log('🔄 Retry 3: Trying transformation fallback for image:', image.id)
+                                  imgElement.src = generateImageUrl(image.responsiveUrls.medium, true, 'jpg', image.id)
+                                } else {
+                                  // Last resort: try original image with grayscale transformation
+                                  console.log('🔄 Retry 4: Last resort - original with grayscale for image:', image.id)
+                                  imgElement.src = generateImageUrl(image.imageUrl, true, 'jpg', image.id)
+                                }
+                              } else {
+                                // For original images, try different sizes and formats
+                                if (image.responsiveUrls.large && !currentSrc.includes('large')) {
+                                  console.log('🔄 Retry 1: Trying large responsive URL for image:', image.id)
+                                  imgElement.src = image.responsiveUrls.large
+                                } else if (image.responsiveUrls.original && !currentSrc.includes('original')) {
+                                  console.log('🔄 Retry 2: Trying original responsive URL for image:', image.id)
+                                  imgElement.src = image.responsiveUrls.original
+                                } else if (image.imageUrl && !currentSrc.includes('imageUrl')) {
+                                  console.log('🔄 Retry 3: Trying base image URL for image:', image.id)
+                                  imgElement.src = image.imageUrl
+                                } else {
+                                  console.log('🔄 Retry 4: All fallbacks exhausted for image:', image.id)
+                                  // Could show a placeholder image here
+                                }
                               }
                             }
+                            
+                            // Add a small delay to prevent rapid retry loops
+                            setTimeout(retryImageLoad, 100)
                           }}
                         />
                       </div>

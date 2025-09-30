@@ -1,6 +1,5 @@
 'use client'
 
-import { useState, useEffect } from 'react'
 import NewNavbar from './components/NewNavbar'
 import NewHeroSection from './components/NewHeroSection'
 import HowItWorksSection from './components/HowItWorksSection'
@@ -11,15 +10,6 @@ import Footer from './components/Footer'
 import ImageCarousel from './components/ImageCarousel'
 
 export default function NewLandingPage() {
-  const [mounted, setMounted] = useState(false)
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  if (!mounted) {
-    return null
-  }
 
   return (
     <div className="w-full overflow-x-hidden">

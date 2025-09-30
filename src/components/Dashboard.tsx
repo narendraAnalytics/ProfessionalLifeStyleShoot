@@ -85,6 +85,25 @@ export default function Dashboard() {
   const { isSyncing, syncError, syncSuccess, retrySync } = useUserSync()
   const { planStatus, loading: planLoading, refreshUsage } = usePlanLimits()
 
+  // Debug logging for Pro plan issues
+  useEffect(() => {
+    if (planStatus && !planLoading) {
+      console.log('🔍 DASHBOARD DEBUG - Plan Status:', {
+        planName: planStatus.plan.name,
+        maxImages: planStatus.plan.maxImagesPerMonth,
+        maxMerges: planStatus.plan.maxMergesPerMonth,
+        currentImages: planStatus.usage.currentPeriodImages,
+        currentMerges: planStatus.usage.currentPeriodMerges,
+        canGenerateImage: planStatus.canGenerateImage,
+        canMergeImages: planStatus.canMergeImages,
+        imagesRemaining: planStatus.imagesRemaining,
+        mergesRemaining: planStatus.mergesRemaining,
+        isAtLimit: planStatus.isAtLimit,
+        upgradeRequired: planStatus.upgradeRequired
+      })
+    }
+  }, [planStatus, planLoading])
+
   // Format options
   const formatOptions = [
     { value: 'jpg' as const, label: 'JPEG', description: 'Universal' },
@@ -129,26 +148,59 @@ export default function Dashboard() {
     setImagesError(null)
 
     try {
-      const response = await fetch('/api/photoshoots?limit=20')
+      // Use the same API as the standalone gallery page to get ALL images
+      // This includes both AI-generated images AND Upload & Combine images
+      console.log('🔄 Dashboard: Fetching complete gallery (AI + Upload & Combine)')
+      const response = await fetch('/api/gallery?limit=20')
       
       if (!response.ok) {
-        throw new Error('Failed to fetch images')
+        const errorData = await response.json().catch(() => ({}))
+        
+        // Handle user sync issues specifically (same as gallery page)
+        if (response.status === 404 && errorData.needsSync) {
+          console.log('⚠️ Dashboard: User needs sync, attempting to trigger sync...')
+          try {
+            // Attempt to sync user
+            await fetch('/api/users/sync', { method: 'POST' })
+            console.log('✅ Dashboard: User sync triggered, retrying gallery fetch...')
+            
+            // Retry gallery fetch after sync
+            const retryResponse = await fetch('/api/gallery?limit=20')
+            if (retryResponse.ok) {
+              const retryData = await retryResponse.json()
+              if (retryData.success && retryData.images) {
+                console.log('✅ Dashboard: Gallery fetch successful after sync')
+                setRecentImages(retryData.images)
+                return
+              }
+            }
+          } catch (syncError) {
+            console.error('❌ Dashboard: User sync failed:', syncError)
+          }
+        }
+        
+        throw new Error(errorData.error || 'Failed to fetch images')
       }
 
       const data = await response.json()
       
       if (data.success && data.images) {
-        console.log('📦 Images loaded from API:', data.images.length, 'images')
-        data.images.forEach((img: GeneratedImage) => {
-          console.log('📦 Image details from API:', {
+        console.log('📦 Dashboard: Images loaded from gallery API:', data.images.length, 'images')
+        console.log('📊 Dashboard: Image types breakdown:', {
+          aiGenerated: data.images.filter((img: GeneratedImage) => img.type === 'ai-generated' || !img.type).length,
+          uploadCombine: data.images.filter((img: GeneratedImage) => img.type === 'upload-combine').length,
+          total: data.images.length
+        })
+        
+        // Log a few sample images for debugging
+        data.images.slice(0, 3).forEach((img: GeneratedImage) => {
+          console.log('📦 Dashboard: Sample image details:', {
             id: img.id,
-            hasBwImageUrl: !!img.bwImageUrl,
-            bwImageUrl: img.bwImageUrl,
-            hasBwUrls: !!img.bwUrls,
-            bwUrls: img.bwUrls,
-            bwUrlsOriginal: img.bwUrls?.original,
-            hasResponsiveUrls: !!img.responsiveUrls,
+            type: img.type,
             style: img.style,
+            hasBwImageUrl: !!img.bwImageUrl,
+            hasBwUrls: !!img.bwUrls,
+            hasResponsiveUrls: !!img.responsiveUrls,
             createdAt: img.createdAt
           })
         })
@@ -163,7 +215,7 @@ export default function Dashboard() {
         })
       }
     } catch (error) {
-      console.error('Error fetching existing images:', error)
+      console.error('❌ Dashboard: Error fetching existing images:', error)
       setImagesError(error instanceof Error ? error.message : 'Failed to load images')
     } finally {
       setIsLoadingImages(false)
@@ -214,7 +266,7 @@ export default function Dashboard() {
     }
   }, [user])
 
-  const generateImageUrl = (originalUrl: string, isGrayscale = false, format = 'jpg') => {
+  const generateImageUrl = (originalUrl: string, isGrayscale = false, format = 'jpg', imageId?: string) => {
     const transformations = []
     
     console.log('🛠️ generateImageUrl called with:', { originalUrl, isGrayscale, format })
@@ -243,8 +295,12 @@ export default function Dashboard() {
     const transformString = transformations.join(',')
     console.log('🔧 Transform string created:', transformString)
     
-    // Generate URL with proper cache-busting via timestamp - always fresh
-    const timestamp = Date.now() + Math.random() * 1000
+    // Use stable cache key instead of random timestamp to prevent image disappearing
+    const stableCacheKey = imageId ? 
+      `dash_${imageId.slice(-8)}_${isGrayscale ? 'bw' : 'orig'}_${format}` : 
+      `fallback_${Buffer.from(originalUrl).toString('base64').slice(-8)}_${isGrayscale ? 'bw' : 'orig'}_${format}`
+    
+    console.log('🔑 Dashboard: Using stable cache key:', stableCacheKey)
     
     // Handle existing transformations in URL
     let finalUrl: string
@@ -258,16 +314,18 @@ export default function Dashboard() {
         finalUrl = originalUrl
       }
       
-      // Add cache busting
-      const separator = finalUrl.includes('?') ? '&' : '?'
-      finalUrl = `${finalUrl}${separator}v=${Math.floor(timestamp)}`
+      // Add stable cache parameter
+      const separator = finalUrl.includes('cache=') ? '' : (finalUrl.includes('?') ? '&' : '?')
+      if (!finalUrl.includes('cache=')) {
+        finalUrl = `${finalUrl}${separator}cache=${stableCacheKey}`
+      }
     } else {
       // URL doesn't have transformations - add them fresh
       const separator = originalUrl.includes('?') ? '&' : '?'
       if (transformString) {
-        finalUrl = `${originalUrl}${separator}tr=${transformString}&v=${Math.floor(timestamp)}`
+        finalUrl = `${originalUrl}${separator}tr=${transformString}&cache=${stableCacheKey}`
       } else {
-        finalUrl = `${originalUrl}${separator}v=${Math.floor(timestamp)}`
+        finalUrl = `${originalUrl}${separator}cache=${stableCacheKey}`
       }
     }
     
@@ -666,7 +724,7 @@ export default function Dashboard() {
                                 <img
                                   key={`gallery-image-${image.id}-${isGrayscale ? 'bw' : 'original'}`}
                                   src={isGrayscale 
-                                    ? (image.bwUrls?.medium || generateImageUrl(image.responsiveUrls.medium, isGrayscale))
+                                    ? (image.bwUrls?.medium || generateImageUrl(image.responsiveUrls.medium, isGrayscale, 'webp', image.id))
                                     : image.responsiveUrls.medium
                                   }
                                   alt={image.originalPrompt}
@@ -678,17 +736,17 @@ export default function Dashboard() {
                                     
                                     // Try fallback based on type
                                     if (isGrayscale) {
-                                      // For B&W images, try the fallback B&W URL or transformation
-                                      const fallbackUrl = image.bwImageUrl || generateImageUrl(image.responsiveUrls.medium, true)
+                                      // For B&W images, try the fallback B&W URL or transformation with stable cache key
+                                      const fallbackUrl = image.bwImageUrl || generateImageUrl(image.responsiveUrls.medium, true, 'jpg', image.id)
                                       if (e.currentTarget.src !== fallbackUrl) {
-                                        console.log('🔄 Trying B&W fallback URL for image:', image.id)
+                                        console.log('🔄 Dashboard: Trying B&W fallback URL for image:', image.id)
                                         e.currentTarget.src = fallbackUrl
                                       }
                                     } else {
                                       // For original images, try different sizes
                                       const fallbackUrl = image.responsiveUrls.original || image.imageUrl
                                       if (e.currentTarget.src !== fallbackUrl) {
-                                        console.log('🔄 Trying fallback URL for image:', image.id)
+                                        console.log('🔄 Dashboard: Trying fallback URL for image:', image.id)
                                         e.currentTarget.src = fallbackUrl
                                       }
                                     }
@@ -698,11 +756,11 @@ export default function Dashboard() {
                               <div className="p-4">
                                 <div className="flex items-center gap-2 mb-2">
                                   <span className={`px-2 py-1 text-xs rounded-full ${
-                                    image.style === 'upload' 
+                                    image.type === 'upload-combine' || image.style === 'composition'
                                       ? 'bg-blue-100 text-blue-700' 
                                       : 'bg-purple-100 text-purple-700'
                                   }`}>
-                                    {image.style === 'upload' ? 'Upload' : 'AI Generated'}
+                                    {image.type === 'upload-combine' || image.style === 'composition' ? 'Upload & Combine' : 'AI Generated'}
                                   </span>
                                   {isNewlyGenerated && (
                                     <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-700 animate-pulse">
@@ -822,6 +880,16 @@ export default function Dashboard() {
                           <div className="flex items-center gap-2 mb-2">
                             <Crown className="w-4 h-4 text-yellow-500" />
                             <span className="text-sm font-medium text-gray-600">Current Plan</span>
+                            <button 
+                              onClick={() => {
+                                console.log('🔄 Manual refresh triggered')
+                                refreshUsage()
+                              }}
+                              className="ml-2 px-2 py-1 bg-blue-100 hover:bg-blue-200 text-blue-600 text-xs rounded transition-colors"
+                              title="Refresh plan data"
+                            >
+                              Refresh
+                            </button>
                           </div>
                           <div className="flex items-center gap-2">
                             <p className="text-lg font-semibold text-gray-800">

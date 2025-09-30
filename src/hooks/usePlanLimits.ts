@@ -79,13 +79,24 @@ export function usePlanLimits() {
   const getCurrentPlan = (): PlanLimits => {
     if (!isLoaded) return PLAN_DEFINITIONS.free // Default to free while loading
     
+    // Debug logging
+    console.log('🔍 PLAN DETECTION DEBUG:', {
+      isLoaded,
+      hasFunction: !!has,
+      hasMaxUltimate: has ? has({ plan: 'max_ultimate' }) : false,
+      hasProPlan: has ? has({ plan: 'pro_plan' }) : false
+    })
+    
     // Use only Clerk plan detection for real-time accuracy
     if (has && has({ plan: 'max_ultimate' })) {
+      console.log('✅ Plan detected: Max Ultimate')
       return PLAN_DEFINITIONS.max_ultimate
     }
     if (has && has({ plan: 'pro_plan' })) {
+      console.log('✅ Plan detected: Pro Plan')
       return PLAN_DEFINITIONS.pro_plan
     }
+    console.log('✅ Plan detected: Free (default)')
     return PLAN_DEFINITIONS.free
   }
 
@@ -154,6 +165,17 @@ export function usePlanLimits() {
 
     const canGenerateImage = isUnlimited || usage.currentPeriodImages < currentPlan.maxImagesPerMonth
     const canMergeImages = isUnlimited || usage.currentPeriodMerges < currentPlan.maxMergesPerMonth
+    
+    // Debug logging for canGenerate calculation
+    console.log('🔍 CAN GENERATE DEBUG:', {
+      planName: currentPlan.name,
+      maxImages: currentPlan.maxImagesPerMonth,
+      currentUsage: usage.currentPeriodImages,
+      isUnlimited,
+      calculation: `${usage.currentPeriodImages} < ${currentPlan.maxImagesPerMonth}`,
+      canGenerateImage,
+      imagesRemaining
+    })
     
     const isAtLimit = !canGenerateImage && !canMergeImages
     const upgradeRequired = currentPlan.name === 'Free' && (
