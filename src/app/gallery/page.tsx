@@ -371,10 +371,10 @@ function UserGallerySection() {
                 <button
                   onClick={handleFixGallery}
                   disabled={isFixingGallery || isLoadingImages}
-                  className="group flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 disabled:from-gray-400 disabled:to-gray-500 text-white rounded-xl font-medium transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-orange-500/25 disabled:hover:scale-100"
+                  className="group flex items-center gap-1.5 px-3 py-2 bg-gray-600 hover:bg-gray-700 disabled:bg-gray-400 text-white rounded-lg text-sm font-medium transition-colors duration-200 shadow-sm"
                   title="Fix missing Upload & Combine images"
                 >
-                  <Wrench className={`w-5 h-5 transition-transform duration-300 ${isFixingGallery ? 'animate-spin' : 'group-hover:rotate-12'}`} />
+                  <Wrench className={`w-4 h-4 transition-transform duration-300 ${isFixingGallery ? 'animate-spin' : 'group-hover:rotate-12'}`} />
                   <span>{isFixingGallery ? 'Fixing...' : 'Fix Gallery'}</span>
                 </button>
                 
@@ -386,9 +386,9 @@ function UserGallerySection() {
                     fetchExistingImages()
                   }}
                   disabled={isLoadingImages || isFixingGallery}
-                  className="group flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 disabled:from-gray-400 disabled:to-gray-500 text-white rounded-xl font-medium transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-green-500/25 disabled:hover:scale-100"
+                  className="group flex items-center gap-1.5 px-3 py-2 bg-gray-600 hover:bg-gray-700 disabled:bg-gray-400 text-white rounded-lg text-sm font-medium transition-colors duration-200 shadow-sm"
                 >
-                  <RefreshCw className={`w-5 h-5 transition-transform duration-300 ${isLoadingImages ? 'animate-spin' : 'group-hover:rotate-180'}`} />
+                  <RefreshCw className={`w-4 h-4 transition-transform duration-300 ${isLoadingImages ? 'animate-spin' : 'group-hover:rotate-180'}`} />
                   <span>{isLoadingImages ? 'Refreshing...' : 'Refresh'}</span>
                 </button>
               </div>

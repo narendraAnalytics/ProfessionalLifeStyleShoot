@@ -1,5 +1,7 @@
 'use client'
 
+import { useState, useEffect } from 'react'
+import { X } from 'lucide-react'
 import NewNavbar from './components/NewNavbar'
 import NewHeroSection from './components/NewHeroSection'
 import HowItWorksSection from './components/HowItWorksSection'
@@ -8,8 +10,32 @@ import PortfolioSection from './components/PortfolioSection'
 import ContactSection from './components/ContactSection'
 import Footer from './components/Footer'
 import ImageCarousel from './components/ImageCarousel'
+import {
+  Dialog,
+  DialogContent,
+} from '@/components/ui/dialog'
 
 export default function NewLandingPage() {
+  // Banner advertisement modal state
+  const [showAdModal, setShowAdModal] = useState(false)
+
+  // Show banner modal on first visit (once per session)
+  useEffect(() => {
+    // Check if user has seen the ad in this browser session
+    const adSeen = sessionStorage.getItem('bannerAdSeen')
+    if (!adSeen) {
+      // Show modal after 3 seconds delay for better user experience
+      const timer = setTimeout(() => setShowAdModal(true), 3000)
+      return () => clearTimeout(timer)
+    }
+  }, [])
+
+  // Handle closing the banner modal
+  const handleCloseAdModal = () => {
+    setShowAdModal(false)
+    // Mark as seen for this session so it won't show again
+    sessionStorage.setItem('bannerAdSeen', 'true')
+  }
 
   return (
     <div className="w-full overflow-x-hidden">
@@ -47,6 +73,26 @@ export default function NewLandingPage() {
       
       {/* Footer */}
       <Footer />
+
+      {/* Promotional Banner Modal */}
+      <Dialog open={showAdModal} onOpenChange={handleCloseAdModal}>
+        <DialogContent className="max-w-4xl p-0 border-0 bg-transparent shadow-2xl">
+          <div className="relative">
+            <img 
+              src="/BannerImage.png" 
+              alt="AI-Powered Photography Service" 
+              className="w-full h-auto rounded-2xl shadow-2xl"
+            />
+            <button 
+              onClick={handleCloseAdModal}
+              className="absolute top-4 right-4 bg-black/50 hover:bg-black/70 text-white rounded-full p-2 transition-all duration-200 hover:scale-110"
+              aria-label="Close advertisement"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
       
     </div>
   )

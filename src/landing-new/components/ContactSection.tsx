@@ -144,7 +144,7 @@ export default function ContactSection() {
       title: 'LinkedIn',
       detail: 'Connect with us',
       description: 'Professional network',
-      gradient: 'from-blue-600 to-blue-800'
+      gradient: 'from-blue-500 to-indigo-600'
     }
   ]
 
@@ -307,8 +307,9 @@ export default function ContactSection() {
             {contactInfo.map((info, index) => (
               <div 
                 key={index}
-                className={`group bg-white/80 backdrop-blur-sm border border-gray-200/50 rounded-3xl p-6 shadow-lg hover:shadow-xl hover:border-gray-300/60 transition-all duration-300 hover:scale-105 ${info.title === 'LinkedIn' ? 'cursor-pointer' : ''}`}
+                className={`group ${info.title === 'LinkedIn' ? 'bg-white/80 hover:bg-gradient-to-r hover:from-blue-200/60 hover:to-indigo-300/60 cursor-pointer' : 'bg-white/80'} backdrop-blur-sm border border-gray-200/50 rounded-3xl p-6 shadow-lg hover:shadow-xl hover:border-gray-300/60 transition-all duration-300 hover:scale-105`}
                 onClick={info.title === 'LinkedIn' ? () => window.open('https://www.linkedin.com/in/nk-analytics', '_blank') : undefined}
+                title={info.title === 'LinkedIn' ? 'Click here' : undefined}
               >
                 <div className="flex items-start space-x-4">
                   <div className="flex-shrink-0">
