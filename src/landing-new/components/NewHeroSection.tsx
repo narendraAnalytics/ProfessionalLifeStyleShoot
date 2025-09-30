@@ -89,7 +89,7 @@ export default function NewHeroSection() {
             </span>
           </span>{' '}
           Vision into
-          <span className="block bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 bg-clip-text text-transparent drop-shadow-lg">
+          <span className="block bg-gradient-to-r from-amber-400 via-orange-400 to-red-500 bg-clip-text text-transparent drop-shadow-lg">
             Professional Reality
           </span>
         </h1>
