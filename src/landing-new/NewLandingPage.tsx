@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { X } from 'lucide-react'
+import { useAuth } from '@clerk/nextjs'
 import NewNavbar from './components/NewNavbar'
 import NewHeroSection from './components/NewHeroSection'
 import HowItWorksSection from './components/HowItWorksSection'
@@ -17,22 +18,35 @@ import {
 } from '@/components/ui/dialog'
 
 export default function NewLandingPage() {
+  // Authentication state
+  const { isSignedIn } = useAuth()
+  
   // Banner advertisement modal state
   const [showAdModal, setShowAdModal] = useState(false)
   
   // Auto-timeout configuration (in milliseconds)
   const BANNER_TIMEOUT_DURATION = 10000 // 10 seconds
 
-  // Show banner modal on first visit (once per session)
+  // Dynamic image configuration based on authentication status
+  const bannerImages = {
+    leftSide: isSignedIn ? '/DiamoundShoot.jpeg' : '/BrightShoot.jpeg',
+    rightSide: isSignedIn ? '/DressPhotoshoot.jpeg' : '/Sareeshoot.jpeg',
+    centerBanner: '/BannerImage.png' // Same for both states
+  }
+
+  // Show banner modal on first visit (once per session per auth state)
   useEffect(() => {
-    // Check if user has seen the ad in this browser session
-    const adSeen = sessionStorage.getItem('bannerAdSeen')
+    // Create unique session storage key based on authentication status
+    const sessionKey = `bannerAdSeen_${isSignedIn ? 'loggedIn' : 'loggedOut'}`
+    
+    // Check if user has seen the ad for this authentication state in this browser session
+    const adSeen = sessionStorage.getItem(sessionKey)
     if (!adSeen) {
       // Show modal after 3 seconds delay for better user experience
       const showTimer = setTimeout(() => setShowAdModal(true), 3000)
       return () => clearTimeout(showTimer)
     }
-  }, [])
+  }, [isSignedIn])
 
   // Auto-close banner after timeout duration
   useEffect(() => {
@@ -56,8 +70,9 @@ export default function NewLandingPage() {
   // Handle closing the banner modal
   const handleCloseAdModal = () => {
     setShowAdModal(false)
-    // Mark as seen for this session so it won't show again
-    sessionStorage.setItem('bannerAdSeen', 'true')
+    // Mark as seen for this authentication state and session so it won't show again
+    const sessionKey = `bannerAdSeen_${isSignedIn ? 'loggedIn' : 'loggedOut'}`
+    sessionStorage.setItem(sessionKey, 'true')
   }
 
   return (
@@ -102,7 +117,7 @@ export default function NewLandingPage() {
         <div className="fixed left-4 top-1/2 transform -translate-y-1/2 z-40">
           <div className="relative group p-2 bg-gradient-to-br from-white via-gray-100 to-gray-200 rounded-3xl shadow-2xl">
             <img 
-              src="/BrightShoot.jpeg" 
+              src={bannerImages.leftSide} 
               alt="Professional Lifestyle Photography" 
               className="w-64 h-80 object-cover rounded-2xl shadow-lg brightness-125 contrast-110 transition-all duration-300 group-hover:scale-105 group-hover:brightness-110 border-2 border-white/50"
             />
@@ -116,7 +131,7 @@ export default function NewLandingPage() {
         <div className="fixed right-4 top-1/2 transform -translate-y-1/2 z-40">
           <div className="relative group p-2 bg-gradient-to-br from-white via-gray-100 to-gray-200 rounded-3xl shadow-2xl">
             <img 
-              src="/Sareeshoot.jpeg" 
+              src={bannerImages.rightSide} 
               alt="Professional Saree Photography" 
               className="w-64 h-80 object-cover rounded-2xl shadow-lg brightness-125 contrast-110 transition-all duration-300 group-hover:scale-105 group-hover:brightness-110 border-2 border-white/50"
             />
@@ -131,7 +146,7 @@ export default function NewLandingPage() {
           <DialogTitle className="sr-only">AI-Powered Photography Service Promotion</DialogTitle>
           <div className="relative">
             <img 
-              src="/BannerImage.png" 
+              src={bannerImages.centerBanner} 
               alt="AI-Powered Photography Service" 
               className="w-full h-auto rounded-2xl shadow-2xl"
             />
