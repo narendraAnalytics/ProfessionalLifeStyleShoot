@@ -13,6 +13,7 @@ import ImageCarousel from './components/ImageCarousel'
 import {
   Dialog,
   DialogContent,
+  DialogTitle,
 } from '@/components/ui/dialog'
 
 export default function NewLandingPage() {
@@ -77,6 +78,7 @@ export default function NewLandingPage() {
       {/* Promotional Banner Modal */}
       <Dialog open={showAdModal} onOpenChange={handleCloseAdModal}>
         <DialogContent className="max-w-4xl p-0 border-0 bg-transparent shadow-2xl">
+          <DialogTitle className="sr-only">AI-Powered Photography Service Promotion</DialogTitle>
           <div className="relative">
             <img 
               src="/BannerImage.png" 
