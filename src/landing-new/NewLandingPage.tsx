@@ -75,48 +75,47 @@ export default function NewLandingPage() {
       {/* Footer */}
       <Footer />
 
+      {/* Left Side Image - Outside Modal */}
+      {showAdModal && (
+        <div className="fixed left-4 top-1/2 transform -translate-y-1/2 z-40">
+          <div className="relative group p-2 bg-gradient-to-br from-white via-gray-100 to-gray-200 rounded-3xl shadow-2xl">
+            <img 
+              src="/BrightShoot.jpeg" 
+              alt="Professional Lifestyle Photography" 
+              className="w-64 h-80 object-cover rounded-2xl shadow-lg brightness-125 contrast-110 transition-all duration-300 group-hover:scale-105 group-hover:brightness-110 border-2 border-white/50"
+            />
+            <div className="absolute inset-2 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl" />
+          </div>
+        </div>
+      )}
+
+      {/* Right Side Image - Outside Modal */}
+      {showAdModal && (
+        <div className="fixed right-4 top-1/2 transform -translate-y-1/2 z-40">
+          <div className="relative group p-2 bg-gradient-to-br from-white via-gray-100 to-gray-200 rounded-3xl shadow-2xl">
+            <img 
+              src="/Sareeshoot.jpeg" 
+              alt="Professional Saree Photography" 
+              className="w-64 h-80 object-cover rounded-2xl shadow-lg brightness-125 contrast-110 transition-all duration-300 group-hover:scale-105 group-hover:brightness-110 border-2 border-white/50"
+            />
+            <div className="absolute inset-2 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl" />
+          </div>
+        </div>
+      )}
+
       {/* Promotional Banner Modal */}
       <Dialog open={showAdModal} onOpenChange={handleCloseAdModal}>
-        <DialogContent className="max-w-6xl p-0 border-0 bg-transparent shadow-2xl">
+        <DialogContent className="max-w-[95vw] p-0 border-0 bg-transparent shadow-2xl">
           <DialogTitle className="sr-only">AI-Powered Photography Service Promotion</DialogTitle>
           <div className="relative">
-            {/* Three-panel advertisement layout */}
-            <div className="grid grid-cols-3 gap-2 rounded-2xl overflow-hidden shadow-2xl bg-white/10 backdrop-blur-sm">
-              {/* Left Panel - Saree Shoot */}
-              <div className="relative group">
-                <img 
-                  src="/Sareeshoot.jpeg" 
-                  alt="Professional Saree Photography" 
-                  className="w-full h-80 object-cover transition-transform duration-300 group-hover:scale-105"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              </div>
-              
-              {/* Center Panel - Main Banner */}
-              <div className="relative group">
-                <img 
-                  src="/BannerImage.png" 
-                  alt="AI-Powered Photography Service" 
-                  className="w-full h-80 object-cover transition-transform duration-300 group-hover:scale-105"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              </div>
-              
-              {/* Right Panel - Bright Shoot */}
-              <div className="relative group">
-                <img 
-                  src="/BrightShoot.jpeg" 
-                  alt="Professional Lifestyle Photography" 
-                  className="w-full h-80 object-cover transition-transform duration-300 group-hover:scale-105"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              </div>
-            </div>
-            
-            {/* Close button */}
+            <img 
+              src="/BannerImage.png" 
+              alt="AI-Powered Photography Service" 
+              className="w-full h-auto rounded-2xl shadow-2xl"
+            />
             <button 
               onClick={handleCloseAdModal}
-              className="absolute top-4 right-4 bg-black/50 hover:bg-black/70 text-white rounded-full p-2 transition-all duration-200 hover:scale-110 z-10"
+              className="absolute top-4 right-4 bg-black/50 hover:bg-black/70 text-white rounded-full p-2 transition-all duration-200 hover:scale-110"
               aria-label="Close advertisement"
             >
               <X className="w-5 h-5" />
