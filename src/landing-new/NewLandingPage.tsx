@@ -19,6 +19,9 @@ import {
 export default function NewLandingPage() {
   // Banner advertisement modal state
   const [showAdModal, setShowAdModal] = useState(false)
+  
+  // Auto-timeout configuration (in milliseconds)
+  const BANNER_TIMEOUT_DURATION = 10000 // 10 seconds
 
   // Show banner modal on first visit (once per session)
   useEffect(() => {
@@ -26,10 +29,29 @@ export default function NewLandingPage() {
     const adSeen = sessionStorage.getItem('bannerAdSeen')
     if (!adSeen) {
       // Show modal after 3 seconds delay for better user experience
-      const timer = setTimeout(() => setShowAdModal(true), 3000)
-      return () => clearTimeout(timer)
+      const showTimer = setTimeout(() => setShowAdModal(true), 3000)
+      return () => clearTimeout(showTimer)
     }
   }, [])
+
+  // Auto-close banner after timeout duration
+  useEffect(() => {
+    let autoCloseTimer: NodeJS.Timeout | null = null
+    
+    if (showAdModal) {
+      // Start auto-close timer when banner is shown
+      autoCloseTimer = setTimeout(() => {
+        handleCloseAdModal()
+      }, BANNER_TIMEOUT_DURATION)
+    }
+
+    // Cleanup timer on unmount or when showAdModal changes
+    return () => {
+      if (autoCloseTimer) {
+        clearTimeout(autoCloseTimer)
+      }
+    }
+  }, [showAdModal])
 
   // Handle closing the banner modal
   const handleCloseAdModal = () => {
