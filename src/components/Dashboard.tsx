@@ -83,7 +83,7 @@ export default function Dashboard() {
   
   const { user } = useUser()
   const { isSyncing, syncError, syncSuccess, retrySync } = useUserSync()
-  const { planStatus, loading: planLoading, refreshUsage } = usePlanLimits()
+  const { planStatus, loading: planLoading, refreshUsage, isLoaded } = usePlanLimits()
 
   // Debug logging for Pro plan issues
   useEffect(() => {
@@ -564,7 +564,7 @@ export default function Dashboard() {
                       }
                       
                       // Check if user can merge images before switching to Upload & Combine
-                      if (!planStatus?.canMergeImages && !hasShownModalThisSession) {
+                      if (!planLoading && isLoaded && !planStatus?.canMergeImages && !hasShownModalThisSession) {
                         setShowUpgradeModal(true)
                         setHasShownModalThisSession(true)
                         toast.error(

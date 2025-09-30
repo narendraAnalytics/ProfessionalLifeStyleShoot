@@ -40,6 +40,7 @@ const carouselImages = [
     objectFit: 'cover' as const,
     priority: true, // Enhanced loading for problematic image
     quality: 90 // Optimized quality for better loading
+
   }
 ]
 

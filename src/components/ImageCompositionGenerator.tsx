@@ -101,8 +101,6 @@ export default function ImageCompositionGenerator({ onImageGenerated }: ImageCom
   const [showUpgradeModal, setShowUpgradeModal] = useState(false)
   const [hasShownModalThisSession, setHasShownModalThisSession] = useState(false)
   
-  // Plan info toast state
-  const [hasShownPlanInfoThisSession, setHasShownPlanInfoThisSession] = useState(false)
   
   useUser() // Keep for auth context
   const { planStatus, incrementUsage, isLoaded } = usePlanLimits()
@@ -271,67 +269,6 @@ export default function ImageCompositionGenerator({ onImageGenerated }: ImageCom
   const removeImage = (index: number) => {
     setUploadedImages(prev => prev.filter((_, i) => i !== index))
   }
-
-  // Show friendly plan info on first interaction
-  const showPlanInfoToast = useCallback(() => {
-    if (hasShownPlanInfoThisSession || !isLoaded || !planStatus) return
-    
-    setHasShownPlanInfoThisSession(true)
-    
-    const planName = planStatus.plan.name
-    const currentMerges = planStatus.usage.currentPeriodMerges
-    const maxMerges = planStatus.plan.maxMergesPerMonth
-    const mergesUsed = currentMerges
-    const mergesRemaining = planStatus.mergesRemaining
-
-    if (planName === 'Free') {
-      toast.info(
-        `🎨 Welcome to Upload & Combine! Free plan: ${maxMerges} merge per month (${mergesUsed} used, ${mergesRemaining} remaining)`,
-        {
-          description: 'Upload 2 images and combine them with AI. Upgrade to Pro for 8 merges/month with all aspect ratios!',
-          duration: 7000,
-          action: {
-            label: 'View Plans',
-            onClick: () => {
-              window.open('/pricing', '_blank')
-            },
-          },
-        }
-      )
-    } else if (planName === 'Pro Plan') {
-      toast.info(
-        `🔥 Welcome to Upload & Combine! Pro plan: ${maxMerges} merges per month (${mergesUsed} used, ${mergesRemaining} remaining)`,
-        {
-          description: 'Upload 2 images and create stunning compositions with unlimited aspect ratios and HD quality!',
-          duration: 5000,
-        }
-      )
-    } else if (planName === 'Max Ultimate') {
-      toast.info(
-        `👑 Welcome to Upload & Combine! Max Ultimate: Unlimited merges`,
-        {
-          description: 'Upload and combine as many images as you want with all premium features and aspect ratios!',
-          duration: 5000,
-        }
-      )
-    }
-  }, [hasShownPlanInfoThisSession, isLoaded, planStatus])
-
-  const handlePromptFocus = () => {
-    showPlanInfoToast()
-  }
-
-  // Show welcome info message when component first mounts
-  useEffect(() => {
-    if (isLoaded && planStatus && !hasShownPlanInfoThisSession) {
-      // Small delay to ensure the component is fully rendered
-      const timer = setTimeout(() => {
-        showPlanInfoToast()
-      }, 500)
-      
-      return () => clearTimeout(timer)
-    }
-  }, [isLoaded, planStatus, hasShownPlanInfoThisSession, showPlanInfoToast])
 
   // Handle proceed to size selection
   const handleProceedToSizeSelection = () => {
@@ -897,7 +834,6 @@ export default function ImageCompositionGenerator({ onImageGenerated }: ImageCom
                     <Textarea
                       value={currentPrompt}
                       onChange={(e) => setCurrentPrompt(e.target.value)}
-                      onFocus={handlePromptFocus}
                       placeholder="e.g., Create a professional e-commerce fashion photo. Take the blue floral dress from the first image and let the woman from the second image wear it..."
                       className="min-h-[120px] text-base border border-gray-200 shadow-sm resize-none bg-white rounded-xl p-4 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
                       disabled={isGenerating}
