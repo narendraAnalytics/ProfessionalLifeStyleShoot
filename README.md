@@ -324,4 +324,3 @@ This project is proprietary and confidential.
 
 **Built with ❤️ using Next.js 15, React 19, and cutting-edge AI technology.**
 
-*For detailed setup instructions, see [CLAUDE.md](./CLAUDE.md)*
