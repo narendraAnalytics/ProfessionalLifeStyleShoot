@@ -1,240 +1,327 @@
-# Professional Lifestyle Shoot - AI-Powered Application
+# Professional Lifestyle Shoot - AI-Powered Photography Platform
 
-A full-stack AI-powered lifestyle shoot application built with Next.js, TypeScript, Prisma, and Google Gemini AI.
+![Professional Lifestyle Shoot Banner](./public/readmeimage.png)
 
-## 📁 Project Structure
+> *An advanced AI-powered professional lifestyle photography platform that transforms your vision into stunning reality using cutting-edge technology.*
+
+## 🚀 Overview
+
+ProfessionalLifeStyleShoot is a comprehensive full-stack web application that leverages artificial intelligence to create professional lifestyle photoshoots. Built with modern web technologies, it offers users an intuitive interface to generate, customize, and manage AI-powered photography sessions with authentication, payment processing, and dynamic content delivery.
+
+## 📁 Current Project Structure
 
 ```
 ProfessionalLifeStyleShoot/
-├── frontend/                    # Next.js Frontend Application
-│   ├── src/
-│   │   ├── app/                # Next.js App Router
-│   │   │   ├── layout.tsx      # Root layout
-│   │   │   ├── page.tsx        # Home page
-│   │   │   ├── globals.css     # Global styles
-│   │   │   └── favicon.ico     # App icon
-│   │   ├── components/
-│   │   │   └── ui/             # shadcn/ui components
-│   │   └── lib/
-│   │       └── utils.ts        # Utility functions
-│   ├── public/                 # Static assets
-│   ├── .env                    # Environment variables (not in git)
-│   ├── .env.example            # Environment template
-│   ├── components.json         # shadcn/ui config
-│   ├── next.config.ts          # Next.js configuration
-│   ├── tailwind.config.ts      # Tailwind CSS config
-│   ├── tsconfig.json           # TypeScript config
-│   └── package.json            # Dependencies and scripts
-├── backend/                    # Backend Utilities & Types
-│   ├── src/
-│   │   ├── lib/                # Core libraries
-│   │   │   ├── prisma.ts       # Prisma client setup
-│   │   │   ├── clerk.ts        # Clerk authentication
-│   │   │   ├── gemini.ts       # Google Gemini AI models
-│   │   │   └── stripe.ts       # Stripe payments
-│   │   ├── types/              # TypeScript type definitions
-│   │   └── utils/              # Utility functions
-│   ├── prisma/
-│   │   └── schema.prisma       # Database schema
-│   ├── .env                    # Environment variables (not in git)
-│   ├── .env.example            # Environment template
-│   ├── tsconfig.json           # TypeScript config
-│   └── package.json            # Dependencies and scripts
-├── claude.md                   # Project setup instructions
-└── README.md                   # This file
+├── src/
+│   ├── app/                          # Next.js App Router (Primary)
+│   │   ├── layout.tsx               # Root layout with Clerk & custom favicon
+│   │   ├── page.tsx                 # Landing page entry point
+│   │   ├── favicon.ico              # Custom professional icon
+│   │   ├── icon.png                 # Backup icon format
+│   │   ├── globals.css              # Global Tailwind styles
+│   │   ├── dashboard/               # Protected dashboard routes
+│   │   ├── gallery/                 # Image gallery features
+│   │   ├── sign-in/[[...sign-in]]/  # Clerk authentication
+│   │   ├── sign-up/[[...sign-up]]/  # Clerk registration
+│   │   └── api/                     # API routes
+│   │       ├── generate-image/      # AI image generation
+│   │       ├── gallery/             # Gallery management
+│   │       ├── users/               # User management
+│   │       └── compose-images/      # Image composition
+│   │
+│   ├── landing-new/                 # ✅ ACTIVE Landing Pages
+│   │   ├── NewLandingPage.tsx       # Main landing with banner ads
+│   │   ├── page.tsx                 # Landing route
+│   │   └── components/              # Active landing components
+│   │       ├── NewHeroSection.tsx   # Dynamic hero with rotating text
+│   │       ├── NewNavbar.tsx        # Auth-aware navigation
+│   │       ├── NewPricingSection.tsx # Pricing cards
+│   │       ├── HowItWorksSection.tsx # Feature explanation
+│   │       ├── PortfolioSection.tsx  # Portfolio showcase
+│   │       ├── ContactSection.tsx   # Contact form
+│   │       ├── Footer.tsx           # Site footer
+│   │       └── ImageCarousel.tsx    # Background carousel
+│   │
+│   ├── components/                  # 🧪 TESTING/BACKUP Code
+│   │   ├── ui/                      # shadcn/ui components (Active)
+│   │   └── *.tsx                    # Original components (Testing)
+│   │
+│   └── hooks/                       # Custom React hooks
+│
+├── public/                          # Static Assets
+│   ├── images/
+│   │   └── iconWebsite.png         # Custom app icon
+│   ├── readmeimage.png             # README banner
+│   ├── BannerImage.png             # Advertisement banner
+│   ├── BrightShoot.jpeg            # Banner side image (logged out)
+│   ├── Sareeshoot.jpeg             # Banner side image (logged out)
+│   ├── DiamoundShoot.jpeg          # Banner side image (logged in)
+│   └── DressPhotoshoot.jpeg        # Banner side image (logged in)
+│
+├── prisma/
+│   └── schema.prisma               # Database schema
+│
+├── CLAUDE.md                       # Development setup instructions
+├── .env.example                    # Environment template
+├── components.json                 # shadcn/ui configuration
+├── tailwind.config.ts              # Tailwind configuration
+├── next.config.ts                  # Next.js configuration
+└── package.json                    # Dependencies & scripts
+```
+
+## ⚡ Key Features (Currently Working)
+
+### 🎯 **Dynamic Banner Advertisement System**
+- **Auto-timeout**: Banners close automatically after 10 seconds
+- **Manual close**: Users can close banners with X button
+- **Authentication-aware**: Different images for logged in vs logged out users
+- **Session storage**: Prevents banner spam with smart session management
+- **Responsive design**: Beautiful gradient styling with hover effects
+
+### 🔐 **Authentication & User Management**
+- **Clerk Integration**: Complete auth system with custom styling
+- **Protected Routes**: Dashboard and user-specific content
+- **User Sync**: Automatic user data synchronization
+- **Custom Auth UI**: Branded sign-in/sign-up experience
+
+### 🎨 **Professional Landing Experience**
+- **Dynamic Hero Section**: Rotating text with "Model", "Brand", "Designer", "Creator", "Content"
+- **Gradient Typography**: Custom amber-orange-red gradient for "Professional Reality"
+- **Background Carousel**: Dynamic image carousel with smooth transitions
+- **Auth-Conditional Content**: Different CTAs for logged in vs logged out users
+
+### 🖼️ **Image Management**
+- **AI Image Generation**: Gemini AI integration for content creation
+- **Gallery System**: Personal and public galleries
+- **Image Composition**: Advanced image editing capabilities
+- **Dynamic Loading**: Optimized image delivery
+
+## 🛠 Tech Stack & Dependencies
+
+### **Core Framework**
+```json
+"next": "15.5.3"                    // Latest Next.js with App Router & Turbopack
+"react": "19.1.0"                   // Latest React 19
+"react-dom": "19.1.0"               // React DOM renderer
+"typescript": "^5"                  // TypeScript for type safety
+```
+
+### **Authentication & Security**
+```json
+"@clerk/nextjs": "^6.31.10"        // Authentication platform
+"@clerk/themes": "^2.4.18"         // Custom auth themes
+"@clerk/types": "^4.85.0"          // Clerk TypeScript types
+```
+
+### **AI & Image Processing**
+```json
+"@google/generative-ai": "^0.24.1" // Gemini AI integration
+"imagekit": "^6.0.0"               // Image optimization
+"imagekitio-react": "^4.3.0"       // React ImageKit components
+"@imagekit/react": "^5.0.1"        // Additional ImageKit features
+```
+
+### **UI Components & Styling**
+```json
+"tailwindcss": "^4"                 // Latest Tailwind CSS
+"framer-motion": "^12.23.12"       // Animation library
+"lucide-react": "^0.543.0"         // Icon library
+"embla-carousel-react": "^8.6.0"   // Carousel components
+"sonner": "^2.0.7"                 // Toast notifications
+
+// Radix UI Components (shadcn/ui)
+"@radix-ui/react-accordion": "^1.2.12"
+"@radix-ui/react-alert-dialog": "^1.1.15"
+"@radix-ui/react-dialog": "^1.1.15"
+"@radix-ui/react-dropdown-menu": "^2.1.16"
+"@radix-ui/react-navigation-menu": "^1.2.14"
+// ... and 15+ more Radix components
+```
+
+### **Database & Backend**
+```json
+"prisma": "^6.16.0"                // Database toolkit
+"@prisma/client": "^6.16.2"        // Prisma client
+```
+
+### **Payments & Business Logic**
+```json
+"stripe": "^18.5.0"                // Payment processing
+"@stripe/stripe-js": "^7.9.0"      // Stripe frontend
+```
+
+### **Forms & Validation**
+```json
+"react-hook-form": "^7.62.0"       // Form management
+"@hookform/resolvers": "^5.2.1"    // Form validation resolvers
+"zod": "^4.1.5"                    // Schema validation
+```
+
+### **State Management & API**
+```json
+"@tanstack/react-query": "^5.87.4" // Server state management
+```
+
+### **Communication & Email**
+```json
+"@emailjs/browser": "^4.4.1"       // Email service integration
+```
+
+### **Utilities**
+```json
+"class-variance-authority": "^0.7.1" // Component variants
+"clsx": "^2.1.1"                    // Conditional classes
+"tailwind-merge": "^3.3.1"          // Tailwind class merging
+"date-fns": "^4.1.0"                // Date utilities
+"mime": "^4.0.7"                    // MIME type detection
+```
+
+## 🔧 Available Scripts
+
+```bash
+# Development
+npm run dev          # Start development server with Turbopack
+npm run build        # Build for production with Turbopack
+npm run start        # Start production server
+npm run lint         # Run ESLint
+
+# Database (if using Prisma)
+npx prisma generate  # Generate Prisma client
+npx prisma db push   # Push schema to database
+npx prisma studio    # Open Prisma Studio
 ```
 
 ## 🚀 Quick Start
 
-### Prerequisites
-
-- Node.js 18+ 
-- npm or yarn
-- PostgreSQL database (recommended: Neon)
-
-### 1. Clone and Setup
-
+### 1. Installation
 ```bash
-# Clone the repository
 git clone <repository-url>
 cd ProfessionalLifeStyleShoot
-
-# Install dependencies for both frontend and backend
-cd frontend && npm install
-cd ../backend && npm install
+npm install
 ```
 
-### 2. Environment Configuration
-
-**Frontend (.env):**
+### 2. Environment Setup
 ```bash
-cp frontend/.env.example frontend/.env
-# Edit frontend/.env with your values
+cp .env.example .env
+# Edit .env with your actual values
 ```
 
-**Backend (.env):**
-```bash
-cp backend/.env.example backend/.env  
-# Edit backend/.env with your values
-```
-
-### 3. Database Setup
-
-```bash
-cd backend
-npm run db:generate    # Generate Prisma client
-npm run db:push        # Push schema to database
-```
-
-### 4. Development
-
-```bash
-# Start frontend (from frontend directory)
-cd frontend
-npm run dev            # http://localhost:3000
-
-# Start backend development (from backend directory) 
-cd backend
-npm run dev            # For utility development
-```
-
-## 🛠 Available Scripts
-
-### Frontend Scripts
-- `npm run dev` - Start development server with Turbopack
-- `npm run build` - Build for production with Turbopack
-- `npm run start` - Start production server
-- `npm run lint` - Run ESLint
-
-### Backend Scripts
-- `npm run build` - Compile TypeScript to JavaScript
-- `npm run dev` - Development with nodemon
-- `npm run start` - Start production server
-- `npm run type-check` - TypeScript type checking
-- `npm run db:generate` - Generate Prisma client
-- `npm run db:push` - Push schema to database
-- `npm run db:migrate` - Run database migrations
-- `npm run db:studio` - Open Prisma Studio
-- `npm run db:seed` - Seed database with test data
-
-## 🏗 Tech Stack
-
-### Frontend
-- **Framework:** Next.js 15.5.3 with App Router
-- **Language:** TypeScript
-- **Styling:** Tailwind CSS 4
-- **UI Components:** shadcn/ui + Radix UI
-- **Authentication:** Clerk
-- **Payments:** Stripe
-- **API Calls:** TanStack React Query
-- **Forms:** React Hook Form + Zod validation
-- **Notifications:** Sonner
-
-### Backend
-- **Runtime:** Node.js with TypeScript
-- **Database:** PostgreSQL with Prisma ORM
-- **Authentication:** Clerk Backend SDK
-- **AI Integration:** Google Gemini AI
-  - `gemini-2.0-flash-exp` (Text processing)
-  - `gemini-2.5-flash-image-preview` (Image analysis)
-- **Payments:** Stripe
-- **Security:** Helmet, Rate limiting
-- **Logging:** Winston
-
-### Development Tools
-- **Language:** TypeScript throughout
-- **Linting:** ESLint
-- **Process Management:** Nodemon
-- **Database Tools:** Prisma Studio
-
-## 🔑 Environment Variables
-
-### Frontend Required
+### 3. Required Environment Variables
 ```env
+# Database
+DATABASE_URL=postgresql://username:password@localhost:5432/database_name
+
+# Clerk Authentication
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
 CLERK_SECRET_KEY=sk_test_...
 NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
 NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
-NEXT_PUBLIC_API_URL=http://localhost:3001
-```
 
-### Backend Required
-```env
-DATABASE_URL="postgresql://..."
-CLERK_SECRET_KEY=sk_test_...
-GEMINI_API_KEY=your_gemini_api_key
+# Gemini AI
+GEMINI_API_KEY=your_gemini_api_key_here
+
+# ImageKit
+NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY=public_...
+NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT=https://ik.imagekit.io/your_imagekit_id/
+IMAGEKIT_PRIVATE_KEY=private_...
+
+# Stripe Payments
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
 STRIPE_SECRET_KEY=sk_test_...
 STRIPE_WEBHOOK_SECRET=whsec_...
-PORT=3001
-NODE_ENV=development
+
+# API Configuration
+NEXT_PUBLIC_API_URL=http://localhost:3000
 ```
 
-## 📦 Key Features
+### 4. Development
+```bash
+npm run dev
+# Open http://localhost:3000
+```
 
-- ✅ **Authentication:** Clerk integration with middleware
-- ✅ **UI Framework:** Modern component library with shadcn/ui
-- ✅ **Database:** Prisma ORM with PostgreSQL
-- ✅ **AI Integration:** Google Gemini models for text and image processing
-- ✅ **Payments:** Stripe integration ready
-- ✅ **Type Safety:** Full TypeScript implementation
-- ✅ **Development Tools:** Hot reloading, type checking, linting
+## 🎨 Design System
 
-## 🔄 Development Workflow
+### **Color Palette**
+- **Primary Gradients**: Cyan → Emerald → Blue
+- **Hero Text**: Amber → Orange → Red (`Professional Reality`)
+- **Backgrounds**: Dynamic gradient overlays
+- **Interactive Elements**: Purple → Pink gradients
 
-1. **Database Changes:**
-   ```bash
-   cd backend
-   # Update prisma/schema.prisma
-   npm run db:push          # Push to database
-   npm run db:generate      # Update Prisma client
-   ```
+### **Typography**
+- **Primary Font**: Geist Sans
+- **Monospace**: Geist Mono  
+- **Gradient Text**: Custom CSS with `bg-clip-text`
 
-2. **Adding UI Components:**
-   ```bash
-   cd frontend
-   npx shadcn@latest add <component-name>
-   ```
+### **Animation System**
+- **Framer Motion**: Page transitions and micro-interactions
+- **CSS Animations**: Custom keyframes for text rotation
+- **Hover Effects**: Scale, brightness, and blur transformations
 
-3. **API Development:**
-   - Use Next.js API routes in `frontend/src/app/api/`
-   - Import backend utilities from `../../../backend/src/lib/`
+## 📱 Features Implementation Status
 
-## 📋 Next Steps
+### ✅ **Completed Features**
+- [x] **Landing Page System**: Dynamic content with auth awareness
+- [x] **Banner Advertisement**: Auto-timeout + manual close functionality
+- [x] **Authentication Flow**: Complete Clerk integration
+- [x] **Responsive Design**: Mobile-first approach with Tailwind
+- [x] **Custom Branding**: Professional icon and gradient styling
+- [x] **Image Management**: Basic upload and display capabilities
+- [x] **Navigation System**: Auth-conditional menu and CTAs
 
-- [ ] Complete database schema design
-- [ ] Implement authentication middleware
-- [ ] Set up API routes for Gemini AI integration
-- [ ] Configure Stripe webhooks
-- [ ] Add ImageKit integration (planned)
-- [ ] Implement core application features
+### 🚧 **In Development**
+- [ ] **AI Image Generation**: Full Gemini AI integration
+- [ ] **Payment System**: Stripe subscription handling
+- [ ] **User Dashboard**: Personal gallery and settings
+- [ ] **Advanced Image Editing**: Composition and enhancement tools
+
+### 📋 **Planned Features**
+- [ ] **Portfolio Builder**: User portfolio creation tools
+- [ ] **Social Features**: Sharing and collaboration
+- [ ] **Analytics Dashboard**: Usage and performance metrics
+- [ ] **Mobile App**: React Native companion app
+
+## 📚 Development Notes
+
+### **Component Architecture**
+- `src/landing-new/`: **Active production components**
+- `src/components/`: **Testing and backup code** (not currently used in production)
+- `src/app/`: **Next.js App Router** with API routes
+
+### **Authentication Flow**
+- Clerk handles all auth logic with custom UI theming
+- Protected routes use middleware for access control
+- User data sync happens automatically on sign-in
+
+### **Banner System Logic**
+```typescript
+// Different session keys for auth states
+const sessionKey = `bannerAdSeen_${isSignedIn ? 'loggedIn' : 'loggedOut'}`
+
+// Auto-timeout functionality
+useEffect(() => {
+  if (showAdModal) {
+    const timer = setTimeout(() => handleCloseAdModal(), 10000)
+    return () => clearTimeout(timer)
+  }
+}, [showAdModal])
+```
 
 ## 🤝 Contributing
 
-1. Follow the existing code structure and conventions
-2. Use TypeScript throughout
-3. Follow the component patterns established by shadcn/ui
-4. Ensure all environment variables are documented
-5. Run type checking before commits: `npm run type-check`
+1. Follow existing code patterns and conventions
+2. Use TypeScript throughout the application
+3. Implement responsive design with Tailwind CSS
+4. Test authentication flows with Clerk
+5. Ensure proper error handling and user feedback
+6. Update this README when adding new features
 
-## 📚 Documentation
+## 📄 License
 
-- [Next.js Documentation](https://nextjs.org/docs)
-- [Clerk Documentation](https://clerk.com/docs)
-- [Prisma Documentation](https://www.prisma.io/docs)
-- [Google Gemini API](https://ai.google.dev/gemini-api/docs)
-- [shadcn/ui Components](https://ui.shadcn.com/docs)
--------------------------------------------------------------------------------------------------------
----------------------------------------------------------------------------------------------------------
- ☒ Create main landing page component with layout structure
-     ☒ Implement glassmorphic navbar with logo and navigation
-     ☒ Build immersive hero section with animated text and 3D carousel
-     ☒ Create How It Works section with timeline animation
-     ☒ Develop AI Features section with Bento grid layout
-     ☐ Build Gallery/Showcase section with masonry grid and filters
-     ☒ Implement Pricing section with glassmorphic cards
-     ☒ Add Testimonials carousel section
-     ☐ Create Stats/Trust section with animated counters
-     ☒ Build FAQ accordion section
-     ☒ Add CTA section and footer
-     ☒ Implement animations, micro-interactions, and responsive design
+This project is proprietary and confidential.
+
+---
+
+**Built with ❤️ using Next.js 15, React 19, and cutting-edge AI technology.**
+
+*For detailed setup instructions, see [CLAUDE.md](./CLAUDE.md)*
