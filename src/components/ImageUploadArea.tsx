@@ -165,7 +165,8 @@ export default function ImageUploadArea({
       // Create a fake event to reuse the existing validation logic
       const fakeEvent = {
         target: { files }
-      } as React.ChangeEvent<HTMLInputElement>
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any
       
       handleFileSelection(fakeEvent)
     }
