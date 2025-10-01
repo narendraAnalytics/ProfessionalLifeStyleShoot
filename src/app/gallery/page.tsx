@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useUser, SignedIn, SignedOut } from '@clerk/nextjs'
+import Link from 'next/link'
 import PublicGallery from '@/components/PublicGallery'
 import { 
   Image as ImageIcon, 
@@ -357,14 +358,14 @@ function UserGallerySection() {
           <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-8">
             {/* Back to Home and Action Buttons */}
             <div className="flex items-center justify-between mb-8">
-              <a 
+              <Link 
                 href="/"
                 className="group flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white rounded-xl font-medium transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-blue-500/25"
               >
                 <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform duration-300" />
                 <Home className="w-5 h-5" />
                 <span>Back to Home</span>
-              </a>
+              </Link>
               
               <div className="flex items-center gap-3">
                 {/* Fix Gallery Button */}

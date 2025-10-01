@@ -1234,7 +1234,7 @@ export default function AIPhotoshootGenerator({ onImageGenerated }: AIPhotoshoot
               🚀 Ready to Generate More Images?
             </DialogTitle>
             <DialogDescription className="text-gray-600 mt-2">
-              You've reached your monthly limit. Upgrade to continue creating amazing images!
+              You&apos;ve reached your monthly limit. Upgrade to continue creating amazing images!
             </DialogDescription>
           </DialogHeader>
           

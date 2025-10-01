@@ -62,10 +62,14 @@ export async function GET(req: NextRequest) {
         
         if (metadata.responsiveUrls) {
           responsiveUrls = {
-            small: metadata.responsiveUrls.small || photoshoot.generatedImageUrl,
-            medium: metadata.responsiveUrls.medium || photoshoot.generatedImageUrl,
-            large: metadata.responsiveUrls.large || photoshoot.generatedImageUrl,
-            original: metadata.responsiveUrls.original || photoshoot.generatedImageUrl
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            small: (metadata.responsiveUrls as any).small || photoshoot.generatedImageUrl,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            medium: (metadata.responsiveUrls as any).medium || photoshoot.generatedImageUrl,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            large: (metadata.responsiveUrls as any).large || photoshoot.generatedImageUrl,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            original: (metadata.responsiveUrls as any).original || photoshoot.generatedImageUrl
           }
         }
         // Extract B&W URLs from metadata
@@ -96,7 +100,8 @@ export async function GET(req: NextRequest) {
         hasBwImageUrl: !!formattedImage.bwImageUrl,
         hasBwUrls: !!formattedImage.bwUrls,
         bwImageUrl: formattedImage.bwImageUrl,
-        bwUrlsOriginal: formattedImage.bwUrls?.original
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        bwUrlsOriginal: (formattedImage.bwUrls as any)?.original
       })
 
       return formattedImage

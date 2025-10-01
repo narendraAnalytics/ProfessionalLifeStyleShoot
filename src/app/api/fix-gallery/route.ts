@@ -27,7 +27,8 @@ export async function POST(req: NextRequest) {
       where: {
         userId: user.id,
         status: { not: 'completed' },
-        outputImageUrl: { not: null } // Has valid output URL but wrong status
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        outputImageUrl: { not: null as any } // Has valid output URL but wrong status
       }
     })
 
@@ -57,7 +58,8 @@ export async function POST(req: NextRequest) {
         status: { not: 'completed' },
         createdAt: { lt: oneHourAgo },
         OR: [
-          { outputImageUrl: null },
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          { outputImageUrl: null as any },
           { outputImageUrl: '' }
         ]
       }

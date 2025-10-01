@@ -226,7 +226,7 @@ export default function PortfolioSection() {
                 </div>
                 
                 <p className="text-gray-600 text-lg mb-8 leading-relaxed">
-                  Let's create stunning lifestyle photography that tells your unique story
+                  Let&apos;s create stunning lifestyle photography that tells your unique story
                 </p>
                 
                 <button className="group relative px-10 py-5 bg-gradient-to-r from-purple-500 via-pink-500 to-rose-500 hover:from-purple-400 hover:via-pink-400 hover:to-rose-400 rounded-2xl text-white font-bold text-lg transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 shadow-2xl hover:shadow-purple-500/25 active:scale-95 overflow-hidden">

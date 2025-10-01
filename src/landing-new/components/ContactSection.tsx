@@ -167,7 +167,7 @@ export default function ContactSection() {
           </div>
           
           <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
-            <span className="text-gray-900 drop-shadow-sm">Let's Create </span>
+            <span className="text-gray-900 drop-shadow-sm">Let&apos;s Create </span>
             <span className="block bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 bg-clip-text text-transparent drop-shadow-sm">
               Together
             </span>
