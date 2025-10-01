@@ -227,6 +227,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const whereClause: any = { userId: user.id };
     if (style) {
       whereClause.style = style;

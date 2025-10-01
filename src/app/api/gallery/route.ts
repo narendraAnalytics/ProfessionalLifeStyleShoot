@@ -100,9 +100,13 @@ export async function GET(req: NextRequest) {
         
         if (metadata.responsiveUrls) {
           responsiveUrls = {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             small: (metadata.responsiveUrls as any).small || photoshoot.generatedImageUrl,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             medium: (metadata.responsiveUrls as any).medium || photoshoot.generatedImageUrl,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             large: (metadata.responsiveUrls as any).large || photoshoot.generatedImageUrl,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             original: (metadata.responsiveUrls as any).original || photoshoot.generatedImageUrl
           }
         }
@@ -146,9 +150,13 @@ export async function GET(req: NextRequest) {
         
         if (metadata.responsiveUrls) {
           responsiveUrls = {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             small: (metadata.responsiveUrls as any).small || composition.outputImageUrl,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             medium: (metadata.responsiveUrls as any).medium || composition.outputImageUrl,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             large: (metadata.responsiveUrls as any).large || composition.outputImageUrl,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             original: (metadata.responsiveUrls as any).original || composition.outputImageUrl
           }
         }
@@ -170,6 +178,7 @@ export async function GET(req: NextRequest) {
       return {
         id: composition.id,
         imageUrl: composition.outputImageUrl,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         thumbnailUrl: (composition.metadata as any)?.thumbnailUrl || composition.outputImageUrl,
         bwImageUrl,
         responsiveUrls,

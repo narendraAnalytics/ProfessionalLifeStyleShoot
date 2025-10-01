@@ -76,6 +76,7 @@ export default function ContactSection() {
       // Reset form only on successful submission
       setFormData({ name: '', email: '', company: '', message: '' })
       
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error('EmailJS error:', error)
       

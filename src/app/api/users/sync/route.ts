@@ -122,6 +122,7 @@ export async function POST() {
       
       // Handle specific Prisma errors
       if (dbError && typeof dbError === 'object' && 'code' in dbError) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const prismaError = dbError as { code: string, meta?: any }
         if (prismaError.code === 'P2002') {
           return NextResponse.json({ 

@@ -223,6 +223,7 @@ export async function POST(req: NextRequest) {
 
       console.log('💾 Database save successful:', {
         imageCompositionId: imageComposition.id,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         storedBwImageUrl: (imageComposition.metadata as any)?.bwImageUrl,
         metadataKeys: Object.keys(imageComposition.metadata || {})
       });
@@ -242,6 +243,7 @@ export async function POST(req: NextRequest) {
           id: imageComposition.id,
           imageUrl: uploadResult.url,
           thumbnailUrl: uploadResult.thumbnailUrl,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           bwImageUrl: (imageComposition.metadata as any)?.bwImageUrl,
           responsiveUrls,
           bwUrls, // Include B&W responsive URLs
