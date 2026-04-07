@@ -46,7 +46,7 @@
     "imagekitio-react": "^4.3.0",
     "lucide-react": "^0.543.0",
     "mime": "^4.0.7",
-    "next": "15.5.3",
+    "next": "15.5.9",
     "prisma": "^6.16.0",
     "react": "19.1.0",
     "react-day-picker": "^9.9.0",
